@@ -83,7 +83,7 @@ export default function Performance() {
 
             {
                 expensesChart < revenuesChart ? 
-                <div className="transaction-health">
+                <div data-aos='zoom-in' className="transaction-health">
                     <div>
                         <h2>Você está indo muito bem!</h2>
                         <p>
@@ -95,7 +95,7 @@ export default function Performance() {
                     <img src={require('../../assets/imgs/goodjob.jpg')} alt="" />
                 </div>
                 :
-                <div className="transaction-health">
+                <div data-aos='zoom-in' className="transaction-health">
                     <div>
                         <h2>Cuidado!</h2>
                         <p>

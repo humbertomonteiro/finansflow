@@ -26,7 +26,7 @@ export default function Dashboard() {
                         Clique aqui para visualizar a lista de clientes cadastrados.
                         Adicione o endereço e o número de telefone para que nos possamos 
                         ajudar a ir até seus clientes ou entrar em contato com apenas alguns 
-                        clique.
+                        cliques.
                     </p>
                     <Link
                     className='link-clients'

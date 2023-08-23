@@ -14,7 +14,8 @@ export default function FormAdd() {
     const { user, 
         categoriesRevenues, 
         categoriesExpenses,
-        setLoading
+        setLoading,
+        signed
     } = useContext(UserContext)
 
     const [ value, setValue ] = useState('')
@@ -153,18 +154,21 @@ export default function FormAdd() {
         <aside className='container-form-add'>
 
 
-            <div className="btn-show-add">
-                {
-                    showAddTransactions ? 
-                    <button className='bg-down' onClick={() => setShowAddTransactions(false)}>
-                        <AiOutlineMinus />
-                    </button>
-                    :
-                    <button className='bg-default' onClick={btnPlus}>
-                        <AiOutlinePlus />
-                    </button>
-                }
-            </div>
+            {
+                signed && 
+                <div className="btn-show-add">
+                    {
+                        showAddTransactions ? 
+                        <button className='bg-down' onClick={() => setShowAddTransactions(false)}>
+                            <AiOutlineMinus />
+                        </button>
+                        :
+                        <button className='bg-default' onClick={btnPlus}>
+                            <AiOutlinePlus />
+                        </button>
+                    }
+                </div>
+            }
             {
                 showAddTransactions &&
                 <div data-aos='fade-up' className='show-form-transactions'>

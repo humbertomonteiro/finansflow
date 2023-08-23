@@ -5,7 +5,8 @@ import { db } from '../../FirebaseConnection'
 import { doc, updateDoc } from 'firebase/firestore'
 import Pendency from '../../components/Pendency'
 import { MdDelete } from 'react-icons/md'
-import { HiMiniPencil } from 'react-icons/hi2'
+import { CgProfile } from 'react-icons/cg'
+import { BiSolidPencil } from 'react-icons/bi'
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { BsFillArrowUpCircleFill, BsFillArrowDownCircleFill, BsLink45Deg } from 'react-icons/bs'
 import { AiFillCheckCircle, AiFillCloseCircle } from 'react-icons/ai'
@@ -48,7 +49,7 @@ export default function Transactions() {
     const categories = categoriesRevenues.concat(categoriesExpenses)
 
     useEffect(() => {
-        function getDays() {
+        function generationArraysByTypes() {
             let typeTransactions = transactions.filter(t => {
                 if(type === 'all') {
                     return t
@@ -66,7 +67,7 @@ export default function Transactions() {
                     && filterDate.getFullYear() === yearSearch
                 })
 
-            let clients = typeTransactions
+            let clientsTransactions = typeTransactions
                 .filter(e => e.category === 'Cliente')
                 .filter(e => {
                     const filterDate = new Date(e.date)
@@ -74,56 +75,40 @@ export default function Transactions() {
                     && filterDate.getFullYear() === yearSearch
                 })
 
-            let pendencys = typeTransactions
+            let pendencysTransactions = typeTransactions
                 .filter(e => e.done === false)
                 .filter(e => {
                     const filterDate = new Date(e.date)
                     return filterDate < currentDate
                 })
 
-            if(type !== 'expensesPendency' && type !== 'revenuesPendency' && type !== 'clients') {
-                const days = allTransactions.map(e => String(e.date).split('-')[2])
-                const unique = days.filter((e, a) => days.indexOf(e) === a)
-                const uniqueNumber = unique.map(e => Number(e))
-                const daysDec = uniqueNumber.sort((a, i) => {
-                    if(a > i) return 1
-                    if(a < i) return -1
-                    return 0
-                })
-    
-                setDays(daysDec)
-                setTypeTransactions(allTransactions)
+            if(type === 'all' || type === 'revenues' || type === 'expenses') {
+                generationDays(allTransactions)
             } else if(type === 'clients') {
-                const days = clients.map(e => String(e.date).split('-')[2])
-                const unique = days.filter((e, a) => days.indexOf(e) === a)
-                const uniqueNumber = unique.map(e => Number(e))
-                const daysDec = uniqueNumber.sort((a, i) => {
-                    if(a > i) return 1
-                    if(a < i) return -1
-                    return 0
-                })
-    
-                setDays(daysDec)
-                setTypeTransactions(clients)
-            } else {
-                const days = pendencys.map(e => String(e.date).split('-')[2])
-                const unique = days.filter((e, a) => days.indexOf(e) === a)
-                const uniqueNumber = unique.map(e => Number(e))
-                const daysDec = uniqueNumber.sort((a, i) => {
-                    if(a > i) return 1
-                    if(a < i) return -1
-                    return 0
-                })
-    
-                setDays(daysDec)
-                setTypeTransactions(pendencys)
+                generationDays(clientsTransactions)
+            } else if(type === 'revenuesPendency' ||type === 'expensesPendency'){
+                generationDays(pendencysTransactions)
             }
 
         }
         
-        getDays()
+        generationArraysByTypes()
 
     }, [monthSearch, type, transactions, yearSearch])
+
+    function generationDays(array) {
+        const days = array.map(e => String(e.date).split('-')[2])
+        const unique = days.filter((e, a) => days.indexOf(e) === a)
+        const uniqueNumber = unique.map(e => Number(e))
+        const daysDec = uniqueNumber.sort((a, i) => {
+            if(a > i) return 1
+            if(a < i) return -1
+            return 0
+        })
+
+        setDays(daysDec)
+        setTypeTransactions(array)
+    }
 
     function handleTransaction(set, state, id, data) {
         set(!state)
@@ -251,9 +236,11 @@ export default function Transactions() {
                                         <>
                                             <div>
                                                 <div className='category bg-normal'>
-                                                    {
-                                                        categories.map(a => a.name === e.category && <div key={e.id}>{a.icon}</div>)
-                                                    }
+
+                                                    <div >
+                                                        <CgProfile />
+                                                    </div>
+
                                                     <span>{e.category}</span>
                                                 </div>
                                             </div>
@@ -272,7 +259,10 @@ export default function Transactions() {
                                                 <div className={e.value > 0 ?
                                                     'category revenue' : 'category expensive' }>
                                                     {
-                                                        categories.map(a => a.name === e.category && <div key={e.id}>{a.icon}</div>)
+                                                        categories.map(a => a.name === e.category && 
+                                                        <div key={e.id}>
+                                                            {a.icon}
+                                                        </div>)
                                                     }
                                                     <span>{e.category}</span>
                                                 </div>
@@ -289,7 +279,7 @@ export default function Transactions() {
                                     </div>
                                     <div className='icon'
                                     onClick={() => handleTransaction(setEditTransaction, editTransaction, e.id, e)}>
-                                        <HiMiniPencil />
+                                        <BiSolidPencil />
                                     </div>
                                     <div className='icon'
                                     onClick={() => handleTransaction(setDeleteTransaction, deleteTransaction, e.id, e)}>
