@@ -1,0 +1,46 @@
+.container-pendency {
+    width: 800px;
+    max-width: 95%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.box-pendency {
+    box-shadow: -1px 1px 4px var(--fifth);
+    padding: 0 10px;
+    border-radius: 15px;
+    width: 150px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    cursor: pointer;
+}
+
+.box-pendency div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.box-pendency div strong {
+    max-width: 80px;
+    font-size: .7rem;
+}
+
+.box-pendency div span {
+    background-color: #fff;
+    color: var(--first);
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.box-pendency h3 {
+    text-align: center;
+}

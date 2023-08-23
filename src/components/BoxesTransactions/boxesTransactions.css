@@ -1,0 +1,87 @@
+
+.boxes-transactions {
+    width: 1000px;
+    max-width: 95%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 10px;
+}
+
+.box-transactions {
+    width: 220px;
+    max-width: 47%;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background-color: #fff;
+    box-shadow: -1px 1px 4px var(--fifth);
+    border-radius: 14px;
+    color: var(--second);
+    margin-bottom: 10px;
+    transition: .5s;
+}
+
+.box-transactions:hover {
+    transform: scale(1.05);
+}
+
+.box-transactions .title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .8rem;
+    background-color: var(--first);
+    color: var(--white);
+    padding: 5px;
+    border-radius: 10px 10px 0 0;
+}
+
+.box-transactions .title svg {
+    font-size: 1rem;
+}
+
+.scale:hover {
+    transform: scale(1.05);
+    background-color: var(--white);
+}
+
+.box-transactions .svg {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.box-transactions .svg svg {
+    font-size: 1.7rem;
+    padding: 0 5px 5px 0;
+}
+
+
+@media (max-width: 600px) {
+
+    .box-transactions {
+        height: 95px;
+    }
+
+    .box-transactions svg {
+        font-size: 1.7rem;
+    }
+
+    .box-transactions .title {
+        font-size: .7rem;
+    }
+
+    .box-transactions h2 {
+        font-size: 1.2rem;
+    }
+
+    .box-transactions .svg svg {
+        font-size: 1.6em;
+    }
+}

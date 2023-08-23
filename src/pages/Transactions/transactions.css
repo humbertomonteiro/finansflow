@@ -1,0 +1,282 @@
+.container-transactions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 80px;
+}
+
+.btn-filters-transactions {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.btn-filters-transactions a {
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    font-size: .6rem;
+}
+
+.transactions {
+    width: 1000px;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.transactions .transaction-day {
+    width: 100%;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+.transactions .transaction-day strong {
+    color: var(--fourth);
+    padding-left: 20px;
+}
+
+.transaction {
+    width: 100%;
+    height: 70px;
+    display: grid;
+    grid-template-columns: 65px 1fr 100px 40px 40px 40px;
+    margin: 5px 0;
+    padding: 2px;
+    background-color: #fff;
+    box-shadow: -1px 1px 4px var(--fifth);
+    border-radius: 40px 20px 20px 40px;
+    column-gap: 10px;
+}
+
+.transaction div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2px;
+}
+
+.transaction .client {
+    cursor: pointer;
+    transition: .5s all ease;
+}
+
+.transaction .client:hover {
+    color: var(--first);
+    font-weight: 600;
+    padding: 0 5px;
+    background-color: var(--fifth);
+    border-radius: 10px;
+}
+
+
+.transaction div span {
+    font-size: .7rem;
+}
+
+.transaction div .category {
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.transaction div .revenue {
+    background-color: var(--green);
+}
+
+.transaction div .expensive {
+    background-color: var(--red);
+}
+
+.transaction div .category span {
+    font-size: .6rem;
+    color: var(--white);
+    text-align: center;
+}
+
+.transaction div .category svg {
+    font-size: 1.4rem;
+    color: var(--white);
+}
+
+.transaction .icon {
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 15px;
+    margin: 10px 0;
+    transition: .5s;
+}
+
+.transaction .icon:hover {
+    transform: scale(1.4);
+}
+
+.transaction .icon svg {
+    font-size: 1.2rem;
+}
+
+
+.handle-transactions {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #000000af;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.handle-transactions .box {
+    background-color: var(--first);
+    color: var(--white);
+    width: 500px;
+    max-width: 95%;
+    height: 300px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 10px;
+}
+
+.handle-transactions .box h2 {
+    margin-bottom: 20px;
+}
+
+.handle-transactions .box p {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 10px 5px 10px;
+    border-bottom: 1px solid var(--fifth);
+    margin-bottom: 10px;
+}
+
+.handle-transactions .box p a {
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    transition: .5s;
+}
+
+.handle-transactions .box p a:hover {
+    color: var(--fifth);
+}
+
+.handle-transactions .box .box-btns {
+    max-width: 95%;
+}
+
+.handle-transactions .box .box-btns button {
+    width: 330px;
+    max-width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 0;
+    color: var(--white);
+    box-shadow: none;
+}
+
+.transaction-edit {
+    width: 1000px;
+    max-width: 95%;
+    background-color: var(--first);
+    border-radius: 10px;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.transaction-edit h2 {
+    color: var(--fifth);
+}
+
+.transaction-edit form {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    color: var(--fifth);
+    padding: 10px;
+}
+
+.transaction-edit form label {
+    width: 350px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.transaction-edit form label input,
+.transaction-edit form label select,
+.transaction-edit form button {
+    width: 350px;
+    height: 40px;
+    max-width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 10px;
+    border: 0;
+    outline: 0 0 0 0;
+    box-shadow: none;
+}
+
+.transaction-edit form .btn-edit-not {
+    margin-top: 17px;
+}
+
+.transaction-edit .btn-edit {
+    width: 350px;
+    max-width: 95%;
+    box-shadow: none;
+} 
+
+@media (max-width: 600px) {
+
+    .transaction {
+        height: 60px;
+        grid-template-columns: 55px 1fr 80px 30px 30px 30px;
+        column-gap: 0;
+        padding: 0;
+    }
+
+    .transaction div p {
+        font-size: .8rem;
+    }
+
+    .transaction div .category {
+        height: 52px;
+    }
+
+    .transaction div .category svg {
+        font-size: 1.1rem;
+    }
+
+    .transaction div .category span {
+        font-size: .5rem;
+    }
+
+    .transaction .icon svg {
+        font-size: 1.2rem;
+    }
+}

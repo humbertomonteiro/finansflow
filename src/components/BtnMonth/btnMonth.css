@@ -1,0 +1,50 @@
+.btn-month {
+    display: flex;
+    align-items: center;
+    color: var(--first);
+}
+
+.btn-month label {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-month label input {
+    border: 0;
+    width: 80px;
+}
+
+.btn-month label h2 {
+    width: 80px;
+    text-align: center;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btn-month h3 {
+    font-size: 1rem;
+}
+
+.btn-month button {
+    border: 0;
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: var(--first);
+    transition: .5s;
+}
+
+.btn-month button:hover {
+    background-color: var(--fifth);
+}
+
+/* @media (max-width: 480px) {
+    .btn-month label input {
+        display: none;
+    }
+} */

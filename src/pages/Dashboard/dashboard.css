@@ -1,0 +1,77 @@
+.container-dashboard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 80px;
+}
+
+.container-dashboard .clients {
+    width: 1000px;
+    max-width: 95%;
+    background-color: #fff;
+    color: var(--fourth);
+    box-shadow: -1px 1px 4px var(--fifth);
+    display: flex;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-radius: 10px;
+    gap: 10px;
+}
+
+.container-dashboard .clients div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px;
+}
+
+.container-dashboard .clients div h2,
+.container-dashboard .clients div p {
+    margin-bottom: 10px;
+    color: var(--first);
+}
+
+.container-dashboard .clients div h2 {
+    font-size: 2rem;
+}
+
+.container-dashboard .clients .img-clients img {
+    min-width: 330px;
+    width: 400px;
+    max-width: 100%;
+}
+
+/* .container-dashboard .clients h2 {
+    background-color: var(--first);
+    width: 100%;
+    padding: 5px;
+    color: var(--white);
+    border-radius: 10px 10px 0 0;
+    font-size: 1.2rem;
+} */
+
+.container-dashboard .link-clients {
+    text-align: center;
+    display: block;
+    padding: 10px;
+    border-radius: 10px;
+    width: 300px;
+    max-width: 95%;
+    background-color: var(--first);
+    color: var(--white);
+    transition: .5s;
+}
+
+.container-dashboard .link-clients:hover {
+    background-color: var(--fourth);
+}
+
+
+@media (max-width: 600px) {
+    .container-dashboard .clients div {
+        align-items: center;
+        text-align: center;
+    }
+}
