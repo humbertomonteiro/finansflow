@@ -65,8 +65,6 @@ export default function UserProvider({children}) {
 
     useEffect(() => {
         function handleTransactions() {
-            // const dataLs = localStorage.getItem('@dataUserManager')
-            // const userLs = JSON.parse(dataLs)
             const transactionsFs = collection(db,'transactions')
             const q = query(transactionsFs, where('user', '==', user ? user.uid : null))
 

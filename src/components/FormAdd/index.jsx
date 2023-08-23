@@ -66,12 +66,14 @@ export default function FormAdd() {
                         setMonth = 1
                         ++setYear
                     }
-                    
+
+                    let zero = setMonth < 10 ? '0' : ''
+
                     await addDoc(collection(db, 'transactions'),{
                         value: type === 2 ? -valueDote : valueDote,
                         name: `${name} (${setInit}/${times})`,
                         category: category,
-                        date: `${setYear}-${setMonth++}-${dateSplit[2]}`,
+                        date: `${setYear}-${zero}${setMonth++}-${dateSplit[2]}`,
                         done: false,
                         times: setTime++,
                         number: number,
