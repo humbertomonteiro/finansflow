@@ -3,7 +3,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-bottom: 80px;
+    margin: 80px 0;
 }
 
 .container-home .slide {
@@ -20,8 +20,6 @@
     padding: 10px 20px;
     border: 0;
     border-radius: 10px;
-    background-color: var(--first);
-    color: var(--fifth);
     font-size: 1.5rem;
     width: 300px;
     max-width: 95%;
@@ -29,9 +27,6 @@
     transition: .5s;
 }
 
-.container-home .slide a:hover {
-    background-color: var(--second);
-}
 
 .boxes-home {
     width: 1200px;
@@ -49,14 +44,27 @@
     width: 320px;
     max-width: 95%;
     margin-bottom: 10px;
+    padding: 10px;
 }
-
+/* 
 .box-home h3 {
     font-size: 1.5rem;
     background-color: var(--first);
     color: var(--fifth);
     border-radius: 10px 10px 0 0;
     padding: 10px 20px;
+} */
+
+.home-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.home-text h3 {
+    font-size: 2rem;
 }
 
 .box-home p {
@@ -67,6 +75,6 @@
 
 @media (max-width: 600px) {
     .box-home {
-        max-width: 100%;
+        width: 100%;
     }
 }

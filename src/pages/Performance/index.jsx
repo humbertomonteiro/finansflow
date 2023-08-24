@@ -86,10 +86,18 @@ export default function Performance() {
                 <div data-aos='zoom-in' className="transaction-health">
                     <div>
                         <h2>Você está indo muito bem!</h2>
-                        <p>
+                        <h3>
                             Seus gastos representam 
                             apenas {(Number(expensesChart/revenuesChart)*100).toFixed(2)}%
                             das suas Receitas.
+                        </h3>
+                        <p>
+                            Com grande satisfação, informamos que suas receitas estão superando 
+                            consistentemente as despesas. Esse progresso notável é um testemunho 
+                            do seu compromisso em gerenciar seus recursos com eficiência. 
+                            Estamos felizes em compartilhar que sua estratégia está rendendo 
+                            frutos, e estamos confiantes de que continuaremos trilhando um caminho 
+                            financeiro sólido e próspero.
                         </p>
                     </div>
                     <img src={require('../../assets/imgs/goodjob.jpg')} alt="" />
@@ -98,19 +106,25 @@ export default function Performance() {
                 <div data-aos='zoom-in' className="transaction-health">
                     <div>
                         <h2>Cuidado!</h2>
-                        <p>
+                        <h3>
                             Seus gastos
                             representam {(Number(expensesChart/revenuesChart)*100)
                             .toFixed(2)}%
                             das suas Receitas. Fique atento!
+                        </h3>
+                        <p>
+                            Lamentamos informar que, neste período, seus despesas têm excedido suas receitas. 
+                            Esteja ciente da importância de reavaliar suas práticas financeiras para retomar o 
+                            equilíbrio desejado. Esteja comprometido em tomar medidas necessárias para enfrentar 
+                            essa situação de maneira proativa e trabalhar em direção a um cenário mais favorável."
                         </p>
                     </div>
                     <img src={require('../../assets/imgs/stop.jpg')} alt="" />
                 </div>
             }
 
-            <div className="transaction-balnace">
-                <div data-aos='zoom-in' className='box-performance'>
+            <div className="transaction-balance">
+                <div data-aos='fade-left' className='box-performance'>
                     <h3>Gráficos de receitas e despesas</h3>
                     <Chart
                         chartType="ColumnChart"
@@ -126,6 +140,18 @@ export default function Performance() {
                         legendToggle
                     />
                 </div>
+                <dir data-aos='fade-right' className='balance-text'>
+                    <h3>Seu balanço mensal</h3>
+                    <p>
+                        Descubra o Balanço Mensal e conquiste um domínio preciso das suas finanças, 
+                        com insights valiosos para manter tudo em ordem. 
+                        <span> R$ {Number(revenuesChart - expensesChart).toFixed(2)}</span>
+                    </p>
+                    <p>
+                        Estabeleça o hábito de monitorar suas transações regularmente e crie um 
+                        orçamento realista para garantir que suas contas estejam sempre em dia.
+                    </p>
+                </dir>
             </div>
 
             <div className='performance-category'>
