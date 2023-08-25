@@ -81,7 +81,8 @@ export default function UserProvider({children}) {
                         times: doc.data().times,
                         adress: doc.data().adress,
                         number: doc.data().number,
-                        done: doc.data().done
+                        done: doc.data().done,
+                        idTransaction: doc.data().idTransaction
                     })
                 })
 

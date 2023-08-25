@@ -74,6 +74,9 @@ export default function Performance() {
         is3D: true,
     };
 
+    // const percent = expensesChart.length revenuesChart : (expensesChart/revenuesChart)*100
+    console.log(expensesChart.length)
+
     return (
         <div className='container-performance'>
             <div data-aos='zoom-out' className="board">

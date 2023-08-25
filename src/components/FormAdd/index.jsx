@@ -79,6 +79,7 @@ export default function FormAdd() {
                         number: number,
                         adress: adress,
                         user: user.uid,
+                        idTransaction: `${name}-${value}=${dateSplit[2]}`
                     })
                     .then(() => {
                         setName('')
@@ -103,7 +104,10 @@ export default function FormAdd() {
                     date: date,
                     done: done,
                     times: times,
-                    user: user.uid
+                    user: user.uid,
+                    number: null,
+                    adress:null,
+                    idTransaction: null
                 })
                 .then(() => {
                     setName('')

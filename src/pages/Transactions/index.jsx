@@ -150,6 +150,7 @@ export default function Transactions() {
         })
         .catch(error => {
             setLoading(false)
+            setEditTransaction(false)
             toast.error(`error: ${error}`)
         })
     }
