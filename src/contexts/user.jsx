@@ -195,7 +195,6 @@ export default function UserProvider({children}) {
         setLoading(true)
         await deleteDoc(docRef)
             .then(() => {
-                toast.success('Deletado com sucesso!')
                 setLoading(false)
             })
     }

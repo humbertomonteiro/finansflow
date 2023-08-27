@@ -128,9 +128,43 @@ export default function Transactions() {
     function handleDeleteTransaction() {
         deleteFirebase(idTransaction, 'transactions')
         setDeleteTransaction(false)
+        toast.success('Deletado com sucesso!')
     }
 
-    async function handleEditTransactions(e) {
+    async function handleDoneTransaction() {
+        const docRef = doc(db, 'transactions', idTransaction)
+        const isDone = dataUser.done
+        const obj = {...dataUser, done: !isDone }
+
+        setLoading(true)
+        await updateDoc(docRef, obj)
+            .then(() => {
+
+                setLoading(false)
+                setDoneTransaction(false)
+                toast.success(isDone ? 'Transação não resolvida' : 
+                'Transação resolvida')
+            })
+    }
+
+    function handleDeleteTransactions() {
+
+        const idTransaction = dataUser.idTransaction
+        const thisAndNexts = transactions
+        .filter(e => e.idTransaction === idTransaction)
+        .filter(e => {
+            const filterDate = new Date(e.date)
+            return filterDate >= currentDate
+        })
+
+        thisAndNexts.forEach(doc => {
+            deleteFirebase(doc.id, 'transactions')
+        })
+        toast.success('Transações deletadas com sucesso!')
+
+    }
+
+    async function handleEditTransaction(e) {
         e.preventDefault()
         
         const docRef = doc(db, 'transactions', idTransaction)
@@ -155,21 +189,48 @@ export default function Transactions() {
         })
     }
 
-    async function handleDoneTransaction() {
-        const docRef = doc(db, 'transactions', idTransaction)
-        const isDone = dataUser.done
-        const obj = {...dataUser, done: !isDone }
+    // function handleEditTransactions(e) {
+    //     e.preventDefault()
 
-        setLoading(true)
-        await updateDoc(docRef, obj)
-            .then(() => {
+    //     const idTransaction = dataUser.idTransaction
+    //     const thisAndNexts = transactions
+    //     .filter(e => e.idTransaction === idTransaction)
+    //     .filter(e => {
+    //         const filterDate = new Date(e.date)
+    //         return filterDate >= currentDate
+    //     })
 
-                setLoading(false)
-                setDoneTransaction(false)
-                toast.success(isDone ? 'Transação não resolvida' : 
-                'Transação resolvida')
-            })
-    }
+    //     thisAndNexts.forEach(e => {
+    //         const docRef = doc(db, 'transactions', e.id)
+
+    //         setLoading(true)
+    //         const dateSplit = date.split('-')
+    //         let year = Number(dateSplit[2])
+    //         let month = Number(dateSplit[1])
+
+    //         if(month === 12) {
+    //             year++
+    //             month = 1
+    //         }
+
+    //         updateDoc(docRef, {
+    //             ...dataUser,
+    //             name: name,
+    //             category: category,
+    //             value: value,
+    //             date: `${dateSplit[0]}-${month < 10 ? '0' : ''}${month + 1}-${year}`,
+    //             done: done
+    //         })
+    //         .then(() => {
+    //             setLoading(false)
+    //             setEditTransaction(false)
+    //         })
+    //         .catch(error => {
+    //             setLoading(false)
+    //             setEditTransaction(false)
+    //         })
+    //     })
+    // }
 
     return(
         <main className='container-transactions'>
@@ -317,8 +378,17 @@ export default function Transactions() {
                             <button 
                             className='bg-down'
                             onClick={handleDeleteTransaction}>
-                                Sim
+                                Apagar somente esta.
                             </button>
+
+                            {
+                                dataUser.idTransaction &&
+                                <button 
+                                className='bg-normal' 
+                                onClick={handleDeleteTransactions}>
+                                    Apagar esta e as próximas.
+                                </button>
+                            }
 
                             <button 
                             className='bg-up' 
@@ -336,7 +406,7 @@ export default function Transactions() {
                 <div className="handle-transactions">
                     <div data-aos='zoom-in' className="transaction-edit">
                         <h2>Editar transação</h2>
-                        <form onSubmit={handleEditTransactions}>
+                        <form onSubmit={handleEditTransaction}>
                             <label>
                                 <p>Valor</p>
                                 <input type="text"

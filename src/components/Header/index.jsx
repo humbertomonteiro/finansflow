@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { BsCardChecklist } from 'react-icons/bs'
 import { FaCommentsDollar } from 'react-icons/fa6'
 import { AiOutlineHome } from 'react-icons/ai'
-import { IoMdSettings } from 'react-icons/io'
-import { IoBook, IoSettingsOutline} from 'react-icons/io5'
+// import { IoMdSettings } from 'react-icons/io' IoBook
+import { IoSettingsOutline} from 'react-icons/io5'
 import { useContext } from 'react'
 import { UserContext } from '../../contexts/user'
 import { FaArrowRightToBracket } from 'react-icons/fa6'
@@ -39,9 +39,9 @@ export default function Header() {
             
             <>             
                 <nav className={'navbar'}>
-                    <Link to='/'><AiOutlineHome /> <span>Home</span></Link>
-                    <Link to='/'><IoBook /> <span>Educação</span></Link>
-                    <Link to='/'><IoMdSettings /> <span>Sobre</span></Link>
+                    {/* <Link to='/'><AiOutlineHome /> <span>Home</span></Link> */}
+                    {/* <Link to='/'><IoBook /> <span>Educação</span></Link> */}
+                    {/* <Link to='/'><IoMdSettings /> <span>Sobre</span></Link> */}
                 </nav>
 
                 <Link className={'btn-header'} to='/login'>Login <FaArrowRightToBracket /></Link>

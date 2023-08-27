@@ -1,6 +1,6 @@
 import './home.css' 
-import { Link } from 'react-router-dom'
-import { MdOutlineAttachMoney } from 'react-icons/md'
+// import { Link } from 'react-router-dom'
+// import { MdOutlineAttachMoney } from 'react-icons/md'
 
 export default function Home() {
     return (
@@ -20,7 +20,7 @@ export default function Home() {
                             está indo. Isso ajuda a identificar gastos desnecessários e
                             possibilita ajustes para manter as finanças em ordem.
                         </p>
-                        <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link>
+                        {/* <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link> */}
                     </div>
                 </div>
 
@@ -33,7 +33,7 @@ export default function Home() {
                             identificar tendências de crescimento ou declínio e tomar decisões
                             informadas.
                         </p>
-                        <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link>
+                        {/* <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link> */}
                     </div>
                     <img src={require('../../assets/imgs/revenues.jpg')} alt="" />
                 </div>
@@ -47,7 +47,7 @@ export default function Home() {
                             alinhado com os objetivos financeiros. Isso auxilia na distribuição
                             adequada dos recursos e evita gastos excessivos.
                         </p>
-                        <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link>
+                        {/* <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link> */}
                     </div>
                 </div>
 
