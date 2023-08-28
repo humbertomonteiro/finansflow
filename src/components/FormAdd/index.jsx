@@ -27,6 +27,7 @@ export default function FormAdd() {
     const [ type, setType ] = useState(1)
     const [ adress, setAdress ] = useState('')
     const [ number, setNumber ] = useState('')
+    const [ infos, setInfos ] = useState('')
     const [ styleButton, setStyleButton ] = useState('bg-up')
     const [ nameType, setNameType ] = useState('Receita')
 
@@ -78,6 +79,7 @@ export default function FormAdd() {
                         times: setTime++,
                         number: number,
                         adress: adress,
+                        infos: infos,
                         user: user.uid,
                         idTransaction: `${name}-${value}=${dateSplit[2]}`
                     })
@@ -106,7 +108,8 @@ export default function FormAdd() {
                     times: times,
                     user: user.uid,
                     number: null,
-                    adress:null,
+                    adress: null,
+                    infos: null,
                     idTransaction: null
                 })
                 .then(() => {
@@ -294,7 +297,18 @@ export default function FormAdd() {
                                     placeholder='Ex: (00) 0 0000 0000... Obs: não precisa usar os parêntesis no DDD' />
                                 </label>
                             </div>
+
                         }
+                        <div>
+                            <label>
+                                <p>Mais informações</p>
+                                <input
+                                type="text"
+                                value={infos}
+                                onChange={e => setInfos(e.target.value)}
+                                placeholder='Pagamento feito com cartão de crédito.' />
+                            </label>
+                        </div>
                         <div>
                             <label>
                                 <button className={styleButton} type='submit'>

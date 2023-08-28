@@ -33,6 +33,7 @@ export default function Transactions() {
     const [ done, setDone ] = useState('')
     const [ adress, setAdress ] = useState('')
     const [ number, setNumber ] = useState('')
+    const [ infos, setInfos ] = useState('')
     const [ id, setId ] = useState('')
     const [ days, setDays ] = useState([])
     const [ typeTransactions, setTypeTransactions ] = useState([])
@@ -122,6 +123,7 @@ export default function Transactions() {
         setDone(data.done)
         setNumber(data.number)
         setAdress(data.adress)
+        setInfos(data.infos)
         setId(data.id)
     }
 
@@ -507,6 +509,11 @@ export default function Transactions() {
                             rel="noreferrer">
                                 <BsLink45Deg />{number}
                             </a>
+                        </p>
+
+                        <p>
+                            <strong>Informações:</strong>
+                            {infos}
                         </p>
 
                         <div className='box-btns'>
