@@ -1,12 +1,9 @@
 import './performance.css'
-import { useState, useContext, useEffect } from 'react';
-import { UserContext } from '../../contexts/user';
+import { useState, useEffect } from 'react';
 import { Chart } from "react-google-charts";
-
 
 export default function Performance() {
 
-    const { transactions } = useContext(UserContext)
     const [ expensesChart, setExpensesChart ] = useState(0)
     const [ revenuesChart, setRevenuesChart ] = useState(0)
     const [ revenuesChart2, setRevenuesChart2 ] = useState(0)
@@ -16,8 +13,11 @@ export default function Performance() {
     const monthCurrent = date.getMonth() + 1
 
     useEffect(() => {
-        const datas = transactions
-            .filter(e => Number(e.date.split('-')[1]) === monthCurrent)
+        const transactionsLs = localStorage.getItem('@transactions')
+        const parseTransactionLs = JSON.parse(transactionsLs)
+
+        const datas = parseTransactionLs
+            .filter(e => new Date(e.date).getMonth() + 1 === monthCurrent)
 
         // expenses
         const expenses = datas
@@ -41,11 +41,11 @@ export default function Performance() {
 
             for(const item of array) {
                 const { category, value } = item
-    
+
                 if(!valuesByCategory[category]) {
-                    valuesByCategory[category] = Number(value.split('-').join(''))
+                    valuesByCategory[category] =  value
                 } else {
-                    valuesByCategory[category] += Number(value.split('-').join(''))
+                    valuesByCategory[category] +=  value
                 }
             }
 
@@ -64,7 +64,7 @@ export default function Performance() {
         setRevenuesChart(RevenuesValue)
         setRevenuesChart2(datasRevenues)
 
-    }, [transactions, monthCurrent])
+    }, [monthCurrent])
 
     const optionsRevenus = {
         is3D: true,
@@ -74,7 +74,8 @@ export default function Performance() {
         is3D: true,
     };
 
-    
+    const percentage = Number(expensesChart/revenuesChart)*100
+    const verifiedPercentage = isNaN(percentage) ? 0 : percentage
 
     return (
         <div className='container-performance'>
@@ -90,7 +91,7 @@ export default function Performance() {
                         <h2>Você está indo muito bem!</h2>
                         <h3>
                             Seus gastos representam 
-                            apenas {(Number(expensesChart/revenuesChart)*100).toFixed(2)}%
+                            apenas {verifiedPercentage}%
                             das suas Receitas.
                         </h3>
                         <p>

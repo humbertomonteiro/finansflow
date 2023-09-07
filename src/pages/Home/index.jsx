@@ -39,7 +39,6 @@ export default function Home() {
                 </div>
 
                 <div className="box-home">
-                    <img src={require('../../assets/imgs/performance.jpg')} alt="" />
                     <div className='home-text'>
                         <h3>Orçamentação</h3>
                         <p>
@@ -49,6 +48,7 @@ export default function Home() {
                         </p>
                         {/* <Link className='btn-default' to='/register'><MdOutlineAttachMoney /> Faça parte!</Link> */}
                     </div>
+                    <img src={require('../../assets/imgs/performance.jpg')} alt="" />
                 </div>
 
             </div>

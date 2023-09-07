@@ -12,25 +12,29 @@ import { AiOutlineFund } from 'react-icons/ai'
 
 export default function Header() {
 
-    const { signed, user } = useContext(UserContext)
+    const { 
+        signed, 
+        user, 
+        setShowAddTransactions 
+    } = useContext(UserContext)
 
     return (
         <header>
 
-            <Link data-aos='fade-left' className='logo' to={signed ? '/dashboard' : '/'}>FinansFlow<FaCommentsDollar /></Link>
+            <Link onClick={() => setShowAddTransactions(false)} data-aos='fade-left' className='logo' to={signed ? '/dashboard' : '/'}>FinansFlow<FaCommentsDollar /></Link>
 
             {
             signed ? 
 
             <>
                 <nav className={'navbar'}>
-                    <Link to='/dashboard'><AiOutlineHome /> <span>Dashboard</span></Link>
-                    <Link to='/transactions/all'><BsCardChecklist /> <span>Transações</span></Link>
-                    <Link to='/performance'><AiOutlineFund /> <span>Desempenho</span></Link>
-                    <Link to='/settings'><IoSettingsOutline /> <span>Configurações</span></Link>
+                    <Link onClick={() => setShowAddTransactions(false)} to='/dashboard'><AiOutlineHome /> <span>Dashboard</span></Link>
+                    <Link onClick={() => setShowAddTransactions(false)} to='/transactions/all'><BsCardChecklist /> <span>Transações</span></Link>
+                    <Link onClick={() => setShowAddTransactions(false)} to='/performance'><AiOutlineFund /> <span>Desempenho</span></Link>
+                    <Link onClick={() => setShowAddTransactions(false)} to='/settings'><IoSettingsOutline /> <span>Configurações</span></Link>
                 </nav>
 
-                <Link to='/account' className={'header-account'}>
+                <Link onClick={() => setShowAddTransactions(false)} to='/account' className={'header-account'}>
                     <img src={user.avatarUrl ? user.avatarUrl : require('../../assets/imgs/avater-default.jpg')} alt="" />
                 </Link>
             </>

@@ -1,55 +1,13 @@
 import { createContext, useState, useEffect } from "react";
 import { auth, db } from "../FirebaseConnection";
 import { createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc, query, onSnapshot, where, collection, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, query, where, collection, deleteDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
-import { BsFillPersonFill, BsFillBagCheckFill } from 'react-icons/bs'
-import { RiMoneyDollarCircleFill } from 'react-icons/ri'
-import { FaWallet } from 'react-icons/fa'
-import { FaEllipsis, FaMoneyBill1Wave } from 'react-icons/fa6'
-import { GrUserWorker } from 'react-icons/gr'
-import { MdPointOfSale, MdFoodBank, MdAssignment } from 'react-icons/md'
-import { TbAwardFilled } from 'react-icons/tb'
-import { GiHealthNormal } from 'react-icons/gi'
-import { AiFillHeart, AiFillCreditCard, AiFillCar} from 'react-icons/ai'
-import { LuPalmtree } from 'react-icons/lu'
-import { BiSolidHomeHeart, BiHomeSmile } from 'react-icons/bi'
-import { HiOutlineNewspaper } from 'react-icons/hi'
-import { SlPresent } from 'react-icons/sl'
-import { PiNewspaper } from 'react-icons/pi'
+import { categoriesExpenses, categoriesRevenues } from "./Categories";
 
 export const UserContext = createContext({})
 
-const categoriesRevenues = [
-    { id: 1, name: 'Pessoal', icon: <BsFillPersonFill /> },
-    { id: 2, name: 'Salário', icon: <RiMoneyDollarCircleFill /> },
-    { id: 3, name: 'Direitos', icon: <FaWallet />},
-    { id: 4, name: 'Bicos', icon: <GrUserWorker /> },
-    { id: 5, name: 'Vendas', icon: <MdPointOfSale /> },
-    { id: 6, name: 'Premio', icon: <TbAwardFilled /> },
-    { id: 7, name: 'Aluguel', icon: <BiHomeSmile /> },
-    { id: 8, name: 'Emprestimos', icon: <FaMoneyBill1Wave /> },
-    { id: 9, name: 'Outras Rec...', icon: <FaEllipsis /> },
-]
-
-const categoriesExpenses = [
-    { id: 10, name: 'Cuidados', icon: <AiFillHeart /> },
-    { id: 11, name: 'Saúde', icon: <GiHealthNormal /> },
-    { id: 12, name: 'Lazer', icon: <LuPalmtree /> },
-    { id: 13, name: 'Moradia', icon: <BiSolidHomeHeart /> },
-    { id: 14, name: 'Taxas', icon: <HiOutlineNewspaper /> },
-    { id: 15, name: 'Presente', icon: <SlPresent /> },
-    { id: 16, name: 'Pessoais', icon: <BsFillPersonFill /> },
-    { id: 17, name: 'Outras', icon: <FaEllipsis /> },
-    { id: 18, name: 'Alimentação', icon: <MdFoodBank /> },
-    { id: 19, name: 'Assinaturas', icon: <MdAssignment /> },
-    { id: 20, name: 'Cartão', icon: <AiFillCreditCard /> },
-    { id: 21, name: 'Carro', icon: <AiFillCar /> },
-    { id: 22, name: 'Compras', icon: <BsFillBagCheckFill /> },
-    { id: 23, name: 'Contas Des...', icon: <PiNewspaper /> },
-]
 
 export default function UserProvider({children}) {
 
@@ -62,35 +20,40 @@ export default function UserProvider({children}) {
     const currentDate = new Date()
     let [ monthSearch, setMonthSearch ] = useState(currentDate.getMonth() + 1)
     let [ yearSearch, setYearSearch ] = useState(currentDate.getFullYear())
+    
+    const [ showAddTransactions, setShowAddTransactions ] = useState(false)
 
     useEffect(() => {
-        function handleTransactions() {
+        async function handleTransactions() {
+        
             const transactionsFs = collection(db,'transactions')
             const q = query(transactionsFs, where('user', '==', user ? user.uid : null))
 
-            onSnapshot(q, snapshot => {
-                let listTransactions = []
+            await getDocs(q)
+                .then(snapshot => {
+                    let listTransactions = []
 
-                snapshot.forEach(doc => {
-                    listTransactions.push({
-                        id: doc.id,
-                        value: Number(doc.data().value).toFixed(2),
-                        name: doc.data().name,
-                        date: doc.data().date,
-                        category: doc.data().category,
-                        times: doc.data().times,
-                        adress: doc.data().adress,
-                        number: doc.data().number,
-                        done: doc.data().done,
-                        infos: doc.data().infos,
-                        idTransaction: doc.data().idTransaction
+                    snapshot.forEach(doc => {
+                        listTransactions.push({
+                            id: doc.id,
+                            value: Number(doc.data().value).toFixed(2),
+                            name: doc.data().name,
+                            date: doc.data().date,
+                            category: doc.data().category,
+                            times: doc.data().times,
+                            adress: doc.data().adress,
+                            number: doc.data().number,
+                            done: doc.data().done,
+                            infos: doc.data().infos,
+                            idTransaction: doc.data().idTransaction
+                        })
                     })
+
+                    localStorage.setItem('@transactions', JSON.stringify(listTransactions))
+                    setTransactions(listTransactions)
                 })
 
-                setTransactions(listTransactions)
-            })
         }
-
         handleTransactions()
     }, [user])
 
@@ -104,10 +67,15 @@ export default function UserProvider({children}) {
             }
 
             setLoading(false)
-        }
+        }   
 
         checkLogin()
     }, [])
+
+    function setTransactionsLs() {
+        const getTransactionsLs = localStorage.getItem('@transactions')
+        setTransactions(JSON.parse(getTransactionsLs))
+    }
 
     async function signUp(name, email, password) {
         
@@ -160,6 +128,10 @@ export default function UserProvider({children}) {
                     avatarUrl: docSnap.data().avatarUrl
                 }
 
+                if(localStorage.getItem('@transactions') === null) {
+                    localStorage.setItem('@transactions', JSON.stringify([]))
+                }
+
                 setUser(data)
                 storageUser(data)
                 setLoadingAuth(false)
@@ -178,6 +150,7 @@ export default function UserProvider({children}) {
         await signOut(auth)
             .then(() => {
                 localStorage.removeItem('@dataUserManager')
+                localStorage.removeItem('@transactions')
                 setUser(null)
                 toast.success('Vecê está deslogado!')
                 setLoadingAuth(false)
@@ -192,6 +165,13 @@ export default function UserProvider({children}) {
 
     async function deleteFirebase(id, fb) {
         const docRef = doc(db, fb, id)
+
+        const transactionsLs = localStorage.getItem('@transactions')
+        let parseTransactionsLs = JSON.parse(transactionsLs)
+
+        const currentData = parseTransactionsLs.filter(e => e.id !== id)
+
+        localStorage.setItem('@transactions', JSON.stringify(currentData))
 
         setLoading(true)
         await deleteDoc(docRef)
@@ -223,6 +203,9 @@ export default function UserProvider({children}) {
                 setMonthSearch,
                 yearSearch,
                 setYearSearch,
+                setTransactionsLs,
+                showAddTransactions,
+                setShowAddTransactions
             }}
         >
             {children}

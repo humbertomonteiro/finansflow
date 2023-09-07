@@ -15,7 +15,9 @@ export default function FormAdd() {
         categoriesRevenues, 
         categoriesExpenses,
         setLoading,
-        signed
+        signed,
+        showAddTransactions,
+        setShowAddTransactions,
     } = useContext(UserContext)
 
     const [ value, setValue ] = useState('')
@@ -30,8 +32,6 @@ export default function FormAdd() {
     const [ infos, setInfos ] = useState('')
     const [ styleButton, setStyleButton ] = useState('bg-up')
     const [ nameType, setNameType ] = useState('Receita')
-
-    const [ showAddTransactions, setShowAddTransactions ] = useState(false)
 
     function checkInput() {
         const input = document.querySelector('.btn-check')
@@ -70,7 +70,7 @@ export default function FormAdd() {
 
                     let zero = setMonth < 10 ? '0' : ''
 
-                    await addDoc(collection(db, 'transactions'),{
+                    let data = {
                         value: type === 2 ? -valueDote : valueDote,
                         name: `${name} (${setInit}/${times})`,
                         category: category,
@@ -82,8 +82,16 @@ export default function FormAdd() {
                         infos: infos,
                         user: user.uid,
                         idTransaction: `${name}-${value}=${dateSplit[2]}`
-                    })
-                    .then(() => {
+                    }
+
+                    await addDoc(collection(db, 'transactions'), data)
+                    .then((doc) => {
+
+                        const getTransactionsLs = localStorage.getItem('@transactions')
+                        const parseDataLs = JSON.parse(getTransactionsLs)
+                        data.id = doc.id
+                        parseDataLs.push(data)
+                        localStorage.setItem('@transactions', JSON.stringify(parseDataLs))
                         setName('')
                         setValue('')
                         setDate('')
@@ -99,7 +107,8 @@ export default function FormAdd() {
                 toast.success('Transação cadastrado com sucesso')
                 setLoading(false)
             } else {
-                await addDoc(collection(db, 'transactions'),{
+
+                let data = {
                     value: type === 1 ? valueDote : -valueDote,
                     name: name,
                     category: category,
@@ -111,8 +120,17 @@ export default function FormAdd() {
                     adress: null,
                     infos: null,
                     idTransaction: null
-                })
-                .then(() => {
+                }
+
+                await addDoc(collection(db, 'transactions'), data)
+                .then((doc) => {
+
+                    const getTransactionsLs = localStorage.getItem('@transactions')
+                    const parseDataLs = JSON.parse(getTransactionsLs)
+                    data.id = doc.id
+                    parseDataLs.push(data)
+                    localStorage.setItem('@transactions', JSON.stringify(parseDataLs))
+
                     setName('')
                     setValue('')
                     setDate('')
@@ -161,8 +179,6 @@ export default function FormAdd() {
     return (
         
         <aside className='container-form-add'>
-
-
             {
                 signed && 
                 <div className="btn-show-add">

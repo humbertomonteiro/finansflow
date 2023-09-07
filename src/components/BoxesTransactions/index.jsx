@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 
 export default function BoxesTransactions() {
 
-    const { transactions, yearSearch, monthSearch } = useContext(UserContext)
+    const { yearSearch, monthSearch } = useContext(UserContext)
     const [ balanceMonth, setBalanceMonth ] = useState(0)
     const [ revenues, setRevenues ] = useState(0)
     const [ expenses, setExpenses ] = useState(0)
@@ -16,7 +16,12 @@ export default function BoxesTransactions() {
 
     useEffect(() => {
         function showTransactions() {
-            const balance = transactions
+            
+            const getTransactionsLs = localStorage.getItem('@transactions')
+            const transactionsLs = JSON.parse(getTransactionsLs)
+            const hasTransactions = transactionsLs === null ? [] : transactionsLs
+
+            const balance = hasTransactions
                 .filter(e => Number(e.date.split('-')[0]) === yearSearch)
                 .filter(e => Number(e.date.split('-')[1]) === monthSearch)
                 .map(e => e.value)
@@ -26,7 +31,7 @@ export default function BoxesTransactions() {
                 }, [0])
                 setBalanceMonth(balance)
 
-            const revenuesValue = transactions
+            const revenuesValue = hasTransactions
                 .filter(e => Number(e.date.split('-')[0]) === yearSearch)
                 .filter(e => Number(e.date.split('-')[1]) === monthSearch)
                 .filter(e => e.value > 0)
@@ -37,7 +42,7 @@ export default function BoxesTransactions() {
                 }, [0])
                 setRevenues(revenuesValue)
 
-            const expensesValue = transactions
+            const expensesValue = hasTransactions
                 .filter(e => Number(e.date.split('-')[0]) === yearSearch)
                 .filter(e => Number(e.date.split('-')[1]) === monthSearch)
                 .filter(e => e.value < 0)
@@ -48,7 +53,7 @@ export default function BoxesTransactions() {
                 }, [0])
                 setExpenses(expensesValue)
 
-            const currentValues = transactions
+            const currentValues = hasTransactions
                 .filter(e => e.done)
                 .map(e => e.value)
                 .reduce((a, i) => {
@@ -59,7 +64,7 @@ export default function BoxesTransactions() {
         }
         showTransactions()
 
-    }, [transactions, monthSearch, yearSearch])
+    }, [monthSearch, yearSearch])
 
     return (
         <div data-aos='fade-up' className="boxes-transactions">
