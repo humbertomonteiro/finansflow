@@ -22,7 +22,7 @@
     box-shadow: -1px 1px 4px var(--fifth);
     border-radius: 14px;
     color: var(--second);
-    padding: 5px;
+    padding: 10px;
     transition: .5s;
 }
 
@@ -36,9 +36,8 @@
     justify-content: space-between;
     align-items: center;
     font-size: .8rem;
-    /* background-color: var(--first); */
-    /* color: var(--white); */
     border-radius: 10px 10px 0 0;
+    font-weight: 600;
 }
 
 .box-transactions .title svg {
@@ -65,7 +64,7 @@
 @media (max-width: 600px) {
 
     .box-transactions {
-        height: 95px;
+        height: 105px;
     }
 
     .box-transactions svg {

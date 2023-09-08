@@ -1,3 +1,4 @@
+import './formEditTransaction.css'
 import { db } from "../../FirebaseConnection"
 import { doc, updateDoc } from "firebase/firestore"
 import { toast } from "react-toastify"
@@ -9,10 +10,8 @@ export default function FormEditTransaction({ setState, dataUser, actionSelected
     const { setLoading } = useContext(UserContext)
 
     const [ name, setName ] = useState(dataUser.name)
-    const [ category, setCategory ] = useState(dataUser.category)
     const [ date, setDate ] = useState(dataUser.date)
     const [ value, setValue ] = useState(dataUser.value)
-    const [ done, setDone ] = useState(dataUser.done)
     const [ adress, setAdress ] = useState(dataUser.adress)
     const [ number, setNumber ] = useState(dataUser.number)
     const [ infos, setInfos ] = useState(dataUser.infos)
@@ -26,10 +25,8 @@ export default function FormEditTransaction({ setState, dataUser, actionSelected
         let data = {
             ...dataUser,
             name: name,
-            category: category,
             value: value,
             date: date,
-            done: done,
             adress: adress,
             number: number,
             infos: infos
@@ -79,19 +76,6 @@ export default function FormEditTransaction({ setState, dataUser, actionSelected
                         <input type="date"
                         value={date}
                         onChange={e => setDate(e.target.value)} />
-                    </label>
-                    <label>
-                        <p>Categoria</p>
-                        <input type="text"
-                        value={category}
-                        onChange={e => setCategory(e.target.value)} />
-                    </label>
-                    <label>
-                        <p>Resolvido</p>
-                        <select onChange={e => setDone(e.target.value)}>
-                            <option value="false">Não resolvido</option>
-                            <option value="true">Resolvido</option>
-                        </select>
                     </label>
                     {
                         actionSelected === 'client' && 

@@ -12,6 +12,7 @@ import NotificationBox from '../../components/NotificationBox'
 import FormEditTransaction from '../../components/FormEditTransaction'
 import ShowClient from '../../components/ShowClient'
 import FilterTransactions from '../../components/FilterTransactions'
+import FormAdd from '../../components/FormAdd'
 
 const currentDate = new Date()
 
@@ -124,6 +125,7 @@ export default function Transactions() {
 
     return(
         <main className='container-transactions'>
+
             <div data-aos='zoom-out' className="board">
                 <h1>Transações</h1>
                 <p>
@@ -274,6 +276,8 @@ export default function Transactions() {
                 setState={setShowClient} 
                 dataUser={dataUser} />
             }
+
+            <FormAdd />
 
         </main>
     )

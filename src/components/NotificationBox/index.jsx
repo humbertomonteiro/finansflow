@@ -1,3 +1,4 @@
+import './notificationBox.css'
 import BtnDelete from "../BtnDelete"
 import BtnDeleteMultiples from "../BtnDeleteMultiples"
 import BtnSolve from "../BtnSolve"
@@ -6,7 +7,7 @@ export default function NotificationBox({ setState, dataUser, actionSelected }) 
 
     return (
         <div className='handle-transactions'>
-            <div data-aos='zoom-in' className='box'>
+            <div data-aos='zoom-in' className='box-notification'>
                 {
                     actionSelected === 'delete' ?
                     <h2>Tem certeza que quer apagar essa transação?</h2>

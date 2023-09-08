@@ -2,6 +2,8 @@ import './settings.css'
 
 export default function Settings() {
     return (
-        <h1>Em breve</h1>
+        <div className="container-settings">
+            <h1>Em breve</h1>
+        </div>
     )
 }

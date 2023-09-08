@@ -3,6 +3,7 @@ import BoxesTransactions from '../../components/BoxesTransactions'
 import BtnMonth from '../../components/BtnMonth'
 import Pendency from '../../components/Pendency'
 import { Link } from 'react-router-dom'
+import FormAdd from '../../components/FormAdd'
 
 export default function Dashboard() {
 
@@ -17,10 +18,10 @@ export default function Dashboard() {
             <Pendency />
 
             <div data-aos='fade-up' className='clients'>
-                <div className='img-clients'>
+            <div className='img-clients'>
                     <img src={require('../../assets/imgs/client.jpg')} alt="" />
                 </div>
-                <div>
+                <div className='clients-text'>
                     <h2>Aba de Clientes</h2>
                     <p>
                         Clique aqui para visualizar a lista de clientes cadastrados.
@@ -35,6 +36,8 @@ export default function Dashboard() {
                     </Link>
                 </div>
             </div>
+
+            <FormAdd />
             
         </main>
     )

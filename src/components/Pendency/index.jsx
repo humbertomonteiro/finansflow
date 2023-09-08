@@ -1,18 +1,18 @@
 import './pendency.css'
-import { useContext, useEffect, useState } from 'react'
-import { UserContext } from '../../contexts/user'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 export default function Pendency() {
-
-    const { transactions } = useContext(UserContext)
 
     const [ hasPendencyRevenues, setHasPendencyRevenues ] = useState([])
     const [ hasPendencyExpenses, setHasPendencyExpenses ] = useState([])
 
     useEffect(() => {
-        const revenues = transactions.filter(e => e.value > 0)
-        const expenses = transactions.filter(e => e.value < 0)
+
+        const transactionsLs = localStorage.getItem('@transactions')
+        const parseTransactionsLs = JSON.parse(transactionsLs)
+        const revenues = parseTransactionsLs.filter(e => e.value > 0)
+        const expenses = parseTransactionsLs.filter(e => e.value < 0)
 
         function getPendency(array, stateArray) {
 
@@ -31,7 +31,7 @@ export default function Pendency() {
 
         getPendency(revenues, setHasPendencyRevenues)
         getPendency(expenses, setHasPendencyExpenses)
-    }, [transactions])
+    }, [])
 
     return (
 

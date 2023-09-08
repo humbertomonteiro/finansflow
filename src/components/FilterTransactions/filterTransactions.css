@@ -1,0 +1,14 @@
+.btn-filters-transactions {
+    display: flex;
+    gap: 5px;
+    margin: 30px 0 20px 0; 
+}
+
+.btn-filters-transactions a {
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    font-size: .6rem;
+}

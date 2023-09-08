@@ -5,7 +5,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-bottom: 80px;
+    margin: 60px 0 80px 0;
 }
 
 .box-performance {
@@ -54,18 +54,19 @@
 
 .transaction-balance .balance-text h3 {
     font-size: 2rem;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     padding-top: 10px;
+}
+
+.transaction-balance .balance-text span {
+    font-size: 1.5rem;
+    color: var(--second);
+    margin-bottom: 3px;
 }
 
 .transaction-balance .balance-text p {
     width: 400px;
     max-width: 95%;
-}
-
-.transaction-balance .balance-text p span {
-    font-size: 1.5rem;
-    color: var(--second);
 }
 
 .transaction-health {

@@ -1,0 +1,35 @@
+
+.btn-show-add {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 30px;
+    z-index: 5;
+}
+
+.btn-show-add button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 70px;
+    width: 70px;
+    border-radius: 50%;
+    border: 0;
+    font-size: 1.5rem;
+    border: 2px solid var(--fifth);
+    box-shadow: none;
+    transition: .5s;
+}
+
+.btn-show-add button svg {
+    font-size: 1.4rem;
+}
+
+@media (max-width: 600px) {
+    .btn-show-add button {
+        width: 60px;
+        height: 60px;
+    }
+}

@@ -1,3 +1,4 @@
+import './filterTransactions.css'
 import { Link } from "react-router-dom"
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { BsFillArrowUpCircleFill, BsFillArrowDownCircleFill } from 'react-icons/bs'
