@@ -22,6 +22,7 @@ export default function Performance() {
         // expenses
         const expenses = datas
             .filter(e => e.value < 0)
+        
         const expensesValue = expenses
             .map(e => e.value)
             .reduce((a, i) => Number(a) + Number(-i), [0])
@@ -42,8 +43,7 @@ export default function Performance() {
             for(const item of array) {
                 const { category, value } = item
 
-                let noNegative = String(value).split('')[0] === '-' ? value.split('-').join('') : value
-                Number(noNegative)
+                let noNegative = value < 0 ? -value : value
 
                 if(!valuesByCategory[category]) {
                     valuesByCategory[category] = noNegative
@@ -64,7 +64,7 @@ export default function Performance() {
         setExpensesChart(expensesValue)
         setExpensesChart2(datasExpenses)
 
-        setRevenuesChart(Number(revenuesValue))
+        setRevenuesChart(revenuesValue)
         setRevenuesChart2(datasRevenues)
 
     }, [monthCurrent])

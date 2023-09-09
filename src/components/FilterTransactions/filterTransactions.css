@@ -1,7 +1,7 @@
 .btn-filters-transactions {
     display: flex;
     gap: 5px;
-    margin: 30px 0 20px 0; 
+    margin-bottom: 20px; 
 }
 
 .btn-filters-transactions a {

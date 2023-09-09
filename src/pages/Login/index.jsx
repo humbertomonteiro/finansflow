@@ -28,37 +28,35 @@ export default function Login() {
 
     return (
         <main className='container-login-register'>
-            <h1 className='logo-login-register'>
-                FinansFlow<FaCommentsDollar />
-            </h1>
-
-            <p>
-                Cuide das suas contas e se sinta em paz!
-            </p>
-
-            <form onSubmit={handleLogin}>
-
-                <input 
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder='Digite seu email...'/>
-
-                <input 
-                type="text"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder='Digite sua senha...'/>
-
-                <button type='submit'>
-                    {
-                        loadingAuth ? 'Carregando' : 'Logar'
-                    }
-                </button>
-
-                <Link to='/register'>Não tem conta? Cadastre-se!</Link>
-
-            </form>
+            <div data-aos='fade-right' className='login-register'>
+                <h1 className='logo-login-register'>
+                    FinansFlow<FaCommentsDollar />
+                </h1>
+                <p>
+                    Cuide das suas contas e se sinta em paz!
+                </p>
+                <form onSubmit={handleLogin}>
+                    <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder='Digite seu email...'/>
+                    <input
+                    type="text"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder='Digite sua senha...'/>
+                    <button type='submit'>
+                        {
+                            loadingAuth ? 'Carregando' : 'Logar'
+                        }
+                    </button>
+                    <Link to='/register'>Não tem conta? Cadastre-se!</Link>
+                </form>
+            </div>
+            <div data-aos='fade-left' className='login-register-img'>
+                <img src={require('../../assets/imgs/login-img.jpg')} alt="" />
+            </div>
         </main>
     )
 }

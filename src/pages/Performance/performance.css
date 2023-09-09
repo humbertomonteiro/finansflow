@@ -41,6 +41,7 @@
     border-radius: 20px;
     box-shadow: -1px 1px 4px var(--fifth);
     padding: 20px 0;
+    margin-top: 20px;
 }
 
 .transaction-balance .balance-text {

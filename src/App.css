@@ -22,11 +22,7 @@
 
 body {
   font-family: 'Open Sans', sans-serif;
-  background-color: #e2e2e2;
-}
-
-body::-webkit-scrollbar {
-  display: none;
+  background-color: #eeeeee;
 }
 
 a {
@@ -122,7 +118,7 @@ img {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 30px 0 ;
+  margin-top: 30px;
   padding: 0 10px;
   background-color: #fff;
   box-shadow: -1px 1px 4px var(--fifth);

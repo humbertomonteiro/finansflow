@@ -27,43 +27,40 @@ export default function Register() {
 
     return (
         <main className='container-login-register'>
-            <h1 className='logo-login-register'>
-                FinansFlow<FaCommentsDollar />
-            </h1>
-
-            <p>
-                Cadastre-se, cuide das suas contas e se sinta em paz!
-            </p>
-
-            <form onSubmit={handleRegister}>
-
-                <input 
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder='Digite seu nome...'/>
-
-                <input 
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder='Digite seu email...'/>
-
-                <input 
-                type="text"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder='Digite sua senha...'/>
-
-                <button type='submit'>
-                    {
-                        loadingAuth ? 'Carregando' : 'Cadastrar'
-                    }
-                </button>
-
-                <Link to='/login'>Já tem conta? Faça login!</Link>
-
-            </form>
+            <div data-aos='fade-right' className="login-register-img">
+                <img src={require('../../assets/imgs/register-img.jpg')} alt="" />
+            </div>
+            <div data-aos='fade-left' className="login-register">
+                <h1 className='logo-login-register'>
+                    FinansFlow<FaCommentsDollar />
+                </h1>
+                <p>
+                    Cadastre-se, cuide das suas contas e se sinta em paz!
+                </p>
+                <form onSubmit={handleRegister}>
+                    <input
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder='Digite seu nome...'/>
+                    <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder='Digite seu email...'/>
+                    <input
+                    type="text"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder='Digite sua senha...'/>
+                    <button type='submit'>
+                        {
+                            loadingAuth ? 'Carregando' : 'Cadastrar'
+                        }
+                    </button>
+                    <Link to='/login'>Já tem conta? Faça login!</Link>
+                </form>
+            </div>
         </main>
     )
 }

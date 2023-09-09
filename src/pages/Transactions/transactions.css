@@ -17,7 +17,6 @@
 
 .transactions .transaction-day {
     width: 100%;
-    margin-bottom: 10px;
     padding-bottom: 10px;
 }
 
@@ -44,6 +43,10 @@
     flex-direction: column;
     justify-content: center;
     padding: 2px;
+}
+
+.transaction .name-transaction {
+    min-width: 100px;
 }
 
 .transaction .client {
@@ -96,7 +99,6 @@
     justify-content: center;
     cursor: pointer;
     border-radius: 15px;
-    margin: 10px 0;
     transition: .5s;
 }
 
@@ -108,18 +110,26 @@
     font-size: 1.2rem;
 }
 
-
-.handle-transactions {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #000000af;
+.transaction div p {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    /* align-items: flex-end; */
+    /* gap: 10px; */
+}
+
+.transaction div p span {
+    width: fit-content;
+    background-color: var(--red);
+    color: var(--white);
+    font-size: .6rem;
+    padding: 2px;
+    border-radius: 2px;
+}
+
+.no-transactions h2 {
+    font-size: 1rem;
+    color: var(--fourth);
+    margin-top: 20px;
 }
 
 @media (max-width: 600px) {

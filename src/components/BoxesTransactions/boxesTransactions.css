@@ -5,8 +5,8 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    margin-bottom: 30px;
     gap: 10px;
+    margin-top: 20px;
 }
 
 .box-transactions {

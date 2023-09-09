@@ -2,10 +2,6 @@ import './transactions.css'
 import { useContext, useState, useEffect } from 'react'
 import { UserContext } from '../../contexts/user'
 import Pendency from '../../components/Pendency'
-import { MdDelete } from 'react-icons/md'
-import { CgProfile } from 'react-icons/cg'
-import { BiSolidPencil } from 'react-icons/bi'
-import { AiFillCheckCircle, AiFillCloseCircle } from 'react-icons/ai'
 import BtnMonth from '../../components/BtnMonth'
 import { useParams } from 'react-router-dom'
 import NotificationBox from '../../components/NotificationBox'
@@ -13,6 +9,8 @@ import FormEditTransaction from '../../components/FormEditTransaction'
 import ShowClient from '../../components/ShowClient'
 import FilterTransactions from '../../components/FilterTransactions'
 import FormAdd from '../../components/FormAdd'
+import SearchTransactions from '../../components/SearchTransactions'
+import Transaction from '../../components/Transaction'
 
 const currentDate = new Date()
 
@@ -24,17 +22,15 @@ export default function Transactions() {
     const [ editTransaction, setEditTransaction ] = useState(false)
     const [ doneTransaction, setDoneTransaction ] = useState(false)
     const [ dataUser, setDataUser ] = useState({})
-    const [ days, setDays ] = useState([])
+    const [ daysFilter, setDaysFilter ] = useState([])
     const [ typeTransactions, setTypeTransactions ] = useState([])
     const [ showClient, setShowClient ] = useState(false)
 
+    const [ searchName, setSearchName ] = useState('')
+
     const { transactions, 
-        categoriesRevenues, 
-        categoriesExpenses, 
         monthSearch,
         yearSearch } = useContext(UserContext)
-
-    const categories = categoriesRevenues.concat(categoriesExpenses)
 
     useEffect(() => {
         function generationArraysByTypes() {
@@ -54,10 +50,16 @@ export default function Transactions() {
             })
 
             let allTransactions = typeTransactions
+                .filter(search => {
+                    if(searchName !== '') {
+                        let searchUpper = search.name.toUpperCase()
+                        return searchUpper.includes(searchName.toUpperCase())
+                    }
+                    return search
+                })
                 .filter(e => {
-                    const filterDate = new Date(e.date)
-                    return filterDate.getMonth() + 1 === monthSearch 
-                    && filterDate.getFullYear() === yearSearch
+                    let date = e.date.split('-')
+                    return Number(date[0]) === yearSearch && Number(date[1]) === monthSearch
                 })
 
             let clientsTransactions = typeTransactions
@@ -87,40 +89,20 @@ export default function Transactions() {
         
         generationArraysByTypes()
 
-    }, [monthSearch, type, transactions, yearSearch])
+    }, [monthSearch, type, transactions, yearSearch, searchName])
 
     function generationDays(array) {
-        const days = array.map(e => String(e.date).split('-')[2])
-        const unique = days.filter((e, a) => days.indexOf(e) === a)
-        const uniqueNumber = unique.map(e => Number(e))
-        const daysDec = uniqueNumber.sort((a, i) => {
-            if(a > i) return 1
-            if(a < i) return -1
-            return 0
-        })
+        const days = array
+            .map(e => e.date.split('-')[2])
+        const daysNoRepeat = days.filter((e, a) => days.indexOf(e) === a)
+        const daysDec = daysNoRepeat.sort((a, i) => {
+                if(a > i) return 1
+                if(a < i) return -1
+                return 0
+            })
 
-        setDays(daysDec)
+        setDaysFilter(daysDec)
         setTypeTransactions(array)
-    }
-
-    function handleDeleteTransaction(data) {
-        setDeleteTransaction(true)
-        setDataUser(data)
-    }
-
-    function handleSolveTransaction(data) {
-        setDoneTransaction(true)
-        setDataUser(data)
-    }
-
-    function handleClient(data) {
-        setShowClient(true)
-        setDataUser(data)
-    }
-
-    async function handleEditTransaction(e) {
-        setDataUser(e)
-        setEditTransaction(true)
     }
 
     return(
@@ -131,12 +113,10 @@ export default function Transactions() {
                 <p>
                     Balanço mensal: 
                     <strong>
-                        R$ {
-                            Number(typeTransactions
+                        R$ {Number(typeTransactions
                                 .map(e => e.value)
                                 .reduce((a, i) => Number(a) + Number(i), [0])
-                            ).toFixed(2)
-                        }
+                            ).toFixed(2)}
                     </strong>
                 </p>
             </div>
@@ -151,87 +131,29 @@ export default function Transactions() {
                     <BtnMonth />
                 }
 
-                {
-                    days.length > 0 ?
+                <SearchTransactions state={searchName} setState={setSearchName} />
 
-                    days.map(d => (
+                {
+                    daysFilter.length > 0 ?
+
+                    daysFilter
+                        .map(d => (
                         <div className='transaction-day'>
 
                             <strong>Dia {d}</strong>
 
-                            {
-                                typeTransactions
-                                .filter(dayFilter => {
-                                    const day = String(dayFilter.date).split('-')[2]
-                                    if(day.split('')[0] === '0') {
-                                        return day[1] === String(d)
-                                    } else {
-                                        return String(dayFilter.date).split('-')[2] === String(d)
-                                    }
+                            {typeTransactions
+                                .filter(day => {
+                                    return day.date.split('-')[2] === d
                                 })
                                 .map(e => (
-                                <div key={e.id} className='transaction'>
-                                    {
-                                        e.category === 'Cliente' ?
-                                        <>
-                                            <div>
-                                                <div className='category bg-normal'>
-
-                                                    <div >
-                                                        <CgProfile />
-                                                    </div>
-
-                                                    <span>{e.category}</span>
-                                                </div>
-                                            </div>
-                                            <div
-                                            className='client'
-                                            onClick={() => handleClient(e)}>
-                                                <span>nome</span>
-                                                <p>
-                                                    {e.name}
-                                                </p>
-                                            </div>
-                                        </>
-                                        :
-                                        <>
-                                            <div>
-                                                <div className={e.value > 0 ?
-                                                    'category revenue' : 'category expensive' }>
-                                                    {
-                                                        categories.map(a => a.name === e.category && 
-                                                        <div key={e.id}>
-                                                            {a.icon}
-                                                        </div>)
-                                                    }
-                                                    <span>{e.category}</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <span>nome</span>
-                                                <p>{e.name}</p>
-                                            </div>
-                                        </>
-                                    }
-                                    <div>
-                                        <span>Valor</span>
-                                        <p>{`R$ ${String(e.value).split('.').join(',')}`}</p>
-                                    </div>
-                                    <div className='icon'
-                                    onClick={() => handleEditTransaction(e)}>
-                                        <BiSolidPencil />
-                                    </div>
-                                    <div className='icon'
-                                    onClick={() => handleDeleteTransaction(e)}>
-                                        <MdDelete />
-                                    </div>
-                                    <div className='icon'
-                                    onClick={() => handleSolveTransaction(e)}>
-                                        {e.done ?
-                                        <AiFillCheckCircle className='up' />
-                                        : <AiFillCloseCircle className='down' />}
-                                    </div>
-                                </div>
+                                    <Transaction 
+                                    data={e} 
+                                    setState={setShowClient} 
+                                    setData={setDataUser}
+                                    setDelete={setDeleteTransaction}
+                                    setEdit={setEditTransaction}
+                                    setSolve={setDoneTransaction} />
                                 ))
                             }
                         </div>
@@ -239,7 +161,7 @@ export default function Transactions() {
                     
                     :
 
-                    <div>
+                    <div className='no-transactions'>
                         <h2>Sem transações este mês</h2>
                     </div>
                 } 
@@ -255,19 +177,19 @@ export default function Transactions() {
             }
 
             {
-                editTransaction && 
-                <FormEditTransaction 
-                setState={setEditTransaction}
-                dataUser={dataUser}
-                actionSelected={dataUser.category === 'Cliente' ? 'client' : 'edit'} />
-            }
-
-            {
                 doneTransaction && 
                 <NotificationBox 
                 setState={setDoneTransaction}
                 dataUser={dataUser}
                 actionSelected={'solve'} />
+            }
+            
+            {
+                editTransaction && 
+                <FormEditTransaction 
+                setState={setEditTransaction}
+                dataUser={dataUser}
+                actionSelected={dataUser.category === 'Cliente' ? 'client' : 'edit'} />
             }
 
             {

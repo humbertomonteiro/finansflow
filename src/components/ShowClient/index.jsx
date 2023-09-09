@@ -1,9 +1,10 @@
+import './showClient.css'
 import { BsLink45Deg } from 'react-icons/bs'
 
 export default function ShowClient({ setState, dataUser, }) {
     return (
         <div className="handle-transactions">
-            <div data-aos='zoom-in' className="box">
+            <div data-aos='zoom-in' className="box-notification">
                 <h2>Dados do cliente</h2>
                 <p>
                     <strong>Nome:</strong>

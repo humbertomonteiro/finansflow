@@ -4,7 +4,6 @@ import { createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } f
 import { doc, getDoc, getDocs, setDoc, query, where, collection, deleteDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { categoriesExpenses, categoriesRevenues } from "./Categories";
 
 export const UserContext = createContext({})
 
@@ -196,8 +195,6 @@ export default function UserProvider({children}) {
                 setUser,
                 transactions,
                 setTransactions,
-                categoriesRevenues,
-                categoriesExpenses,
                 deleteFirebase,
                 monthSearch,
                 setMonthSearch,

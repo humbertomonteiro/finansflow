@@ -8,14 +8,12 @@ import { TbUserDollar } from 'react-icons/tb'
 import { LiaFileInvoiceDollarSolid } from 'react-icons/lia'
 import { FaHandHoldingDollar } from 'react-icons/fa6'
 import BtnShowAddTransaction from '../BtnShowAddTransaction'
+import { categoriesExpenses, categoriesRevenues } from '../../contexts/Categories'
 
 export default function FormAdd() {
 
     const { user, 
-        categoriesRevenues, 
-        categoriesExpenses,
         setLoading,
-        signed,
         showAddTransactions,
         setShowAddTransactions,
     } = useContext(UserContext)
