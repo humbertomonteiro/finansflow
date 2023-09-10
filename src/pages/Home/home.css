@@ -1,52 +1,51 @@
 .container-home {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 80px 0 80px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 80px 0 80px 0;
 }
 
 .container-home .slide {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .container-home a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border: 0;
-    border-radius: 10px;
-    font-size: 1.5rem;
-    width: 300px;
-    max-width: 95%;
-    margin: 25px 0;
-    transition: .5s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  width: 300px;
+  max-width: 95%;
+  margin: 25px 0;
+  transition: 0.5s;
 }
 
-
 .boxes-home {
-    width: 1200px;
-    max-width: 95%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 10px;
+  width: 1200px;
+  max-width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 10px;
 }
 
 .box-home {
-    text-align: center;
-    border-radius: 10px;
-    width: 320px;
-    max-width: 95%;
-    margin-bottom: 10px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 20px;
-    box-shadow: -1px 1px 4px var(--fifth);
+  text-align: center;
+  border-radius: 10px;
+  width: 320px;
+  max-width: 95%;
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 20px;
+  box-shadow: -1px 1px 4px var(--fifth);
 }
 /* 
 .box-home h3 {
@@ -58,25 +57,25 @@
 } */
 
 .home-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
 }
 
 .home-text h3 {
-    font-size: 2rem;
+  font-size: 2rem;
 }
 
 .box-home p {
-    padding: 10px 25px;
-    color: var(--first);
-    line-height: 150%;
+  padding: 10px 25px;
+  color: var(--first);
+  line-height: 150%;
 }
 
 @media (max-width: 600px) {
-    .box-home {
-        width: 100%;
-    }
+  .box-home {
+    width: 100%;
+  }
 }

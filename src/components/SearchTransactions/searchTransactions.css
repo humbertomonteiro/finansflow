@@ -1,16 +1,20 @@
 .search {
-    display: flex;
-    align-items: center;
-    border-radius: 10px;
-    border: 1px solid var(--fifth);
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--fifth);
+  background-color: #fff;
 }
 
 .search svg {
-    margin: 10px;
+  margin: 10px;
+  color: var(--fourth);
 }
 
 .search input {
-    padding: 10px;
-    border: 1px solid var(--fifth);
-    border-radius: 0 10px 10px 0;
+  padding: 8px;
+  padding-left: 0;
+  border: 0;
+  border-radius: 0 10px 10px 0;
+  outline: 0;
 }

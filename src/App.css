@@ -1,9 +1,8 @@
-
 :root {
   --first: #000000;
-  --second: #0A0A0A;
+  --second: #0a0a0a;
   --third: #111111;
-  --fourth: #2E2E2E;
+  --fourth: #6d6d6d;
   --fifth: #cfcfcf;
   --white: #ececec;
   --green: #036e30;
@@ -21,8 +20,8 @@
 }
 
 body {
-  font-family: 'Open Sans', sans-serif;
-  background-color: #eeeeee;
+  font-family: "Open Sans", sans-serif;
+  background-color: #e7e7e7;
 }
 
 a {
@@ -47,7 +46,7 @@ img {
   border-radius: 10px;
   background-color: var(--first);
   color: var(--fifth);
-  transition: .5s;
+  transition: 0.5s;
 }
 
 .btn-default:hover {
@@ -58,7 +57,7 @@ img {
   color: #fff;
   background-color: var(--first);
   box-shadow: -1px 1px 4px var(--fifth);
-  transition: .5s;
+  transition: 0.5s;
 }
 
 .bg-default:hover {
@@ -73,7 +72,7 @@ img {
   color: #fff;
   background-color: var(--red);
   box-shadow: -1px 1px 4px var(--fifth);
-  transition: .5s;
+  transition: 0.5s;
 }
 
 .bg-down:hover {
@@ -88,7 +87,7 @@ img {
   color: #fff;
   background-color: var(--green);
   box-shadow: -1px 1px 4px var(--fifth);
-  transition: .5s;
+  transition: 0.5s;
 }
 
 .bg-up:hover {
@@ -103,13 +102,12 @@ img {
   color: #fff;
   background-color: var(--blue);
   box-shadow: -1px 1px 4px var(--fifth);
-  transition: .5s;
+  transition: 0.5s;
 }
 
 .bg-normal:hover {
   background-color: var(--bg-blue);
 }
-
 
 .board {
   width: 1000px;
@@ -134,7 +132,7 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: .7rem;
+  font-size: 0.7rem;
   color: var(--first);
 }
 

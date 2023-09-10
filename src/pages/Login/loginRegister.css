@@ -1,75 +1,75 @@
 .container-login-register {
-    height: calc(100vh);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    color: var(--first);
-    padding-top: 80px;
-    background-color: #fff;
+  height: calc(100vh);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  color: var(--first);
+  padding-top: 80px;
+  background-color: #fff;
 }
 
 .container-login-register .login-register-img {
-    width: 500px;
-    max-width: 95%;
+  width: 500px;
+  max-width: 95%;
 }
 
 .login-register {
-    width: 500px;
-    max-width: 95%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 30px 10px;
-    border-radius: 10px;
+  width: 500px;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 10px;
+  border-radius: 10px;
 }
 
 .container-login-register p {
-    margin-bottom: 10px;
-    color: var(--second);
-    font-size: .8rem;
+  margin-bottom: 10px;
+  color: var(--second);
+  font-size: 0.8rem;
 }
 
 .logo-login-register {
-    font-size: 3rem;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
+  font-size: 3rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
 }
 
 .container-login-register form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 500px;
-    max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 500px;
+  max-width: 95%;
 }
 
 .container-login-register form input,
 .container-login-register form button {
-    width: 400px;
-    max-width: 95%;
-    padding: 15px;
-    margin-bottom: 10px;
-    border: 1px solid var(--fifth);
-    border-radius: 10px;
+  width: 400px;
+  max-width: 95%;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid var(--fifth);
+  border-radius: 10px;
 }
 
 .container-login-register form button {
-    background-color: var(--first);
-    color: var(--fifth);
-    transition: .5s;
+  background-color: var(--first);
+  color: var(--fifth);
+  transition: 0.5s;
 }
 
 .container-login-register form button:hover {
-    background-color: var(--fourth);
+  background-color: var(--fourth);
 }
 
 .container-login-register form a {
-    color: var(--first);
+  color: var(--first);
 }
 
 .container-login-register form a:hover {
-    color: var(--second);
+  color: var(--second);
 }

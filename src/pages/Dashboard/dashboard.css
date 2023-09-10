@@ -1,45 +1,45 @@
 .container-dashboard {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 60px 0 80px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 60px 0 80px 0;
 }
 
 .container-dashboard .clients {
-    width: 1000px;
-    max-width: 95%;
-    background-color: #fff;
-    color: var(--fourth);
-    box-shadow: -1px 1px 4px var(--fifth);
-    display: flex;
-    flex-wrap: wrap;
-    padding-bottom: 10px;
-    border-radius: 10px;
-    gap: 10px;
+  width: 1000px;
+  max-width: 95%;
+  background-color: #fff;
+  color: var(--fourth);
+  box-shadow: -1px 1px 4px var(--fifth);
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-radius: 10px;
+  gap: 10px;
 }
 
 .container-dashboard .clients div {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
 }
 
 .container-dashboard .clients .clients-text h2,
 .container-dashboard .clients .clients-text p {
-    margin-bottom: 10px;
-    color: var(--first);
+  margin-bottom: 10px;
+  color: var(--first);
 }
 
 .container-dashboard .clients .clients-text h2 {
-    font-size: 2rem;
+  font-size: 2rem;
 }
 
 .container-dashboard .clients .img-clients img {
-    max-width: 100%;
-    min-width: 330px;
+  max-width: 100%;
+  min-width: 330px;
 }
 
 /* .container-dashboard .clients h2 {
@@ -52,25 +52,24 @@
 } */
 
 .container-dashboard .link-clients {
-    text-align: center;
-    display: block;
-    padding: 10px;
-    border-radius: 10px;
-    width: 300px;
-    max-width: 95%;
-    background-color: var(--first);
-    color: var(--white);
-    transition: .5s;
+  text-align: center;
+  display: block;
+  padding: 10px;
+  border-radius: 10px;
+  width: 300px;
+  max-width: 95%;
+  background-color: var(--first);
+  color: var(--white);
+  transition: 0.5s;
 }
 
 .container-dashboard .link-clients:hover {
-    background-color: var(--fourth);
+  background-color: var(--fourth);
 }
 
-
 @media (max-width: 600px) {
-    .container-dashboard .clients div {
-        align-items: center;
-        text-align: center;
-    }
+  .container-dashboard .clients div {
+    align-items: center;
+    text-align: center;
+  }
 }

@@ -1,14 +1,28 @@
 .btn-filters-transactions {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-filters-transactions .links {
+  display: flex;
+  gap: 10px;
 }
 
 .btn-filters-transactions a {
-    padding: 10px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    gap: 5px;
-    font-size: .6rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  font-size: 10px;
+}
+
+.btn-filters-transactions h2 {
+  color: var(--fourth);
+  font-size: 1.2rem;
+  margin-top: 5px;
 }

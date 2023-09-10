@@ -1,153 +1,148 @@
-
-
 .container-performance {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 60px 0 80px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 60px 0 80px 0;
+  overflow: hidden;
 }
 
 .box-performance {
-    max-width: 95%;
-    width: 400px;
-    height: 400px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #fff;
-    box-shadow: -1px 1px 4px var(--fifth);
-    padding-bottom: 20px;
-    border-radius: 20px;
+  max-width: 95%;
+  width: 400px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  box-shadow: -1px 1px 4px var(--fifth);
+  padding-bottom: 20px;
+  border-radius: 20px;
 }
 
 .box-performance h3 {
-    width: 100%;
-    background-color: var(--first);
-    color: var(--fifth);
-    padding: 10px;
-    border-radius: 20px 20px 0 0;
-    text-align: center;
+  width: 100%;
+  background-color: var(--first);
+  color: var(--fifth);
+  padding: 10px;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
 }
 
 .transaction-balance {
-    width: 1000px;
-    max-width: 95%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    background-color: #fff;
-    border-radius: 20px;
-    box-shadow: -1px 1px 4px var(--fifth);
-    padding: 20px 0;
-    margin-top: 20px;
+  width: 1000px;
+  max-width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  background-color: #fff;
+  border-radius: 20px;
+  box-shadow: -1px 1px 4px var(--fifth);
+  padding: 20px 0;
+  margin-top: 20px;
 }
 
 .transaction-balance .balance-text {
-    width: 400px;
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 20px;
+  width: 400px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
 }
 
 .transaction-balance .balance-text h3 {
-    font-size: 2rem;
-    margin-bottom: 5px;
-    padding-top: 10px;
+  font-size: 2rem;
+  margin-bottom: 5px;
+  padding-top: 10px;
 }
 
 .transaction-balance .balance-text span {
-    font-size: 1.5rem;
-    color: var(--second);
-    margin-bottom: 3px;
+  font-size: 1.5rem;
+  color: var(--second);
+  margin-bottom: 3px;
 }
 
 .transaction-balance .balance-text p {
-    width: 400px;
-    max-width: 95%;
+  width: 400px;
+  max-width: 95%;
 }
 
 .transaction-health {
-    width: 1000px;
-    max-width: 95%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fff;
-    color: var(--first);
-    box-shadow: -1px 1px 4px var(--fifth);
-    border-radius: 20px;
-    margin-bottom: 30px;
+  width: 1000px;
+  max-width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  color: var(--first);
+  box-shadow: -1px 1px 4px var(--fifth);
+  border-radius: 20px;
+  margin-bottom: 30px;
 }
 
 .transaction-health div {
-    flex: 1;
-    padding: 20px;
+  flex: 1;
+  padding: 20px;
 }
 
 .transaction-health div h2 {
-    font-size: 2.2rem;
-    margin-bottom: 10px;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
 }
 
 .transaction-health div h3 {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .transaction-health img {
-    flex: 1;
-    width: 50%;
-    min-width: 330px;
-    max-width: 95%;
-    border-radius: 20px;
+  flex: 1;
+  width: 50%;
+  min-width: 330px;
+  max-width: 95%;
+  border-radius: 20px;
 }
 
 .performance-category {
-    width: 1000px;
-    max-width: 95%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding-bottom: 20px;
-    margin-top: 40px;
+  width: 1000px;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  margin-top: 40px;
 }
 
 .performance-category h2 {
-    width: 100%;
-    padding: 10px;
-    color: var(--fourth);
-    text-align: center;
+  width: 100%;
+  padding: 10px;
+  color: var(--fourth);
+  text-align: center;
 }
 
 .performance-category .transaction-category {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    gap: 20px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+  gap: 20px;
 }
 
 .performance-category .box-performance {
-    height: 300px;
+  height: 300px;
 }
 
-
-
 @media (max-width: 600px) {
+  .box-performance {
+    height: 350px;
+  }
 
-    .box-performance {
-        height: 350px;
-    }
-
-    .performance-category .box-performance {
-        height: 280px;
-    }
-
+  .performance-category .box-performance {
+    height: 280px;
+  }
 }

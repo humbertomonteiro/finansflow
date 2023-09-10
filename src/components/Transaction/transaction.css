@@ -1,0 +1,132 @@
+.transaction {
+  width: 100%;
+  height: 70px;
+  display: grid;
+  grid-template-columns: 65px 1fr 100px 40px 40px 40px;
+  margin: 5px 0;
+  padding: 2px;
+  background-color: #fff;
+  box-shadow: -1px 1px 4px var(--fifth);
+  border-radius: 40px 20px 20px 40px;
+  column-gap: 10px;
+}
+
+.transaction div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2px;
+}
+
+.transaction .name-transaction {
+  padding-left: 5px;
+}
+
+.transaction .client {
+  cursor: pointer;
+  transition: 0.5s all ease;
+}
+
+.transaction .client:hover {
+  color: var(--first);
+  font-weight: 600;
+  padding: 0 5px;
+  background-color: var(--fifth);
+  border-radius: 10px;
+}
+
+.transaction div span {
+  font-size: 0.7rem;
+}
+
+.transaction div .category {
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.transaction div .revenue {
+  background-color: var(--green);
+}
+
+.transaction div .expensive {
+  background-color: var(--red);
+}
+
+.transaction div .category span {
+  font-size: 0.6rem;
+  color: var(--white);
+  text-align: center;
+}
+
+.transaction div .category svg {
+  font-size: 1.4rem;
+  color: var(--white);
+}
+
+.transaction .icon {
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 15px;
+  transition: 0.5s;
+}
+
+.transaction .icon:hover {
+  transform: scale(1.4);
+}
+
+.transaction .icon svg {
+  font-size: 1.2rem;
+}
+
+.transaction div p {
+  display: flex;
+  flex-direction: column;
+}
+
+.transaction div p span {
+  width: fit-content;
+  background-color: var(--red);
+  color: var(--white);
+  font-size: 0.6rem;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+@media (max-width: 600px) {
+  .transaction {
+    height: 60px;
+    grid-template-columns: 55px 1fr 80px 30px 30px 30px;
+    column-gap: 0;
+    padding: 0;
+  }
+
+  .transaction div p {
+    font-size: 0.8rem;
+  }
+
+  .transaction div .category {
+    height: 52px;
+  }
+
+  .transaction div .category svg {
+    font-size: 1.1rem;
+  }
+
+  .transaction div .category span {
+    font-size: 0.5rem;
+  }
+
+  .transaction .icon svg {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .transaction {
+    grid-template-columns: 55px 1fr 80px 25px 25px 25px;
+  }
+}

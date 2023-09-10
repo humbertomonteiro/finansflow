@@ -1,9 +1,9 @@
 .container-account {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 60px 0 80px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 60px 0 80px 0;
 }
 
 /* .container-account h1 {
@@ -14,112 +14,108 @@
 } */
 
 .boxes-account {
-    width: 1000px;
-    max-width: 95%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 25px;
-    margin-top: 20px;
+  width: 1000px;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  margin-top: 20px;
 }
 
 .box-account {
-    width: 100%;
-    background-color: #fff;
-    box-shadow: -1px 1px 4px var(--fifth);
-    color: var(--first);
-    border-radius: 10px;
-    padding: 0 10px 0 10px;
+  width: 100%;
+  background-color: #fff;
+  box-shadow: -1px 1px 4px var(--fifth);
+  color: var(--first);
+  border-radius: 10px;
+  padding: 0 10px 0 10px;
 }
 
 .box-account h2 {
-    background-color: var(--first);
-    color: var(--fifth);
-    border-radius: 10px 10px 0 0;
-    padding: 15px;
-    margin: 0 -10px;
+  background-color: var(--first);
+  color: var(--fifth);
+  border-radius: 10px 10px 0 0;
+  padding: 15px;
+  margin: 0 -10px;
 }
 
 .box-account form {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    padding-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: 20px;
 }
 
 .box-account form div {
-    padding: 10px;
-    min-width: 300px;
+  padding: 10px;
+  min-width: 300px;
 }
 
 .box-account form div input {
-    font-size: 1.5rem;
-    background-color: transparent;
-    border: 0;
-    border-bottom: 1px solid var(--first);
-    margin-bottom: 20px;
-    padding: 10px 10px 5px 10px;
-    width: 100%;
+  font-size: 1.5rem;
+  background-color: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--first);
+  margin-bottom: 20px;
+  padding: 10px 10px 5px 10px;
+  width: 100%;
 }
 
 .box-account form div input::placeholder {
-    color: var(--first);
+  color: var(--first);
 }
 
 .box-account form div input:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0;
+  outline: 0;
+  box-shadow: 0 0 0 0;
 }
 
-
 .avatar-account {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .avatar-account label {
-    width: 230px;
-    height: 230px;
-    display: flex;
-    flex-direction: column;
-    justify-self: center;
-    align-items: center;
-    cursor: pointer;
+  width: 230px;
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  align-items: center;
+  cursor: pointer;
 }
 
 .avatar-account label input {
-    display: none;
+  display: none;
 }
 
 .avatar-account label span {
-    position: relative;
-    top: 45%;
-    font-size: 2rem;
-    opacity: .7;
-    transition: all .5s;
+  position: relative;
+  top: 45%;
+  font-size: 2rem;
+  opacity: 0.7;
+  transition: all 0.5s;
 }
 
 .avatar-account label span:hover {
-    opacity: 1;
-    transform: scale(1.4);
+  opacity: 1;
+  transform: scale(1.4);
 }
-
 
 .avatar-account label img {
-    width: 200px;
-    height: 200px;
-    margin-top: -30px;
-    border-radius: 40px;
-    object-fit: cover;
+  width: 200px;
+  height: 200px;
+  margin-top: -30px;
+  border-radius: 40px;
+  object-fit: cover;
 }
 
-
 @media (max-width: 480px) {
-
-    .box-account form div input {
-        font-size: 1.5rem;
-    }
+  .box-account form div input {
+    font-size: 1.5rem;
+  }
 }
