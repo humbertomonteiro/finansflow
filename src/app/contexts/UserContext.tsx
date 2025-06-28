@@ -18,7 +18,7 @@ import { listCategoryController } from "@/controllers/category/ListCategoryContr
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { ListAllTransactionsController } from "@/controllers/transaction/ListAllTransactionsController";
 import { EditiTransactionController } from "@/controllers/transaction/EditTransactionController";
-import { RemoveTransactionController } from "@/controllers/transaction/removeTransactionController";
+import { RemoveTransactionController } from "@/controllers/transaction/RemoveTransactionController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
