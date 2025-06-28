@@ -54,11 +54,13 @@ body {
 
 .input {
   width: 100%;
+  max-width: 100%;
   font-size: 1rem;
   font-weight: 500;
   border: 1px solid #4b5563;
   border-radius: 0.375rem;
   padding: 0.75rem;
+  height: 50px;
   margin-bottom: 0.625rem;
   background-color: #111827;
   color: #e5e7eb;
