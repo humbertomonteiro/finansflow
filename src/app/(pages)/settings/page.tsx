@@ -1,8 +1,8 @@
 export default function Settings() {
   return (
     <div>
-      <h1>Configurações</h1>
-      <p>Em breve...</p>
+      <h1 className="text-gray-100">Configurações</h1>
+      <p className="text-gray-400">Em breve...</p>
     </div>
   );
 }

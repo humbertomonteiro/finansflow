@@ -50,7 +50,9 @@ export const TransactionList = ({ transactions }: TransactionsListProps) => {
 
   return (
     <div>
-      {groupedTransactions.length === 0 && <div>Não há transações</div>}
+      {groupedTransactions.length === 0 && (
+        <div className="text-gray-100">Não há transações</div>
+      )}
       <div className="flex flex-col gap-6">
         {groupedTransactions.map((group) => (
           <div key={format(group.date, "yyyy-MM-dd")}>

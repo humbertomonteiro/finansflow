@@ -1,6 +1,5 @@
 import { IRepository } from "@/domain/interfaces/repository/repository";
 import { Transaction } from "@/domain/entities/transaction/Transaction";
-import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { db } from "../services/firebaseConfig";
 import {
   doc,
@@ -117,7 +116,7 @@ export class TransactionRepositoryFirestore
     return snapshot.docs.map((doc) => this.mapToTransaction(doc.data()));
   }
 
-  private mapToTransaction(data: any): ITransaction {
+  private mapToTransaction(data: any): Transaction {
     // Converte a dueDate principal
     const dueDate =
       data.dueDate instanceof Timestamp
@@ -156,12 +155,11 @@ export class TransactionRepositoryFirestore
       dueDate: dueDate,
       paymentHistory: paymentHistory,
       recurrence: recurrence,
-    } as ITransaction;
+    } as Transaction;
   }
 
   // private mapToTransaction(data: any): Transaction {
 
-  //   let recurrence = data.recurrence || {};
   //   return {
   //     ...data,
 

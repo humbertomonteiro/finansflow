@@ -44,7 +44,9 @@ export const TransactionItemList = ({
       >
         <div className="w-full text-nowrap overflow-hidden text-ellipsis">
           <div>
-            {transaction && <p>{transaction.description}</p>}
+            {transaction && (
+              <p className="text-gray-100">{transaction.description}</p>
+            )}
             <div className="flex gap-1">
               <p className="text-xs block text-gray-400">
                 {getCategoryName(transaction.categoryId)}
@@ -63,7 +65,7 @@ export const TransactionItemList = ({
             </div>
           </div>
         </div>
-        <div className="w-[250px] text-right mr-2">
+        <div className="w-[250px] text-right mr-2 text-gray-100">
           {transaction.amount.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
@@ -76,7 +78,7 @@ export const TransactionItemList = ({
             }
             payTransaction(transaction.id);
           }}
-          className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 rounded-full ${
+          className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 rounded-full text-gray-100 ${
             payment?.isPaid ? "bg-green-500" : "bg-red-500"
           }`}
           disabled={index === -1 && transaction.kind !== TransactionKind.FIXED}
