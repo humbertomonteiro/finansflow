@@ -99,7 +99,12 @@ export class FilteredTransactionsListUsecase {
     transaction.paymentHistory.forEach((payment, index) => {
       const installmentNumber = index + 1;
 
-      if (excludedInstallments.includes(installmentNumber)) return;
+      if (excludedInstallments.includes(installmentNumber)) {
+        console.log(
+          `[ProcessInstallmentTransaction] Skipping installment ${installmentNumber} for transaction ${transaction.id} as it is excluded`
+        );
+        return;
+      }
 
       const paymentDate = new Date(payment.dueDate);
 

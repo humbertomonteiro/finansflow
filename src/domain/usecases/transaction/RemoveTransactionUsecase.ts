@@ -7,6 +7,18 @@ import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { Account } from "@/domain/entities/account/Account";
 
+export interface BalanceUpdate {
+  message: string;
+  balanceUpdate: number;
+  removeCurrentMonth?: RemoveCurrentMonth;
+}
+
+interface RemoveCurrentMonth {
+  account: Account;
+  index?: number[];
+  date?: { year: number; month: number }[];
+}
+
 export class RemoveTransactionUsecase {
   constructor(
     private readonly transactionRepository: IRepository<ITransaction>,
@@ -18,7 +30,7 @@ export class RemoveTransactionUsecase {
     scopo: TransactionRemovalScope,
     year?: number,
     month?: number
-  ) {
+  ): Promise<BalanceUpdate> {
     const transactionData = await this.transactionRepository.findById(
       transactionId
     );
@@ -40,47 +52,85 @@ export class RemoveTransactionUsecase {
     const account = Account.fromData(accountData);
 
     let message = "";
+    let updatedAccount: Account = account;
+    let removedObject: RemoveCurrentMonth = { account };
 
     switch (scopo) {
       case TransactionRemovalScope.ALL:
-        await this.removeAll(transaction, account);
+        updatedAccount = await this.removeAll(transaction, account);
         message = `Transaction ${transaction.id} and all its occurrences were removed successfully.`;
         break;
       case TransactionRemovalScope.CURRENT_MONTH:
         if (!year || !month) {
           throw new Error("Year and Month required");
         }
-        await this.removeCurrentMonth(transaction, account, year, month);
+        removedObject = await this.removeCurrentMonth(
+          transaction,
+          account,
+          year,
+          month
+        );
+
+        updatedAccount = removedObject.account;
+
         message = `Occurrence for ${month}/${year} of transaction ${transaction.id} was removed successfully.`;
         break;
       case TransactionRemovalScope.FROM_MONTH_ONWARD:
         if (!year || !month) {
           throw new Error("Year and Month required");
         }
-        await this.removeFromMonthOnward(transaction, account, year, month);
+        updatedAccount = await this.removeFromMonthOnward(
+          transaction,
+          account,
+          year,
+          month
+        );
         message = `Occurrences from ${month}/${year} onward for transaction ${transaction.id} were removed successfully.`;
         break;
     }
 
-    await this.accountRepository.update(account.id, account);
+    await this.accountRepository.update(account.id, updatedAccount);
 
-    return message;
+    return {
+      message,
+      balanceUpdate: updatedAccount.balance,
+      removeCurrentMonth: removedObject,
+    };
   }
 
-  private async removeAll(transaction: Transaction, account: Account) {
-    const isPaymentPaid = this.hasPaymentIsPaid(transaction);
+  private async removeAll(
+    transaction: Transaction,
+    account: Account
+  ): Promise<Account> {
+    try {
+      const isPaymentPaid = this.hasPaymentIsPaid(transaction);
+      let currentAccountState = account;
 
-    if (isPaymentPaid) {
-      const valuesRemoved = this.totalValuesIsPaidDeleted(transaction);
-      this.adjustBalance(transaction, account, valuesRemoved);
+      if (isPaymentPaid) {
+        const valuesRemoved = this.totalValuesIsPaidDeleted(transaction);
+
+        currentAccountState = this.adjustBalance(
+          transaction,
+          currentAccountState,
+          valuesRemoved
+        );
+      }
+
+      const updatedTransactionsIds = currentAccountState.transactionsIds.filter(
+        (id) => id !== transaction.id
+      );
+
+      currentAccountState = currentAccountState.update({
+        transactionsIds: updatedTransactionsIds,
+      });
+
+      await this.transactionRepository.delete(transaction.id);
+
+      return currentAccountState;
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    const updatedTransactionsIds = account.transactionsIds.filter(
-      (id) => id !== transaction.id
-    );
-    account.update({ transactionsIds: updatedTransactionsIds });
-
-    await this.transactionRepository.delete(transaction.id);
   }
 
   private async removeCurrentMonth(
@@ -88,70 +138,81 @@ export class RemoveTransactionUsecase {
     account: Account,
     year: number,
     month: number
-  ) {
-    const { kind, amount, paymentHistory, id, recurrence, dueDate } =
-      transaction;
+  ): Promise<RemoveCurrentMonth> {
+    const { kind, amount, paymentHistory, id, recurrence } = transaction;
+    let updateAccount: Account = account;
 
-    if (kind === TransactionKind.INSTALLMENT) {
-      let paymentIndex = paymentHistory.findIndex(
-        (payment) =>
-          payment.dueDate.getUTCFullYear() === year &&
-          payment.dueDate.getUTCMonth() + 1 === month
-      );
-
-      if (paymentIndex === -1) {
-        throw new Error(`No occurrence found for ${month}/${year}.`);
-      }
-
-      const paymentEntry = paymentHistory[paymentIndex];
-      if (paymentEntry.isPaid) {
-        this.adjustBalance(transaction, account, amount);
-      }
-
-      const excludedInstallments = recurrence.excludedInstallments || [];
-      const updatedExcluded = [...excludedInstallments, paymentIndex + 1];
-
-      const newTransaction = transaction.update({
-        recurrence: {
-          ...recurrence,
-          excludedInstallments: updatedExcluded,
-        },
-      });
-
-      await this.transactionRepository.update(id, newTransaction);
-    } else if (kind === TransactionKind.FIXED) {
-      let excludes = [];
-
-      if (!recurrence.excludedFixeds) {
-        excludes = recurrence.excludedFixeds = [{ year, month }];
-      } else {
-        excludes = recurrence.excludedFixeds = [
-          ...recurrence.excludedFixeds,
-          { year, month },
-        ];
-      }
-
-      const hasPayment = paymentHistory
-        .filter(
+    try {
+      if (kind === TransactionKind.INSTALLMENT) {
+        let paymentIndex = paymentHistory.findIndex(
           (payment) =>
-            payment.dueDate.getFullYear() === year &&
-            payment.dueDate.getMonth() + 1 === month
-        )
-        .some((payment) => payment.isPaid);
+            payment.dueDate.getUTCFullYear() === year &&
+            payment.dueDate.getUTCMonth() + 1 === month
+        );
 
-      if (hasPayment) {
-        this.adjustBalance(transaction, account, transaction.amount);
+        if (paymentIndex === -1) {
+          throw new Error(`No occurrence found for ${month}/${year}.`);
+        }
+
+        const paymentEntry = paymentHistory[paymentIndex];
+
+        if (paymentEntry.isPaid) {
+          updateAccount = this.adjustBalance(transaction, account, amount);
+        }
+
+        const excludedInstallments = recurrence.excludedInstallments || [];
+        const updatedExcluded = [...excludedInstallments, paymentIndex + 1];
+
+        const newTransaction = transaction.update({
+          recurrence: {
+            ...recurrence,
+            excludedInstallments: updatedExcluded,
+          },
+        });
+
+        await this.transactionRepository.update(id, newTransaction);
+        return { account: updateAccount, index: updatedExcluded };
+      } else {
+        let excludes = [];
+
+        if (!recurrence.excludedFixeds) {
+          excludes = recurrence.excludedFixeds = [{ year, month }];
+        } else {
+          excludes = recurrence.excludedFixeds = [
+            ...recurrence.excludedFixeds,
+            { year, month },
+          ];
+        }
+
+        const hasPayment = paymentHistory
+          .filter(
+            (payment) =>
+              payment.dueDate.getFullYear() === year &&
+              payment.dueDate.getMonth() + 1 === month
+          )
+          .some((payment) => payment.isPaid);
+
+        if (hasPayment) {
+          updateAccount = this.adjustBalance(
+            transaction,
+            account,
+            transaction.amount
+          );
+        }
+
+        const newTransaction = transaction.update({
+          ...transaction,
+          recurrence: {
+            ...recurrence,
+            excludedFixeds: excludes,
+          },
+        });
+
+        await this.transactionRepository.update(id, newTransaction);
+        return { account: updateAccount, date: excludes };
       }
-
-      const newTransaction = transaction.update({
-        ...transaction,
-        recurrence: {
-          ...recurrence,
-          excludedFixeds: excludes,
-        },
-      });
-
-      await this.transactionRepository.update(id, newTransaction);
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -160,16 +221,17 @@ export class RemoveTransactionUsecase {
     account: Account,
     year: number,
     month: number
-  ) {
+  ): Promise<Account> {
     const { recurrence, dueDate, id } = transaction;
     const valuesRemoved = this.totalValuesIsPaidDeleted(
       transaction,
       year,
       month
     );
+    let updateAccount: Account = account;
 
     if (valuesRemoved > 0) {
-      this.adjustBalance(transaction, account, valuesRemoved);
+      updateAccount = this.adjustBalance(transaction, account, valuesRemoved);
     }
 
     const newEndDate = new Date(
@@ -182,8 +244,10 @@ export class RemoveTransactionUsecase {
       const updatedTransactionsIds = account.transactionsIds.filter(
         (tId) => tId !== id
       );
-      account.update({ transactionsIds: updatedTransactionsIds });
-      return;
+      updateAccount = account.update({
+        transactionsIds: updatedTransactionsIds,
+      });
+      return updateAccount;
     }
 
     const newTransaction = transaction.update({
@@ -194,6 +258,8 @@ export class RemoveTransactionUsecase {
     });
 
     await this.transactionRepository.update(id, newTransaction);
+
+    return updateAccount;
   }
 
   private totalValuesIsPaidDeleted(
@@ -222,18 +288,21 @@ export class RemoveTransactionUsecase {
     transaction: Transaction,
     account: Account,
     valuesRemoved: number
-  ) {
+  ): Account {
+    let updatedAccount;
+
     if (transaction.type === TransactionTypes.DEPOSIT) {
-      account.update({
-        ...account,
+      updatedAccount = account.update({
         balance: account.balance - valuesRemoved,
       });
-    }
-    if (transaction.type === TransactionTypes.WITHDRAW) {
-      account.update({
-        ...account,
+    } else if (transaction.type === TransactionTypes.WITHDRAW) {
+      updatedAccount = account.update({
         balance: account.balance + valuesRemoved,
       });
+    } else {
+      return account;
     }
+
+    return updatedAccount;
   }
 }

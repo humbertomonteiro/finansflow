@@ -3,12 +3,14 @@ import { TransactionRepositoryFirestore } from "@/infra/repositories/FirebaseTra
 import { AccountRepositoryFirestore } from "@/infra/repositories/FirebaseAccountRepository";
 import { TransactionRemovalScope } from "@/domain/enums/transaction/TransactionRemovalScope";
 
+import { BalanceUpdate } from "@/domain/usecases/transaction/RemoveTransactionUsecase";
+
 export const RemoveTransactionController = async (
   transactionId: string,
   scope: TransactionRemovalScope = TransactionRemovalScope.ALL,
   year?: number,
   month?: number
-): Promise<string> => {
+): Promise<BalanceUpdate> => {
   try {
     console.log(
       `RemoveTransactionController: Starting removal for ID ${transactionId} with scope ${scope}`
@@ -22,7 +24,7 @@ export const RemoveTransactionController = async (
       accountRepository
     );
 
-    const message = await removeTransactionUsecase.execute(
+    const messageAndBalanceUpdate = await removeTransactionUsecase.execute(
       transactionId,
       scope,
       year,
@@ -31,7 +33,7 @@ export const RemoveTransactionController = async (
 
     console.log("RemoveTransactionController: Removal executed successfully");
 
-    return message;
+    return messageAndBalanceUpdate;
   } catch (error) {
     console.error("RemoveTransactionController error:", error);
     throw new Error("Erro ao apagar a transação. Tente novamente.");

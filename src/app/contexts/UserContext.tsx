@@ -28,6 +28,7 @@ import {
   AnnualMetricsUsecase,
   AnnualMetrics,
 } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
+import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
 const filteredTransactionsListUsecase = new FilteredTransactionsListUsecase();
 
@@ -427,12 +428,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       // Chama o controller para remover a transação no backend
-      const message = await RemoveTransactionController(
-        transactionId,
-        scope,
-        year,
-        month
-      );
+      const { message, balanceUpdate, removeCurrentMonth } =
+        await RemoveTransactionController(transactionId, scope, year, month);
 
       setAllTransactions((prevTransactions) => {
         if (!prevTransactions) return null;
@@ -441,10 +438,70 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           return prevTransactions.filter((t) => t.id !== transactionId);
         }
 
+        if (scope === TransactionRemovalScope.FROM_MONTH_ONWARD) {
+          return prevTransactions.map((t) =>
+            t.id === transactionId
+              ? {
+                  ...t,
+                  recurrence: {
+                    ...t.recurrence,
+                    endDate: new Date(year, month - 2, t.dueDate.getDate()),
+                  },
+                }
+              : t
+          );
+        }
+
+        if (scope === TransactionRemovalScope.CURRENT_MONTH) {
+          return prevTransactions.map((t) => {
+            const { recurrence } = t;
+
+            if (!removeCurrentMonth) {
+              return t;
+            }
+
+            if (removeCurrentMonth.index) {
+              const excludedInstallments: number[] =
+                recurrence.excludedInstallments
+                  ? [
+                      ...recurrence.excludedInstallments,
+                      ...removeCurrentMonth.index,
+                    ]
+                  : [...removeCurrentMonth.index];
+
+              return t.id === transactionId
+                ? {
+                    ...t,
+                    recurrence: {
+                      ...t.recurrence,
+                      excludedInstallments: excludedInstallments,
+                    },
+                  }
+                : t;
+            } else if (removeCurrentMonth.date) {
+              const excludedFixeds = recurrence.excludedFixeds
+                ? [...recurrence.excludedFixeds, ...removeCurrentMonth.date]
+                : [...removeCurrentMonth?.date];
+
+              return t.id === transactionId
+                ? {
+                    ...t,
+                    recurrence: {
+                      ...t.recurrence,
+                      excludedFixeds: excludedFixeds,
+                    },
+                  }
+                : t;
+            } else {
+              return t;
+            }
+          });
+        }
+
         return prevTransactions;
       });
 
-      await fetchAllTransactions();
+      setCurrentBalance(balanceUpdate);
 
       return message;
     } catch (error) {
