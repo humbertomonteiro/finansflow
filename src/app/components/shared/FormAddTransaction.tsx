@@ -98,17 +98,22 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           md:h-auto md:rounded-none md:shadow-none`}
     >
       {/* Type Selector */}
-      <div className="flex items-center justify-between pb-4">
-        <h2 className="text-2xl font-bold text-center">Adicionar Transação</h2>
-        <button className="button bg-red-600" onClick={onClose}>
-          <FiX />
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-center text-gray-100">
+          Adicionar Transação
+        </h2>
+        <button
+          className="px-2 py-1 rounded-lg cursor-pointer text-gray-100 hover:bg-gray-400 hover:text-gray-950 transition-all"
+          onClick={onClose}
+        >
+          <FiX className="h-7 w-7" />
         </button>
       </div>
-      <div className="flex items-center justify-around gap-4 mb-4">
+      <div className="flex items-center justify-around gap-4 mb-2">
         {Object.values(TransactionTypes).map((transactionType) => (
           <button
             key={transactionType}
-            className={`button w-full ${
+            className={`button w-full text-gray-100 ${
               type === transactionType
                 ? transactionType === TransactionTypes.DEPOSIT
                   ? "bg-green-600"
@@ -125,66 +130,99 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
       </div>
 
       {/* Form */}
-      <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-        <input
-          className="input"
-          type="text"
-          placeholder="Descrição"
-          name="description"
-        />
-        <input
-          className="input"
-          type="text"
-          placeholder="Valor"
-          name="amount"
-        />
-        <input
-          className="input"
-          type="date"
-          placeholder="Data de vencimento"
-          name="dueDate"
-        />
-
-        <select className="input" name="categoryId">
-          {categories?.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-
-        <select className="input" name="accountId">
-          {accounts?.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Fixed Transaction Checkbox */}
-        <div className="flex items-center gap-2">
+      <form className="flex flex-col gap-1" onSubmit={handleSubmit}>
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">
+            Descrição da transação
+          </p>
           <input
-            type="checkbox"
-            name="fixed"
-            id="fixed"
-            onChange={toggleInstallmentVisibility}
+            className="input"
+            type="text"
+            placeholder="Descreva sua transação"
+            name="description"
           />
-          <label htmlFor="fixed">Fixa</label>
-        </div>
+        </label>
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">Valor da transação</p>
+          <input
+            className="input"
+            type="text"
+            placeholder="Digite o valor"
+            name="amount"
+          />
+        </label>
 
-        {/* Installments Selector */}
-        {showInstallment && (
-          <select className="input" name="installments">
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>
-                {num}
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">
+            Data de vencimento da transação
+          </p>
+          <input
+            className="input"
+            type="date"
+            placeholder="Data de vencimento"
+            name="dueDate"
+          />
+        </label>
+
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">
+            Categoria da transação
+          </p>
+          <select className="input" name="categoryId">
+            {categories?.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
+        </label>
+
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">Escolha a conta</p>
+          <select className="input" name="accountId">
+            {accounts?.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* Installments Selector */}
+        {showInstallment && (
+          <label>
+            <p className="text-gray-500 text-xs ml-1 mb-1">
+              Escolha a quantidade de parcelas
+            </p>
+
+            <select className="input" name="installments">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
 
+        {/* Fixed Transaction Checkbox */}
+        <label>
+          <p className="text-gray-500 text-xs ml-1 mb-1">
+            Selecione se for uma transação fixa
+          </p>
+          <div className="flex items-center gap-2 mb-2 ml-2">
+            <input
+              type="checkbox"
+              name="fixed"
+              id="fixed"
+              onChange={toggleInstallmentVisibility}
+            />
+            <label htmlFor="fixed">Fixa</label>
+          </div>
+        </label>
+
         <button
-          className={`button ${
+          className={`button text-gray-100 ${
             type === TransactionTypes.DEPOSIT ? "bg-green-600" : "bg-red-600"
           }`}
           type="submit"
