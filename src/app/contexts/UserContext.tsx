@@ -420,9 +420,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const removeTransaction = async (
     transactionId: string,
-    scope: TransactionRemovalScope = TransactionRemovalScope.ALL,
-    year?: number,
-    month?: number
+    scope: TransactionRemovalScope = TransactionRemovalScope.ALL
+    // year?: number,
+    // month?: number
   ): Promise<string> => {
     setLoading(true);
     try {
@@ -443,6 +443,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         return prevTransactions;
       });
+
+      await fetchAllTransactions();
 
       return message;
     } catch (error) {

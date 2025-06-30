@@ -73,17 +73,13 @@ export const TransactionDetails = ({
 
   const handleDeleteConfirmed = async (scope: TransactionRemovalScope) => {
     if (!transaction) return;
-    try {
-      const currentMonth = new Date().getMonth() + 1; // Mês atual (1-12)
-      const currentYear = new Date().getFullYear();
+    console.log(
+      `Attempting to delete transaction with ID: ${transaction.id}, scope: ${scope}`
+    );
 
+    try {
       // Chama a função removeTransaction do hook com o escopo e data, se necessário
-      const message = await removeTransaction(
-        transaction.id,
-        scope,
-        currentYear,
-        currentMonth
-      );
+      const message = await removeTransaction(transaction.id, scope);
 
       console.log(message);
       setIsConfirmingDelete(false); // Fecha o modal de confirmação

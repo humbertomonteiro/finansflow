@@ -92,17 +92,21 @@ export class FilteredTransactionsListUsecase {
     const result: (ITransaction & { installmentsNumber: number })[] = [];
     const recurrence = transaction.recurrence || {};
     const excludedInstallments = recurrence.excludedInstallments || [];
+    const endDate = recurrence.endDate || null;
+
+    let currentDate = new Date(year, month - 1, transaction.dueDate.getDate());
 
     transaction.paymentHistory.forEach((payment, index) => {
       const installmentNumber = index + 1;
 
-      // Skip excluded installments
       if (excludedInstallments.includes(installmentNumber)) return;
 
       const paymentDate = new Date(payment.dueDate);
+
       if (
         paymentDate.getFullYear() === year &&
-        paymentDate.getMonth() + 1 === month
+        paymentDate.getMonth() + 1 === month &&
+        (!endDate || currentDate <= endDate)
       ) {
         result.push({
           ...transaction,
@@ -131,47 +135,29 @@ export class FilteredTransactionsListUsecase {
     const result: ITransaction[] = [];
     const dueDate = new Date(transaction.dueDate);
     const recurrence = transaction.recurrence || {};
-    const endDate =
-      recurrence.endDate ||
-      new Date(Date.UTC(year + 10, month - 1, dueDate.getUTCDate()));
+    const endDate = recurrence.endDate || null;
 
-    let currentDate = new Date(dueDate);
-    let occurrenceIndex = 0;
+    const excludedFixeds = recurrence.excludedFixeds || [];
 
-    function getSafeUTCDate(year: number, month: number, day: number): Date {
-      const tentative = new Date(Date.UTC(year, month, day));
-      if (tentative.getUTCMonth() !== month) {
-        // overflow: mês pulou, então usar o último dia do mês
-        return new Date(Date.UTC(year, month + 1, 0));
-      }
-      return tentative;
-    }
+    const occurrenceDate = new Date(
+      Date.UTC(year, month, dueDate.getUTCDate())
+    );
 
-    const originalDay = dueDate.getUTCDate();
+    const isAfterStartDate = occurrenceDate >= dueDate;
+    const isBeforeEndDate = !endDate || occurrenceDate <= endDate;
 
-    while (currentDate <= endDate && currentDate.getUTCFullYear() <= year) {
-      if (
-        currentDate.getUTCFullYear() === year &&
-        currentDate.getUTCMonth() + 1 === month
-      ) {
-        result.push({
-          ...transaction,
-          id: `${transaction.id}-fixed-${occurrenceIndex}`,
-          dueDate: new Date(currentDate),
-          description: transaction.description || "",
-        });
-        break;
-      }
+    const isExcluded = excludedFixeds.some(
+      (excludedDate: { year: number; month: number }) =>
+        excludedDate.year === year && excludedDate.month === month
+    );
 
-      const nextMonth = currentDate.getUTCMonth() + 1;
-      const nextYear =
-        nextMonth > 11
-          ? currentDate.getUTCFullYear() + 1
-          : currentDate.getUTCFullYear();
-      const normalizedMonth = nextMonth % 12;
-
-      currentDate = getSafeUTCDate(nextYear, normalizedMonth, originalDay + 1);
-      occurrenceIndex++;
+    if (isAfterStartDate && isBeforeEndDate && !isExcluded) {
+      result.push({
+        ...transaction,
+        id: transaction.id,
+        dueDate: occurrenceDate,
+        description: transaction.description || "",
+      });
     }
 
     return result;

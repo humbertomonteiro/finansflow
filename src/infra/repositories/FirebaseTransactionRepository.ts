@@ -117,24 +117,70 @@ export class TransactionRepositoryFirestore
     return snapshot.docs.map((doc) => this.mapToTransaction(doc.data()));
   }
 
-  private mapToTransaction(data: any): Transaction {
+  private mapToTransaction(data: any): ITransaction {
+    // Converte a dueDate principal
+    const dueDate =
+      data.dueDate instanceof Timestamp
+        ? data.dueDate.toDate()
+        : new Date(data.dueDate);
+
+    // Converte o paymentHistory
+    const paymentHistory = (data.paymentHistory || []).map((payment: any) => ({
+      ...payment,
+      dueDate:
+        payment.dueDate instanceof Timestamp
+          ? payment.dueDate.toDate()
+          : new Date(payment.dueDate),
+      paidAt:
+        payment.paidAt instanceof Timestamp
+          ? payment.paidAt.toDate()
+          : payment.paidAt,
+    }));
+
+    // === Adição necessária para o endDate ===
+    let recurrence = data.recurrence || {};
+    if (recurrence.endDate instanceof Timestamp) {
+      recurrence = {
+        ...recurrence,
+        endDate: recurrence.endDate.toDate(),
+      };
+    } else if (typeof recurrence.endDate === "string" && recurrence.endDate) {
+      recurrence = {
+        ...recurrence,
+        endDate: new Date(recurrence.endDate),
+      };
+    }
+
     return {
       ...data,
-      dueDate:
-        data.dueDate instanceof Timestamp
-          ? data.dueDate.toDate()
-          : new Date(data.dueDate),
-      paymentHistory: (data.paymentHistory || []).map((payment: any) => ({
-        ...payment,
-        dueDate:
-          payment.dueDate instanceof Timestamp
-            ? payment.dueDate.toDate()
-            : new Date(payment.dueDate),
-        paidAt:
-          payment.paidAt instanceof Timestamp
-            ? payment.paidAt.toDate()
-            : payment.paidAt,
-      })),
-    } as Transaction;
+      dueDate: dueDate,
+      paymentHistory: paymentHistory,
+      recurrence: recurrence,
+    } as ITransaction;
   }
+
+  // private mapToTransaction(data: any): Transaction {
+
+  //   let recurrence = data.recurrence || {};
+  //   return {
+  //     ...data,
+
+  //     dueDate:
+  //       data.dueDate instanceof Timestamp
+  //         ? data.dueDate.toDate()
+  //         : new Date(data.dueDate),
+  //     paymentHistory: (data.paymentHistory || []).map((payment: any) => ({
+  //       ...payment,
+  //       dueDate:
+  //         payment.dueDate instanceof Timestamp
+  //           ? payment.dueDate.toDate()
+  //           : new Date(payment.dueDate),
+  //       paidAt:
+  //         payment.paidAt instanceof Timestamp
+  //           ? payment.paidAt.toDate()
+  //           : payment.paidAt,
+  //     })),
+
+  //   } as Transaction;
+  // }
 }

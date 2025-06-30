@@ -117,7 +117,7 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-          {unpaidTransactions && (
+          {/* {unpaidTransactions && (
             <div className="bg-gray-950 py-4 rounded-xl border border-gray-800">
               <div className=" px-4 max-w-[100%] flex-1 max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
@@ -126,7 +126,7 @@ export default function Dashboard() {
                 <TransactionList transactions={unpaidTransactions} />
               </div>
             </div>
-          )}
+          )} */}
 
           {overdueTransactions && (
             <div className="bg-gray-950 rounded-xl py-4 border border-gray-800">
