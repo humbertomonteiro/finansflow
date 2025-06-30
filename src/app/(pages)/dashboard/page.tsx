@@ -107,7 +107,7 @@ export default function Dashboard() {
         )}
 
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {nearbyTransactions && (
+          {nearbyTransactions && nearbyTransactions.length > 0 && (
             <div className="bg-gray-950 rounded-xl py-4 border border-gray-800">
               <div className="px-4 max-w-[100%] flex-1 max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
@@ -117,18 +117,8 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-          {/* {unpaidTransactions && (
-            <div className="bg-gray-950 py-4 rounded-xl border border-gray-800">
-              <div className=" px-4 max-w-[100%] flex-1 max-h-[400px] overflow-y-auto">
-                <h2 className="text-gray-300 text-lg mb-4">
-                  Transações Não resolvidas do Mês.
-                </h2>
-                <TransactionList transactions={unpaidTransactions} />
-              </div>
-            </div>
-          )} */}
 
-          {overdueTransactions && (
+          {overdueTransactions && overdueTransactions.length > 0 && (
             <div className="bg-gray-950 rounded-xl py-4 border border-gray-800">
               <div className="px-4 max-w-[100%] flex-1  max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
