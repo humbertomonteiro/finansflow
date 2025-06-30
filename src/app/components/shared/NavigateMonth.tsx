@@ -23,15 +23,15 @@ export const NavigateMonth = () => {
   };
 
   return (
-    <div className="flex items-center gap-6 bg-gray-950 rounded-full p-2 shadow-sm">
+    <div className="flex items-center gap-4 bg-gray-950 rounded-full p-1 shadow-sm">
       <button
-        className="flex items-center gap-1 bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-1 rounded-full transition-colors duration-200 cursor-pointer"
+        className="flex items-center bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
         onClick={handlePreviousMonth}
         aria-label="Mês anterior"
       >
         <FiChevronLeft className="h-5 w-5" />
       </button>
-      <label className="flex items-center gap-2 text-white font-medium">
+      <label className="flex items-center gap-1 text-white font-medium">
         <span className="text-sm">
           {month < 10 ? `0${month}` : month}/{year}
         </span>
@@ -51,7 +51,7 @@ export const NavigateMonth = () => {
         </div>
       </label>
       <button
-        className="flex items-center gap-1 bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-1 rounded-full transition-colors duration-200 cursor-pointer"
+        className="flex items-center bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
         onClick={handleNextMonth}
         aria-label="Próximo mês"
       >
