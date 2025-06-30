@@ -35,8 +35,8 @@ export default function Register() {
   };
 
   return (
-    <div className="container">
-      <h1 className="text-2xl font-bold">Cadastro</h1>
+    <div className="container bg-gray-950">
+      <h1 className="text-2xl font-bold  text-gray-100">Cadastro</h1>
       <form
         className="flex flex-col gap-2 w-full max-w-md my-4"
         onSubmit={handleSubmit}
@@ -62,7 +62,7 @@ export default function Register() {
         />
         {error && <p className="text-red-500">{error}</p>}
 
-        <button className="button bg-purple-950" type="submit">
+        <button className="button bg-purple-950  text-gray-100" type="submit">
           Cadastrar
         </button>
       </form>

@@ -28,8 +28,8 @@ export default function Login() {
     }
   };
   return (
-    <div className="container">
-      <h1 className="text-2xl font-bold">Login</h1>
+    <div className="container bg-gray-950">
+      <h1 className="text-2xl font-bold  text-gray-100">Login</h1>
       <form
         className="flex flex-col gap-2 w-full max-w-md my-4"
         onSubmit={handleSubmit}
@@ -47,7 +47,7 @@ export default function Login() {
           name="password"
         />
         {error && <p className="text-red-500">{error}</p>}
-        <button className="button bg-purple-950" type="submit">
+        <button className="button bg-purple-950  text-gray-100" type="submit">
           Entrar
         </button>
       </form>
