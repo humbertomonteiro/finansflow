@@ -101,8 +101,7 @@ export default function Dashboard() {
         </div>
 
         {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
-          <div className="bg-gray-900 rounded-xl py-4 border border-gray-800 p-6 h-[400px] mb-6">
-            <h2 className="text-gray-300 text-lg mb-4 px-2">Balanço Anual</h2>
+          <div className="bg-gray-900 rounded-xl py-4 border border-gray-800 p-4 h-[400px] mb-6">
             <LineChart data={monthlyMetrics} />
           </div>
         )}

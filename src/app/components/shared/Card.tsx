@@ -24,9 +24,7 @@ const Card = ({ value, title, icon, color, bg }: CardProps) => {
           {icon}
         </div>
       </div>
-      <h2 className="text-2xl md:text-3xl font-semibold text-gray-100">
-        {value}
-      </h2>
+      <h2 className="text-xl md:text-2xl text-gray-200">{value}</h2>
     </div>
   );
 };

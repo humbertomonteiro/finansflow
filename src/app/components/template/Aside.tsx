@@ -15,8 +15,8 @@ export const Aside = () => {
       <aside className="hidden lg:flex bg-gray-950 text-white w-[260px] h-screen fixed top-0 left-0 flex-col justify-between shadow-lg">
         {/* Logo/Title Section */}
         <div className="">
-          <Link href="/dashboard" className="p-6 border-b border-gray-800">
-            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <Link href="/dashboard" className="p-6 border-gray-800">
+            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2 ml-6 text-gray-200">
               <FiDollarSign className="h-6 w-6 text-indigo-400" />
               Finans Flow
             </h1>
@@ -121,13 +121,13 @@ export const Aside = () => {
       </nav>
 
       {/* Mobile Logo Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-gray-950 border-b border-gray-800 h-12 flex items-center px-4 z-10">
+      <header className="lg:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 h-14 flex items-center px-5 z-10">
         <Link
           href="/dashboard"
-          className="text-xl font-semibold text-white flex items-center gap-2"
+          className="text-2xl font-semibold text-gray-200 flex items-center gap-2"
         >
-          <FiDollarSign className="h-5 w-5 text-indigo-400" />
           Finans Flow
+          <FiDollarSign className="h-5 w-5 text-indigo-400" />
         </Link>
       </header>
 
