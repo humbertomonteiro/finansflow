@@ -36,7 +36,7 @@ export const TransactionItemList = ({
     <>
       <li
         key={transaction.id}
-        className={`flex items-center gap-2 p-3 bg-gray-900 rounded-xl ${
+        className={`flex items-center gap-2 p-3 bg-gray-800 rounded-xl ${
           transaction.type === TransactionTypes.DEPOSIT
             ? "border-l-4 border-green-500"
             : "border-l-4 border-red-500"

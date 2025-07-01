@@ -27,7 +27,7 @@ export const Aside = () => {
               <li>
                 <Link
                   href="/dashboard"
-                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-600 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                 >
                   <FiHome className="h-5 w-5" />
                   Dashboard
@@ -36,7 +36,7 @@ export const Aside = () => {
               <li>
                 <Link
                   href="/transactions"
-                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-600 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                 >
                   <FiList className="h-5 w-5" />
                   Transações
@@ -45,7 +45,7 @@ export const Aside = () => {
               <li>
                 <Link
                   href="/performance"
-                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-600 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                 >
                   <GoGraph className="h-5 w-5" />
                   Performance
@@ -54,7 +54,7 @@ export const Aside = () => {
               <li>
                 <Link
                   href="/settings"
-                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-600 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                 >
                   <IoSettingsOutline className="h-5 w-5" />
                   Configurações
@@ -63,7 +63,7 @@ export const Aside = () => {
 
               <li>
                 <button
-                  className="link w-full cursor-pointer flex items-center gap-3 p-3 rounded-lg border border-indigo-600 hover:bg-indigo-600 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                  className="link w-full cursor-pointer flex items-center gap-3 p-3 rounded-lg border border-violet-600 hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                   onClick={() => setShowForm(true)}
                 >
                   <FiPlus className="h-5 w-5" />

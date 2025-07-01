@@ -38,7 +38,8 @@ export default function Dashboard() {
                     }
                     title="Saldo"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
-                    color="bg-indigo-600"
+                    color="bg-green-600"
+                    bg="bg-violet-900"
                   />
                 </div>
                 <div>
@@ -78,7 +79,7 @@ export default function Dashboard() {
                   }
                   title="Balanço"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
-                  color="bg-purple-500"
+                  color="bg-violet-500"
                 />
 
                 <Card
@@ -90,7 +91,7 @@ export default function Dashboard() {
                   }
                   title="Projeção"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
-                  color="bg-purple-500"
+                  color="bg-violet-500"
                 />
               </div>
             </>
@@ -100,7 +101,7 @@ export default function Dashboard() {
         </div>
 
         {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
-          <div className="bg-gray-950 rounded-xl py-4 border border-gray-800 p-6 h-[400px] mb-6">
+          <div className="bg-gray-900 rounded-xl py-4 border border-gray-800 p-6 h-[400px] mb-6">
             <h2 className="text-gray-300 text-lg mb-4 px-2">Balanço Anual</h2>
             <LineChart data={monthlyMetrics} />
           </div>

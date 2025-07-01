@@ -23,19 +23,19 @@ export const NavigateMonth = () => {
   };
 
   return (
-    <div className="flex items-center rounded-full shadow-sm gap-2 bg-gray-950 p-1">
+    <div className="flex items-center rounded-full shadow-sm bg-gray-900 p-1">
       <button
-        className="flex items-center bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
+        className="flex items-center bg-gray-800 hover:bg-violet-900 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
         onClick={handlePreviousMonth}
         aria-label="Mês anterior"
       >
         <FiChevronLeft className="h-5 w-5" />
       </button>
-      <label className="flex items-center gap-1 bg-gray-950 px-4 py-2 text-white font-medium">
+      <label className="flex items-center gap-1 px-4 py-2 text-gray-200 font-medium">
         <span className="text-sm">
           {month < 10 ? `0${month}` : month}/{year}
         </span>
-        <div className="relative">
+        <div className="relative overflow-hidden">
           <FiCalendar className="h-5 w-5 text-indigo-400 cursor-pointer" />
           <input
             className="absolute inset-0 opacity-0 cursor-pointer"
@@ -51,7 +51,7 @@ export const NavigateMonth = () => {
         </div>
       </label>
       <button
-        className="flex items-center bg-gray-800 hover:bg-indigo-600 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
+        className="flex items-center bg-gray-800 hover:bg-violet-900 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
         onClick={handleNextMonth}
         aria-label="Próximo mês"
       >

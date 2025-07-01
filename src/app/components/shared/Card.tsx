@@ -5,11 +5,17 @@ interface CardProps {
   title: string;
   icon: ReactNode;
   color: string;
+  bg?: string;
 }
 
-const Card = ({ value, title, icon, color }: CardProps) => {
+const Card = ({ value, title, icon, color, bg }: CardProps) => {
   return (
-    <div className="flex flex-col gap-4 bg-gray-950 color-white border border-gray-800 rounded-xl p-4 md:p-4 w-full shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div
+      className={`flex flex-col gap-2 ${
+        bg ? bg : "bg-gray-900"
+      } border border-gray-800 
+     rounded-xl p-4 md:p-4 w-full shadow-sm hover:shadow-md transition-shadow duration-200`}
+    >
       <div className="flex justify-between items-center">
         <h3 className="text-gray-400">{title}</h3>
         <div

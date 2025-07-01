@@ -92,24 +92,24 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div
-      className={`flex flex-col gap-2 py-6 px-4 overflow-y-auto max-w-[500px] 
+      className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px] 
           mx-auto bg-gray-800 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 
           md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px] 
           md:h-auto md:rounded-none md:shadow-none`}
     >
       {/* Type Selector */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-2">
         <h2 className="text-2xl font-bold text-center text-gray-100">
           Adicionar Transação
         </h2>
         <button
-          className="px-2 py-1 rounded-lg cursor-pointer text-gray-100 hover:bg-gray-400 hover:text-gray-950 transition-all"
+          className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-blue-800 transition-all"
           onClick={onClose}
         >
           <FiX className="h-7 w-7" />
         </button>
       </div>
-      <div className="flex items-center justify-around gap-4 mb-2">
+      <div className="flex items-center justify-around gap-4 mb-2 px-2">
         {Object.values(TransactionTypes).map((transactionType) => (
           <button
             key={transactionType}
@@ -130,7 +130,10 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
       </div>
 
       {/* Form */}
-      <form className="flex flex-col gap-1" onSubmit={handleSubmit}>
+      <form
+        className="flex flex-col gap-1 overflow-x-hidden px-2"
+        onSubmit={handleSubmit}
+      >
         <label>
           <p className="text-gray-500 text-xs ml-1 mb-1">
             Descrição da transação
@@ -153,7 +156,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </label>
 
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
+          <p className="text-gray-500 text-xs ml-1 mb-1 max-w-[100%]">
             Data de vencimento da transação
           </p>
           <input
