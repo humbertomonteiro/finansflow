@@ -17,7 +17,6 @@ export const Aside = () => {
         <div className="">
           <Link href="/dashboard" className="p-6 border-gray-800">
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2 ml-6 text-gray-200">
-              <FiDollarSign className="h-6 w-6 text-indigo-400" />
               Finans Flow
             </h1>
           </Link>
@@ -84,50 +83,49 @@ export const Aside = () => {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 h-16 flex items-center justify-around shadow-lg z-11">
         <Link
           href="/dashboard"
-          className="flex flex-col items-center gap-1 text-gray-200 hover:text-indigo-400 text-xs"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
         >
           <FiHome className="h-6 w-6" />
           Dashboard
         </Link>
         <Link
           href="/transactions"
-          className="flex flex-col items-center gap-1 text-gray-200 hover:text-indigo-400 text-xs"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
         >
-          <FiList className="h-6 w-6" />
+          <FiList className="h-5 w-5" />
           Transações
         </Link>
 
         <button
-          className="flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-full text-white hover:bg-indigo-700 cursor-pointer"
+          className="flex items-center justify-center w-12 h-12 bg-violet-800 rounded-full text-white hover:bg-violet-700 cursor-pointer"
           onClick={() => setShowForm(true)}
           aria-label="Adicionar transação"
         >
-          <FiPlus className="h-6 w-6" />
+          <FiPlus className="h-5 w-5" />
         </button>
         <Link
           href="/performance"
-          className="flex flex-col items-center gap-1 text-gray-200 hover:text-indigo-400 text-xs"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
         >
-          <GoGraph className="h-6 w-6" />
+          <GoGraph className="h-5 w-5" />
           Performance
         </Link>
         <Link
           href="/settings"
-          className="flex flex-col items-center gap-1 text-gray-200 hover:text-indigo-400 text-xs"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
         >
-          <IoSettingsOutline className="h-6 w-6" />
+          <IoSettingsOutline className="h-5 w-5" />
           Configurações
         </Link>
       </nav>
 
       {/* Mobile Logo Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 h-14 flex items-center px-5 z-10">
+      <header className="lg:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 h-14 flex items-center px-3 z-10">
         <Link
           href="/dashboard"
-          className="text-2xl font-semibold text-gray-200 flex items-center gap-2"
+          className="text-2xl font-semibold text-gray-200 flex items-center"
         >
           Finans Flow
-          <FiDollarSign className="h-5 w-5 text-indigo-400" />
         </Link>
       </header>
 

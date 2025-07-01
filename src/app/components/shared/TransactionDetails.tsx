@@ -228,7 +228,7 @@ export const TransactionDetails = ({
             {isEditing && (
               <button
                 onClick={handleEdit}
-                className="px-4 py-2 bg-green-500 text-white rounded"
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700 cursor-pointer transition-all"
               >
                 Salvar
               </button>
@@ -243,7 +243,7 @@ export const TransactionDetails = ({
         </div>
 
         {isConfirmingDelete && (
-          <div className="fixed inset-0 bg-[#0a0a0a] bg-opacity-75 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-[#0a0a0ad3] bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-gray-900 rounded-lg p-6 text-gray-100 w-full max-w-md border border-gray-700 shadow-xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">Confirmar Exclusão</h3>
@@ -270,7 +270,7 @@ export const TransactionDetails = ({
                           TransactionRemovalScope.CURRENT_MONTH
                         )
                       }
-                      className="w-full bg-red-700 hover:bg-red-800 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
+                      className="w-full bg-violet-700 hover:bg-violet-600 cursor-pointer text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
                     >
                       Apagar apenas esta ocorrência
                     </button>
@@ -280,7 +280,7 @@ export const TransactionDetails = ({
                           TransactionRemovalScope.FROM_MONTH_ONWARD
                         )
                       }
-                      className="w-full bg-red-700 hover:bg-red-800 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
+                      className="w-full bg-gray-700 hover:bg-gray-600 cursor-pointer text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
                     >
                       Apagar desta ocorrência em diante
                     </button>
@@ -288,7 +288,7 @@ export const TransactionDetails = ({
                       onClick={() =>
                         handleDeleteConfirmed(TransactionRemovalScope.ALL)
                       }
-                      className="w-full bg-red-700 hover:bg-red-800 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
+                      className="w-full bg-red-800 hover:bg-red-700 cursor-pointer text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
                     >
                       Apagar todas as ocorrências
                     </button>
@@ -301,7 +301,7 @@ export const TransactionDetails = ({
                     onClick={() =>
                       handleDeleteConfirmed(TransactionRemovalScope.ALL)
                     }
-                    className="w-full bg-red-700 hover:bg-red-800 text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
+                    className="w-full bg-red-800 hover:bg-red-700 cursor-pointer text-white py-3 px-4 rounded-lg font-bold transition-colors duration-200"
                   >
                     Confirmar Exclusão
                   </button>

@@ -101,14 +101,14 @@ export default function Dashboard() {
         </div>
 
         {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
-          <div className="bg-gray-900 rounded-xl py-4 border border-gray-800 p-4 h-[400px] mb-6">
+          <div className="bg-gray-900 rounded-xl py-4 border border-gray-800 p-4 h-[400px]">
             <LineChart data={monthlyMetrics} />
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {nearbyTransactions && nearbyTransactions.length > 0 && (
-            <div className="bg-gray-950 rounded-xl py-4 border border-gray-800">
+            <div className="bg-gray-900 rounded-xl py-4 border border-gray-800">
               <div className="px-4 max-w-[100%] flex-1 max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
                   Próximas transações
@@ -119,7 +119,7 @@ export default function Dashboard() {
           )}
 
           {overdueTransactions && overdueTransactions.length > 0 && (
-            <div className="bg-gray-950 rounded-xl py-4 border border-gray-800">
+            <div className="bg-gray-900 rounded-xl py-4 border border-gray-800">
               <div className="px-4 max-w-[100%] flex-1  max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
                   Transações Atrasadas

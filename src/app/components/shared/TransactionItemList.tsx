@@ -45,7 +45,9 @@ export const TransactionItemList = ({
         <div className="w-full text-nowrap overflow-hidden text-ellipsis">
           <div>
             {transaction && (
-              <p className="text-gray-100">{transaction.description}</p>
+              <p className="text-gray-300 text-sm md:text-base">
+                {transaction.description}
+              </p>
             )}
             <div className="flex gap-1">
               <p className="text-xs block text-gray-400">
@@ -57,7 +59,7 @@ export const TransactionItemList = ({
                 )}
                 {transaction.kind === TransactionKind.INSTALLMENT && (
                   <span>
-                    Parcela {transaction.installmentsNumber} de{" "}
+                    {transaction.installmentsNumber} de{" "}
                     {transaction.recurrence.installmentsCount}
                   </span>
                 )}
@@ -65,7 +67,7 @@ export const TransactionItemList = ({
             </div>
           </div>
         </div>
-        <div className="w-[250px] text-right mr-2 text-gray-100">
+        <div className="w-[250px] text-right mr-2 text-gray-300">
           {transaction.amount.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",

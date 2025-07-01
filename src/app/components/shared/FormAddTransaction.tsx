@@ -98,12 +98,12 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           md:h-auto md:rounded-none md:shadow-none`}
     >
       {/* Type Selector */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between px-2 mb-4">
         <h2 className="text-2xl font-bold text-center text-gray-100">
           Adicionar Transação
         </h2>
         <button
-          className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-blue-800 transition-all"
+          className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-violet-800 transition-all"
           onClick={onClose}
         >
           <FiX className="h-7 w-7" />
@@ -156,7 +156,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </label>
 
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1 max-w-[100%]">
+          <p className="text-gray-500 text-xs ml-1 mb-1">
             Data de vencimento da transação
           </p>
           <input
