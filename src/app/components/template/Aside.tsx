@@ -12,7 +12,7 @@ export const Aside = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex bg-gray-950 text-white w-[260px] h-screen fixed top-0 left-0 flex-col justify-between shadow-lg">
+      <aside className="hidden lg:flex bg-gray-900 text-white w-[260px] h-screen fixed top-0 left-0 flex-col justify-between shadow-lg">
         {/* Logo/Title Section */}
         <div className="">
           <Link href="/dashboard" className="p-6 border-gray-800">

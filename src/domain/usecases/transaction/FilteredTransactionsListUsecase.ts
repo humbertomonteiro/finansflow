@@ -144,9 +144,7 @@ export class FilteredTransactionsListUsecase {
 
     const excludedFixeds = recurrence.excludedFixeds || [];
 
-    const occurrenceDate = new Date(
-      Date.UTC(year, month - 1, dueDate.getUTCDate())
-    );
+    const occurrenceDate = new Date(year, month - 1, dueDate.getDate());
 
     const isAfterStartDate = occurrenceDate >= dueDate;
     const isBeforeEndDate = !endDate || occurrenceDate <= endDate;
