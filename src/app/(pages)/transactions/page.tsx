@@ -11,7 +11,7 @@ import { CiSearch } from "react-icons/ci";
 
 type FilterProps = "all" | "revenues" | "expenses" | "paid" | "unpaid";
 
-const styleFilter = `rounded-full bg-gray-900 text-gray-400 text-xs px-4 p-2 flex items-center text-nowrap 
+const styleFilter = `rounded-full bg-gray-900 text-xs px-4 p-2 flex items-center text-nowrap 
   cursor-pointer hover:bg-violet-900 hover:text-gray-200 transition-all`;
 
 export default function Transactions() {
@@ -74,7 +74,9 @@ export default function Transactions() {
           <li
             onClick={() => setFilterSelected("all")}
             className={`${styleFilter} ${
-              filterSelected === "all" && "bg-violet-800"
+              filterSelected === "all"
+                ? "bg-violet-800 text-gray-200"
+                : "text-gray-400"
             }`}
           >
             Todas
@@ -82,7 +84,9 @@ export default function Transactions() {
           <li
             onClick={() => setFilterSelected("revenues")}
             className={`${styleFilter} ${
-              filterSelected === "revenues" && "bg-violet-800"
+              filterSelected === "revenues"
+                ? "bg-violet-800 text-gray-200"
+                : "text-gray-400"
             }`}
           >
             Receitas
@@ -90,7 +94,9 @@ export default function Transactions() {
           <li
             onClick={() => setFilterSelected("expenses")}
             className={`${styleFilter} ${
-              filterSelected === "expenses" && "bg-violet-800"
+              filterSelected === "expenses"
+                ? "bg-violet-800 text-gray-200"
+                : "text-gray-400"
             }`}
           >
             Despesas
@@ -98,7 +104,9 @@ export default function Transactions() {
           <li
             onClick={() => setFilterSelected("paid")}
             className={`${styleFilter} ${
-              filterSelected === "paid" && "bg-violet-800"
+              filterSelected === "paid"
+                ? "bg-violet-800 text-gray-200"
+                : "text-gray-400"
             }`}
           >
             Pagas
@@ -106,7 +114,9 @@ export default function Transactions() {
           <li
             onClick={() => setFilterSelected("unpaid")}
             className={`${styleFilter} ${
-              filterSelected === "unpaid" && "bg-violet-800"
+              filterSelected === "unpaid"
+                ? "bg-violet-800 text-gray-200"
+                : "text-gray-400"
             }`}
           >
             Não pagas
