@@ -13,7 +13,7 @@ export const CategoryExpensesSummary = ({
   }
 
   return (
-    <div className="bg-gray-800 p-4 rounded-xl">
+    <div className="bg-gray-900 p-4 rounded-xl">
       <table className="w-full">
         <thead className="text-gray-400 text-sm">
           <tr className="border-b border-gray-700">
@@ -30,13 +30,13 @@ export const CategoryExpensesSummary = ({
         <tfoot className="text-gray-300 text-sm">
           <tr className="border-t border-gray-600 font-semibold">
             <td className="p-2">Total</td>
-            <td className="text-right py-2 px-4">
+            <td className="text-right p-2">
               {dataCategoryExpenses.totalExpenses.toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
               })}
             </td>
-            <td className="text-right py-2 px-4">100%</td>
+            <td className="text-right p-2">100%</td>
           </tr>
         </tfoot>
       </table>

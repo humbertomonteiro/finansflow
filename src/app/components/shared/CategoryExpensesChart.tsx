@@ -59,7 +59,7 @@ export function CategoryExpensesChart({
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-800 p-4 rounded-xl w-full">
+    <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl w-full">
       <Pie data={chartData} options={options} />
     </div>
   );
