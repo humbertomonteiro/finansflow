@@ -40,6 +40,7 @@ export default function Dashboard() {
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-green-600"
                     bg="bg-violet-900"
+                    info="Saldo atual"
                   />
                 </div>
                 <div>
@@ -53,6 +54,12 @@ export default function Dashboard() {
                     title="Receitas"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-green-500"
+                    info={`Valor recebido: ${
+                      metrics.revenuesPaid?.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }) || "$0.00"
+                    }`}
                   />
                 </div>
                 <div>
@@ -66,6 +73,12 @@ export default function Dashboard() {
                     title="Despesas"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-red-500"
+                    info={`Valor pago: ${
+                      metrics.expensesPaid?.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }) || "$0.00"
+                    }`}
                   />
                 </div>
               </div>
@@ -80,6 +93,7 @@ export default function Dashboard() {
                   title="Balanço"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                   color="bg-violet-500"
+                  info="Mês virgente"
                 />
 
                 <Card
@@ -92,6 +106,7 @@ export default function Dashboard() {
                   title="Projeção"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                   color="bg-violet-500"
+                  info="Soma dos balanços"
                 />
               </div>
             </>

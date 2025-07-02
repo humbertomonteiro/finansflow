@@ -7,6 +7,8 @@ export interface MetricsType {
   revenues: number;
   expenses: number;
   futureBalance: number;
+  revenuesPaid: number;
+  expensesPaid: number;
 }
 
 export class MetricsUsecase {
@@ -23,6 +25,8 @@ export class MetricsUsecase {
         revenues: 0,
         expenses: 0,
         futureBalance: 0,
+        revenuesPaid: 0,
+        expensesPaid: 0,
       };
     }
 
@@ -37,6 +41,8 @@ export class MetricsUsecase {
         revenues: 0,
         expenses: 0,
         futureBalance: 0,
+        revenuesPaid: 0,
+        expensesPaid: 0,
       };
     }
 
@@ -56,14 +62,25 @@ export class MetricsUsecase {
       revenues: 0,
       expenses: 0,
       futureBalance: 0,
+      revenuesPaid: 0,
+      expensesPaid: 0,
     };
 
     // Processar transações
     for (const transaction of transactions) {
+      const paymentHistory = transaction.paymentHistory;
       if (transaction.type === TransactionTypes.DEPOSIT) {
         metrics.revenues += transaction.amount;
+        const valuesPaid = paymentHistory
+          .filter((payment) => payment.isPaid)
+          .reduce((acc, payment) => acc + payment.amount, 0);
+        metrics.revenuesPaid += valuesPaid;
       } else if (transaction.type === TransactionTypes.WITHDRAW) {
         metrics.expenses += transaction.amount;
+        const valuesPaid = paymentHistory
+          .filter((payment) => payment.isPaid)
+          .reduce((acc, payment) => acc + payment.amount, 0);
+        metrics.expensesPaid += valuesPaid;
       }
     }
 

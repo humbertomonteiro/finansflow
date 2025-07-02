@@ -26,7 +26,7 @@ ChartJS.register(
 
 interface LineChartProps {
   data: {
-    labels: string[]; // Ex: ['Jan', 'Fev', 'Mar', ...]
+    labels: string[];
     revenues: number[];
     expenses: number[];
   };
@@ -39,13 +39,13 @@ export function LineChart({ data }: LineChartProps) {
       {
         label: "Receitas",
         data: data.revenues,
-        borderColor: "rgb(34, 197, 94)", // Cor verde
+        borderColor: "rgb(34, 197, 94)",
         backgroundColor: "rgba(34, 197, 94, 0.5)",
       },
       {
         label: "Despesas",
         data: data.expenses,
-        borderColor: "rgb(239, 68, 68)", // Cor vermelha
+        borderColor: "rgb(239, 68, 68)",
         backgroundColor: "rgba(239, 68, 68, 0.5)",
       },
     ],
@@ -58,13 +58,13 @@ export function LineChart({ data }: LineChartProps) {
       legend: {
         position: "top" as const,
         labels: {
-          color: "#e5e7eb", // Cor das legendas
+          color: "#d1d5dc",
         },
       },
       title: {
         display: true,
         text: "Evolução Mensal (Receitas vs. Despesas)",
-        color: "#e5e7eb", // Cor do título
+        color: "#d1d5dc",
       },
       tooltip: {
         callbacks: {
@@ -86,15 +86,15 @@ export function LineChart({ data }: LineChartProps) {
     },
     scales: {
       x: {
-        ticks: { color: "#9ca3af" }, // Cor dos rótulos do eixo X
-        grid: { color: "#374151" }, // Cor das linhas do grid
+        ticks: { color: "#9ca3af" },
+        grid: { color: "#374151" },
       },
       y: {
         ticks: {
           color: "#9ca3af",
           callback: (value: any) => `R$ ${value.toLocaleString("pt-BR")}`,
-        }, // Formata o eixo Y como moeda
-        grid: { color: "#374151" }, // Cor das linhas do grid
+        },
+        grid: { color: "#374151" },
       },
     },
   };

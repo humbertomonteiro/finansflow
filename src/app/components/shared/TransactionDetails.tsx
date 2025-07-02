@@ -78,15 +78,14 @@ export const TransactionDetails = ({
     );
 
     try {
-      // Chama a função removeTransaction do hook com o escopo e data, se necessário
       const message = await removeTransaction(transaction.id, scope);
 
       console.log(message);
-      setIsConfirmingDelete(false); // Fecha o modal de confirmação
-      onClose(); // Fecha o modal de detalhes
+      setIsConfirmingDelete(false);
+      onClose();
     } catch (error) {
       console.error("Error deleting transaction:", error);
-      setIsConfirmingDelete(false); // Garante que o modal feche mesmo com erro
+      setIsConfirmingDelete(false);
     }
   };
 
@@ -96,8 +95,8 @@ export const TransactionDetails = ({
     <div className="fixed inset-0 bg-[#0a0a0aa2] bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-lg p-6 text-gray-100 w-[500px] max-w-[95%]">
         <h2 className="text-xl font-semibold mb-4">Detalhes da Transação</h2>
-        <div className="space-y-3">
-          <p className="">
+        <div className="space-y-2">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Descrição:</strong>{" "}
             {isEditing ? (
               <input
@@ -115,7 +114,7 @@ export const TransactionDetails = ({
               transaction.description || "Sem descrição"
             )}
           </p>
-          <p className="">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Valor:</strong>{" "}
             {isEditing ? (
               <input
@@ -136,7 +135,7 @@ export const TransactionDetails = ({
               })
             )}
           </p>
-          <p className="">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Categoria:</strong>{" "}
             {isEditing ? (
               <select
@@ -159,13 +158,13 @@ export const TransactionDetails = ({
               getCategoryName(transaction.categoryId)
             )}
           </p>
-          <p className="">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Tipo:</strong>{" "}
             {transaction.type === TransactionTypes.DEPOSIT
-              ? "Depósito"
-              : "Saque"}
+              ? "Receita"
+              : "Despesa"}
           </p>
-          <p className="">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Tipo de Transação:</strong>{" "}
             {transaction.kind === TransactionKind.SIMPLE
               ? "Simples"
@@ -173,7 +172,7 @@ export const TransactionDetails = ({
               ? `Parcelada (${transaction.paymentHistory.length} de ${transaction.recurrence.installmentsCount})`
               : "Fixa"}
           </p>
-          <p className="">
+          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
             <strong>Data de Vencimento:</strong>{" "}
             {format(transaction.dueDate, "dd/MM/yyyy", { locale: ptBR })}
           </p>
