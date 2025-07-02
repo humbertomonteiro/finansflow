@@ -22,13 +22,17 @@ import { RemoveTransactionController } from "@/controllers/transaction/RemoveTra
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
+import {
+  CategoryExpensesSummary,
+  CalculateCategoryExpensesUsecase,
+} from "@/domain/usecases/transaction/CalculateCategoryExpensesUsecase";
+
 import { MetricsType } from "@/domain/usecases/account/MetricsUsecase";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import {
   AnnualMetricsUsecase,
   AnnualMetrics,
 } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
-import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
 const filteredTransactionsListUsecase = new FilteredTransactionsListUsecase();
 
@@ -51,6 +55,7 @@ interface UserContextType {
   currentBalance: number;
   accumulatedFutureBalance: number;
   monthlyMetrics: AnnualMetrics | null;
+  dataCategoryExpenses: CategoryExpensesSummary | null;
   month: number;
   year: number;
   setMonth: (month: number) => void;
@@ -89,6 +94,7 @@ export const UserContext = createContext<UserContextType>({
   currentBalance: 0,
   accumulatedFutureBalance: 0,
   monthlyMetrics: null,
+  dataCategoryExpenses: null,
   month: 0,
   year: 0,
   setMonth: () => {},
@@ -133,6 +139,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [monthlyMetrics, setMonthlyMetrics] = useState<AnnualMetrics | null>(
     null
   );
+  const [dataCategoryExpenses, setDataCategoryExpenses] =
+    useState<CategoryExpensesSummary | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -285,6 +293,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setOverdueTransactions(overdueTransaction);
       setPaidTransactions(paidTransaction);
       setUnpaidTransactions(unpaidTransaction);
+
+      if (categories) {
+        const dataCategoryExpense =
+          new CalculateCategoryExpensesUsecase().execute(
+            transactions,
+            categories
+          );
+        setDataCategoryExpenses(dataCategoryExpense);
+      }
     }
   };
 
@@ -575,6 +592,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         currentBalance,
         accumulatedFutureBalance,
         monthlyMetrics,
+        dataCategoryExpenses,
         month,
         year,
         setMonth,

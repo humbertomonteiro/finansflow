@@ -1,7 +1,11 @@
+"use client";
+
+import { Title } from "../../components/shared/Title";
+
 export default function Settings() {
   return (
-    <div>
-      <h1 className="text-gray-100">Configurações</h1>
+    <div className="flex flex-col gap-6">
+      <Title navigateMonth={false}>Configurações</Title>
       <p className="text-gray-400">Em breve...</p>
     </div>
   );

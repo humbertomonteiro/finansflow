@@ -67,7 +67,7 @@ export default function Transactions() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Title>Transações</Title>
+      <Title navigateMonth={true}>Transações</Title>
 
       <div className="flex justify-between flex-col md:flex-row ">
         <ul className="flex gap-2 overflow-x-auto pb-3 mb-3 md:mb-0 ml-1 md:pb-0">

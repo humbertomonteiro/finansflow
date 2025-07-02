@@ -93,7 +93,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
   return (
     <div
       className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px] 
-          mx-auto bg-gray-800 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 
+          mx-auto bg-gray-900 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 
           md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px] 
           md:h-auto md:rounded-none md:shadow-none`}
     >
@@ -131,7 +131,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
       {/* Form */}
       <form
-        className="flex flex-col gap-1 overflow-x-hidden px-2"
+        className="flex flex-col gap-1 overflow-x-hidden px-2 max-w-[100%]"
         onSubmit={handleSubmit}
       >
         <label>
@@ -155,7 +155,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           />
         </label>
 
-        <label>
+        <label className="max-w-[100%]">
           <p className="text-gray-500 text-xs ml-1 mb-1">
             Data de vencimento da transação
           </p>

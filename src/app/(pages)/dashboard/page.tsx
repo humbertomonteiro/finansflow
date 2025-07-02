@@ -15,14 +15,13 @@ export default function Dashboard() {
     loading,
     nearbyTransactions,
     overdueTransactions,
-    unpaidTransactions,
     monthlyMetrics,
   } = useUser();
 
   return (
     <div className="">
       <div className="flex flex-col gap-6">
-        <Title>Dashboard</Title>
+        <Title navigateMonth={true}>Dashboard</Title>
 
         <div className="grid grid-cols-2">
           {metrics && !loading ? (
