@@ -8,7 +8,10 @@ import {
 } from "react-icons/md";
 import { FaBalanceScaleLeft } from "react-icons/fa";
 
+import { useUser } from "@/app/hooks/useUser";
+
 export default function Settings() {
+  const { user } = useUser();
   return (
     <div className="flex flex-col gap-6">
       <Title navigateMonth={false}>Configurações</Title>
@@ -16,11 +19,12 @@ export default function Settings() {
       <div className="bg-gray-900 p-4 rounded-2xl flex justify-between items-start gap-4 w-full">
         <div className="flex gap-4">
           <div className="h-12 w-12 rounded-full bg-gray-800 flex justify-center items-center font-semibold">
-            HF
+            {user?.name[0]}
+            {user?.name[1]}
           </div>
           <div>
-            <p className="text-lg">Humberto Filho</p>
-            <p className="text-sm text-gray-400">berto@gmail.com</p>
+            <p className="text-lg">{user?.name}</p>
+            <p className="text-sm text-gray-400">{user?.email}</p>
           </div>
         </div>
         <button className="button bg-violet-800">Editar</button>
