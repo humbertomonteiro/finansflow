@@ -1,7 +1,7 @@
 export function ExpensesOverview() {
   return (
-    <div className="px-2 max-w-[800px]">
-      <h2 className="text-lg font-semibold text-gray-300 mb-2">
+    <div className="px-2 w-full">
+      <h2 className="text-lg text-gray-300 mb-2">
         Entenda seus gastos mensais e organize seu orçamento!
       </h2>
       <p className="text-sm text-gray-400 leading-6">

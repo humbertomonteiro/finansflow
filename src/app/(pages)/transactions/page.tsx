@@ -11,7 +11,7 @@ import { CiSearch } from "react-icons/ci";
 
 type FilterProps = "all" | "revenues" | "expenses" | "paid" | "unpaid";
 
-const styleFilter = `rounded-full bg-gray-900 text-xs px-4 p-2 flex items-center text-nowrap 
+const styleFilter = `rounded-full bg-gray-900 text-xs py-3 px-4 flex items-center text-nowrap 
   cursor-pointer hover:bg-violet-900 hover:text-gray-200 transition-all`;
 
 export default function Transactions() {
@@ -69,71 +69,74 @@ export default function Transactions() {
     <div className="flex flex-col gap-6">
       <Title navigateMonth={true}>Transações</Title>
 
-      <div className="flex justify-between flex-col md:flex-row ">
-        <ul className="flex gap-2 overflow-x-auto pb-3 mb-3 md:mb-0 ml-1 md:pb-0">
-          <li
-            onClick={() => setFilterSelected("all")}
-            className={`${styleFilter} ${
-              filterSelected === "all"
-                ? "bg-violet-800 text-gray-200"
-                : "text-gray-400"
-            }`}
-          >
-            Todas
-          </li>
-          <li
-            onClick={() => setFilterSelected("revenues")}
-            className={`${styleFilter} ${
-              filterSelected === "revenues"
-                ? "bg-violet-800 text-gray-200"
-                : "text-gray-400"
-            }`}
-          >
-            Receitas
-          </li>
-          <li
-            onClick={() => setFilterSelected("expenses")}
-            className={`${styleFilter} ${
-              filterSelected === "expenses"
-                ? "bg-violet-800 text-gray-200"
-                : "text-gray-400"
-            }`}
-          >
-            Despesas
-          </li>
-          <li
-            onClick={() => setFilterSelected("paid")}
-            className={`${styleFilter} ${
-              filterSelected === "paid"
-                ? "bg-violet-800 text-gray-200"
-                : "text-gray-400"
-            }`}
-          >
-            Pagas
-          </li>
-          <li
-            onClick={() => setFilterSelected("unpaid")}
-            className={`${styleFilter} ${
-              filterSelected === "unpaid"
-                ? "bg-violet-800 text-gray-200"
-                : "text-gray-400"
-            }`}
-          >
-            Não pagas
-          </li>
-        </ul>
-        <label className="flex items-center justify-between text-xs px-4 py-2 border border-gray-700 rounded-full gap-2 self-center w-[99%] md:w-60">
-          <input
-            className=" focus:outline-none"
-            type="text"
-            placeholder="Pesquisar por nome..."
-            onChange={(e) => setFilterName(e.target.value)}
-          />
-          <CiSearch className="h-5 w-5" />
-        </label>
-      </div>
+      <ul className="flex gap-2 overflow-x-auto">
+        <li
+          onClick={() => setFilterSelected("all")}
+          className={`${styleFilter} ${
+            filterSelected === "all"
+              ? "bg-violet-800 text-gray-200"
+              : "text-gray-400"
+          }`}
+        >
+          Todas
+        </li>
+        <li
+          onClick={() => setFilterSelected("revenues")}
+          className={`${styleFilter} ${
+            filterSelected === "revenues"
+              ? "bg-violet-800 text-gray-200"
+              : "text-gray-400"
+          }`}
+        >
+          Receitas
+        </li>
+        <li
+          onClick={() => setFilterSelected("expenses")}
+          className={`${styleFilter} ${
+            filterSelected === "expenses"
+              ? "bg-violet-800 text-gray-200"
+              : "text-gray-400"
+          }`}
+        >
+          Despesas
+        </li>
+        <li
+          onClick={() => setFilterSelected("paid")}
+          className={`${styleFilter} ${
+            filterSelected === "paid"
+              ? "bg-violet-800 text-gray-200"
+              : "text-gray-400"
+          }`}
+        >
+          Pagas
+        </li>
+        <li
+          onClick={() => setFilterSelected("unpaid")}
+          className={`${styleFilter} ${
+            filterSelected === "unpaid"
+              ? "bg-violet-800 text-gray-200"
+              : "text-gray-400"
+          }`}
+        >
+          Não pagas
+        </li>
+      </ul>
 
-      <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl">
+      <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl flex flex-col">
+        <div className="flex justify-between">
+          <h3 className="text-gray-400 text-lg hidden md:block">
+            Transações mensais
+          </h3>
+          <label className="flex items-center justify-between text-xs py-3 md:py-2 px-4 mb-4 border border-gray-700 rounded-full gap-2 w-[99%] md:w-60">
+            <input
+              className=" focus:outline-none"
+              type="text"
+              placeholder="Pesquisar por nome..."
+              onChange={(e) => setFilterName(e.target.value)}
+            />
+            <CiSearch className="h-5 w-5" />
+          </label>
+        </div>
         {transactionsSelected && transactionsSelected.length > 0 ? (
           <TransactionList
             transactions={transactionsSelected.filter((transaction) =>
@@ -143,7 +146,7 @@ export default function Transactions() {
             )}
           />
         ) : (
-          <p>Não há transações</p>
+          <p className="text-gray-400">Não há transações</p>
         )}
       </div>
     </div>

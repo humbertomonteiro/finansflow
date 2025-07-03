@@ -7,8 +7,8 @@ interface CategoryExpenseItemProps {
 export const CategoryExpenseItem = ({ expense }: CategoryExpenseItemProps) => {
   return (
     <tr className="border-b border-gray-700 hover:bg-gray-800">
-      <td className="p-2">{expense.categoryName}</td>
-      <td className="text-right p-2">
+      <td className=" py-4 px-2">{expense.categoryName}</td>
+      <td className="text-right  py-4 px-2">
         <span
           className={expense.percentage > 30 ? "text-red-400" : "text-gray-100"}
         >
@@ -18,7 +18,7 @@ export const CategoryExpenseItem = ({ expense }: CategoryExpenseItemProps) => {
           })}
         </span>
       </td>
-      <td className="text-right p-2">
+      <td className="text-right  py-4 px-2">
         <span
           className={expense.percentage > 30 ? "text-red-400" : "text-gray-100"}
         >

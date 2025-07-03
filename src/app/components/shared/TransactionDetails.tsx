@@ -93,10 +93,10 @@ export const TransactionDetails = ({
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0aa2] bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 text-gray-100 w-[500px] max-w-[95%]">
+      <div className="bg-gray-800 rounded-lg p-4 text-gray-100 w-[500px] max-w-[100%] max-h-[100%] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Detalhes da Transação</h2>
-        <div className="space-y-2">
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+        <div className="space-y-2 bg-gray-900 rounded-2xl px-4 py-2">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Descrição:</strong>{" "}
             {isEditing ? (
               <input
@@ -108,13 +108,13 @@ export const TransactionDetails = ({
                     description: e.target.value,
                   })
                 }
-                className="input bg-gray-700 text-gray-100 rounded p-1 w-full"
+                className="input"
               />
             ) : (
               transaction.description || "Sem descrição"
             )}
           </p>
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Valor:</strong>{" "}
             {isEditing ? (
               <input
@@ -126,7 +126,7 @@ export const TransactionDetails = ({
                     amount: Number(e.target.value),
                   })
                 }
-                className="input bg-gray-700 text-gray-100 rounded p-1 w-full"
+                className="input"
               />
             ) : (
               transaction.amount.toLocaleString("pt-BR", {
@@ -135,7 +135,7 @@ export const TransactionDetails = ({
               })
             )}
           </p>
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Categoria:</strong>{" "}
             {isEditing ? (
               <select
@@ -146,7 +146,7 @@ export const TransactionDetails = ({
                     categoryId: e.target.value,
                   })
                 }
-                className="input bg-gray-700 text-gray-100 rounded p-1 w-full"
+                className="input"
               >
                 {categories?.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -158,13 +158,13 @@ export const TransactionDetails = ({
               getCategoryName(transaction.categoryId)
             )}
           </p>
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Tipo:</strong>{" "}
             {transaction.type === TransactionTypes.DEPOSIT
               ? "Receita"
               : "Despesa"}
           </p>
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Tipo de Transação:</strong>{" "}
             {transaction.kind === TransactionKind.SIMPLE
               ? "Simples"
@@ -172,44 +172,13 @@ export const TransactionDetails = ({
               ? `Parcelada (${transaction.paymentHistory.length} de ${transaction.recurrence.installmentsCount})`
               : "Fixa"}
           </p>
-          <p className="pb-1 border-b border-b-gray-700 text-gray-300">
+          <p className="py-4  text-gray-300">
             <strong>Data de Vencimento:</strong>{" "}
             {format(transaction.dueDate, "dd/MM/yyyy", { locale: ptBR })}
           </p>
-          {/* <p>
-            <strong>Status de Pagamento:</strong>{" "}
-            {payment?.isPaid ? (
-              <span className="text-green-500">Pago em {format(payment.paidAt!, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-            ) : (
-              <span className="text-red-500">Não pago</span>
-            )}
-          </p> */}
-          {/* {transaction.paymentHistory && (
-            <div>
-              <strong>Histórico de Pagamentos:</strong>
-              <ul className="list-disc list-inside">
-                {transaction.paymentHistory.map((payment, index) => (
-                  <li key={index}>
-                    {format(payment.dueDate, "MM/yyyy", { locale: ptBR })} -{" "}
-                    {payment.isPaid
-                      ? `Pago em ${format(payment.paidAt!, "dd/MM/yyyy HH:mm", { locale: ptBR })}`
-                      : "Não pago"} -{" "}
-                    {payment.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )} */}
         </div>
-        <div className="flex justify-between mt-6">
+        <div className="flex justify-between mt-6 bg-gray-900 p-4 rounded-2xl">
           <div className="flex gap-2">
-            {/* <button
-              onClick={handlePay}
-              className={`p-2 rounded-full ${payment?.isPaid ? "bg-red-500" : "bg-green-500"} text-white disabled:opacity-50`}
-              disabled={paymentIndex === -1 && transaction.kind !== TransactionKind.FIXED}
-            >
-              {payment?.isPaid ? <FiX size={20} /> : <FiCheck size={20} />}
-            </button> */}
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="h-10 w-10 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 text-white flex items-center justify-center cursor-pointer"

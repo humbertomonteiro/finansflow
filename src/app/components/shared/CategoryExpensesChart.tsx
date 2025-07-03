@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Pie } from "react-chartjs-2";
+import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { GenerateCategoryChartDataUsecase } from "@/domain/usecases/transaction/GenerateCategoryChartDataUsecase";
 import { CategoryExpensesSummary } from "@/domain/usecases/transaction/CalculateCategoryExpensesUsecase";
@@ -59,8 +59,8 @@ export function CategoryExpensesChart({
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl w-full">
-      <Pie data={chartData} options={options} />
+    <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl w-full h-full">
+      <Doughnut data={chartData} options={options} />
     </div>
   );
 }
