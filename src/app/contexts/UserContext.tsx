@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useEffect, useState } from "react";
-import router from "next/router";
 
 import { IUser } from "@/domain/interfaces/user/IUser";
 import { IAccount } from "@/domain/interfaces/account/IAccount";
@@ -19,6 +18,7 @@ import { payerTransactionController } from "@/controllers/transaction/PayerTrans
 import { ListAllTransactionsController } from "@/controllers/transaction/ListAllTransactionsController";
 import { EditiTransactionController } from "@/controllers/transaction/EditTransactionController";
 import { RemoveTransactionController } from "@/controllers/transaction/RemoveTransactionController";
+import { logoutController } from "@/controllers/user/LogoutController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
@@ -33,6 +33,8 @@ import {
   AnnualMetricsUsecase,
   AnnualMetrics,
 } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
+
+import { useRouter } from "next/navigation";
 
 const filteredTransactionsListUsecase = new FilteredTransactionsListUsecase();
 
@@ -73,6 +75,7 @@ interface UserContextType {
   ) => Promise<string>;
   updateTransaction: (updatedTransaction: ITransaction) => void;
   loading: boolean;
+  logout: () => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -104,6 +107,7 @@ export const UserContext = createContext<UserContextType>({
   removeTransaction: async () => "x",
   updateTransaction: () => {},
   loading: false,
+  logout: async () => {},
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -142,6 +146,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [dataCategoryExpenses, setDataCategoryExpenses] =
     useState<CategoryExpensesSummary | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -198,6 +204,21 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     updateAccumulatedBalance();
   }, [month, year]);
+
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await logoutController();
+      setUser(null);
+      localStorage.removeItem("user-finan-flow");
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw new Error("Erro ao fazer logout");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAccounts = async () => {
     if (user) {
@@ -602,6 +623,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         removeTransaction,
         updateTransaction,
         loading,
+        logout,
       }}
     >
       {children}

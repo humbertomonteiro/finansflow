@@ -225,12 +225,12 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </label>
 
         <button
-          className={`button text-gray-100 ${
+          className={`button min-h-[45px] text-gray-100 ${
             type === TransactionTypes.DEPOSIT ? "bg-green-600" : "bg-red-600"
           }`}
           type="submit"
         >
-          Adicionar
+          Adicionar {type === TransactionTypes.DEPOSIT ? "Receita" : "Despesa"}
         </button>
       </form>
     </div>

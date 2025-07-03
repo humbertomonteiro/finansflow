@@ -35,7 +35,7 @@ export default function Register() {
   };
 
   return (
-    <div className="container bg-gray-950">
+    <div className="bg-gray-900 h-screen w-screen flex flex-col justify-center items-center">
       <h1 className="text-2xl font-bold  text-gray-100">Cadastro</h1>
       <form
         className="flex flex-col gap-2 w-full max-w-md my-4"

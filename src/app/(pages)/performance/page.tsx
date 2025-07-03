@@ -11,7 +11,7 @@ export default function Performance() {
   const { loading, dataCategoryExpenses, monthlyMetrics } = useUser();
   return (
     <div className="flex flex-col gap-6">
-      <Title navigateMonth={false}>Performance</Title>
+      <Title navigateMonth={true}>Performance</Title>
       {loading && <p className="text-gray-400">Carregando...</p>}
       {!dataCategoryExpenses ? (
         <p className="text-gray-400">Sem dados...</p>
