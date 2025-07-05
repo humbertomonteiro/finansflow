@@ -155,12 +155,12 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           />
         </label>
 
-        <label className="max-w-[100%]">
+        <label>
           <p className="text-gray-500 text-xs ml-1 mb-1">
             Data de vencimento da transação
           </p>
           <input
-            className="input"
+            className="input max-w-[100%]"
             type="date"
             placeholder="Data de vencimento"
             name="dueDate"
