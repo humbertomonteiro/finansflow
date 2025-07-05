@@ -131,7 +131,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
       {/* Form */}
       <form
-        className="flex flex-col gap-4 overflow-x-hidden px-2 max-w-[100%]"
+        className="flex flex-col gap-4 overflow-x-hidden px-2 w-full"
         onSubmit={handleSubmit}
       >
         <label>
