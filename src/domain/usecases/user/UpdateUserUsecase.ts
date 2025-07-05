@@ -1,22 +1,25 @@
 import { IRepository } from "../../interfaces/repository/repository";
 import { User } from "../../entities/user/User";
+import { IUser } from "@/domain/interfaces/user/IUser";
 
 export class UpdateUserUsecase {
   constructor(private readonly userRepository: IRepository<User>) {}
 
-  async execute(userId: string, user: User): Promise<User> {
+  async execute(userId: string, user: Partial<User>): Promise<User> {
     try {
-      const user = await this.userRepository.findById(userId);
-      if (!user) throw new Error("User not found");
+      const userData = await this.userRepository.findById(userId);
 
-      const updatedUser = user.update({
-        name: user.name,
-        email: user.email,
-        password: user.getPassword(),
-        accountsIds: user.accountsIds,
-        categoriesIds: user.categoriesIds,
-      });
-      await this.userRepository.update(userId, updatedUser);
+      if (!userData) {
+        throw new Error("Usur not found");
+      }
+
+      const user = User.fromData(
+        userData as unknown as IUser & { password: string }
+      );
+
+      const newUser = user.update({ ...user });
+
+      const updatedUser = await this.userRepository.update(userId, newUser);
 
       return updatedUser;
     } catch (error) {

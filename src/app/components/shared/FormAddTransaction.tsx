@@ -113,12 +113,12 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         {Object.values(TransactionTypes).map((transactionType) => (
           <button
             key={transactionType}
-            className={`button w-full text-gray-100 ${
+            className={`button w-full font-semibold ${
               type === transactionType
                 ? transactionType === TransactionTypes.DEPOSIT
-                  ? "bg-green-600"
-                  : "bg-red-600"
-                : "bg-gray-600"
+                  ? "bg-green-400 text-gray-900"
+                  : "bg-red-400 text-gray-900"
+                : "bg-gray-600 text-gray-300"
             }`}
             onClick={() => handleTypeChange(transactionType)}
           >
@@ -225,8 +225,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </label>
 
         <button
-          className={`button min-h-[45px] text-gray-100 ${
-            type === TransactionTypes.DEPOSIT ? "bg-green-600" : "bg-red-600"
+          className={`button min-h-[45px] font-semibold text-gray-900 ${
+            type === TransactionTypes.DEPOSIT ? "bg-green-400" : "bg-red-400"
           }`}
           type="submit"
         >

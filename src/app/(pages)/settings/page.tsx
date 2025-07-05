@@ -1,6 +1,8 @@
 "use client";
 
 import { Title } from "../../components/shared/Title";
+import { BoxUser } from "@/app/components/shared/BoxUser";
+
 import {
   MdOutlineAccountBalance,
   MdOutlineCategory,
@@ -8,7 +10,6 @@ import {
   MdOutlineBalance,
 } from "react-icons/md";
 import { IoExitOutline } from "react-icons/io5";
-import { IoIosArrowForward } from "react-icons/io";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -45,21 +46,7 @@ export default function Settings() {
     <div className="flex flex-col gap-6">
       <Title navigateMonth={false}>Configurações</Title>
 
-      <div className="bg-gray-900 p-4 rounded-2xl flex justify-between gap-4 w-full">
-        <div className="flex gap-4">
-          <div className="h-12 w-12 rounded-full bg-gray-800 flex justify-center items-center font-semibold">
-            {user?.name[0]}
-            {user?.name[1]}
-          </div>
-          <div>
-            <p className="text-lg">{user?.name}</p>
-            <p className="text-sm text-gray-400">{user?.email}</p>
-          </div>
-        </div>
-        <button className=" px-4 rounded-2xl hover:bg-violet-800 transition-all cursor-pointer">
-          <IoIosArrowForward className="h-5 w-5" />
-        </button>
-      </div>
+      <BoxUser />
 
       <ul className="text-gray-400 flex flex-col bg-gray-900 py-2 px-2 rounded-2xl">
         <li className="flex gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl">

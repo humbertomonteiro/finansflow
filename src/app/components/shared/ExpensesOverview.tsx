@@ -1,14 +1,9 @@
 export function ExpensesOverview() {
   return (
     <div className="px-2 w-full">
-      <h2 className="text-lg text-gray-300 mb-2">
-        Entenda seus gastos mensais e organize seu orçamento!
-      </h2>
-      <p className="text-sm text-gray-400 leading-6">
-        Este resumo mostra como seu dinheiro está distribuído em categorias como
-        Alimentação, Moradia e Lazer.{" "}
-        <strong>Dicas para um orçamento saudável</strong>:
-      </p>
+      <h4 className="text-gray-300 text-lg mb-2">
+        Dicas para um orçamento saudável
+      </h4>
       <ul className="list-disc list-inside text-sm text-gray-300 mt-2 leading-6 space-y-2">
         <li>
           <strong>Siga a regra 50-30-20</strong>:{" "}

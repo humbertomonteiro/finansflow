@@ -38,7 +38,7 @@ export default function Dashboard() {
                     title="Saldo"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-green-600"
-                    bg="bg-violet-900"
+                    highligth={true}
                     info="Saldo atual"
                   />
                 </div>

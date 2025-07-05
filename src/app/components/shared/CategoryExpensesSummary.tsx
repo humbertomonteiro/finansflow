@@ -9,7 +9,7 @@ export const CategoryExpensesSummary = ({
   dataCategoryExpenses,
 }: CategoryExpensesSummaryProps) => {
   if (!dataCategoryExpenses || dataCategoryExpenses.expenses.length === 0) {
-    return <p className="text-gray-400">Nenhuma despesa registrada</p>;
+    return <p className="text-gray-400 px-2">Nenhuma despesa registrada</p>;
   }
 
   return (

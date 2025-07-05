@@ -93,10 +93,10 @@ export const TransactionDetails = ({
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0aa2] bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-4 text-gray-100 w-[500px] max-w-[100%] max-h-[100%] overflow-y-auto">
+      <div className="bg-gray-800 rounded-xl p-4 text-gray-100 w-[500px] max-w-[100%] max-h-[100%] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Detalhes da Transação</h2>
-        <div className="space-y-2 bg-gray-900 rounded-2xl px-4 py-2">
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+        <div className="space-y-2 bg-gray-900 rounded-xl px-4 py-2">
+          <p className="flex gap-2  items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Descrição:</strong>{" "}
             {isEditing ? (
               <input
@@ -118,7 +118,7 @@ export const TransactionDetails = ({
             <strong>Valor:</strong>{" "}
             {isEditing ? (
               <input
-                type="number"
+                type="text"
                 value={editedTransaction.amount}
                 onChange={(e) =>
                   setEditedTransaction({
@@ -172,41 +172,42 @@ export const TransactionDetails = ({
               ? `Parcelada (${transaction.paymentHistory.length} de ${transaction.recurrence.installmentsCount})`
               : "Fixa"}
           </p>
-          <p className="py-4  text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
             <strong>Data de Vencimento:</strong>{" "}
             {format(transaction.dueDate, "dd/MM/yyyy", { locale: ptBR })}
           </p>
-        </div>
-        <div className="flex justify-between mt-6 bg-gray-900 p-4 rounded-2xl">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="h-10 w-10 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 text-white flex items-center justify-center cursor-pointer"
-            >
-              <FiEdit />
-            </button>
-            <button
-              onClick={handleDeleteClick} // <--- AQUI!
-              className="h-10 w-10 rounded-full bg-red-600 hover:bg-red-700 transition-colors duration-200 text-white flex items-center justify-center cursor-pointer"
-            >
-              <FiTrash />
-            </button>
-          </div>
-          <div className="flex gap-2">
-            {isEditing && (
+
+          <div className="flex justify-between py-4">
+            <div className="flex gap-4">
               <button
-                onClick={handleEdit}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700 cursor-pointer transition-all"
+                onClick={() => setIsEditing(!isEditing)}
+                className="h-10 w-10 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 text-white flex items-center justify-center cursor-pointer"
               >
-                Salvar
+                <FiEdit />
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 transition-colors duration-200 text-white rounded-lg cursor-pointer"
-            >
-              Fechar
-            </button>
+              <button
+                onClick={handleDeleteClick} // <--- AQUI!
+                className="h-10 w-10 rounded-full bg-red-600 hover:bg-red-700 transition-colors duration-200 text-white flex items-center justify-center cursor-pointer"
+              >
+                <FiTrash />
+              </button>
+            </div>
+            <div className="flex gap-4">
+              {isEditing && (
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700 cursor-pointer transition-all"
+                >
+                  Salvar
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 transition-colors duration-200 text-white rounded-lg cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
 

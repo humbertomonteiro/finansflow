@@ -19,6 +19,7 @@ import { ListAllTransactionsController } from "@/controllers/transaction/ListAll
 import { EditiTransactionController } from "@/controllers/transaction/EditTransactionController";
 import { RemoveTransactionController } from "@/controllers/transaction/RemoveTransactionController";
 import { logoutController } from "@/controllers/user/LogoutController";
+import { UpdateUserController } from "@/controllers/user/UpdateUserController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
@@ -35,6 +36,7 @@ import {
 } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
 
 import { useRouter } from "next/navigation";
+import { User } from "@/domain/entities/user/User";
 
 const filteredTransactionsListUsecase = new FilteredTransactionsListUsecase();
 
@@ -76,6 +78,7 @@ interface UserContextType {
   updateTransaction: (updatedTransaction: ITransaction) => void;
   loading: boolean;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<IUser>) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -108,6 +111,7 @@ export const UserContext = createContext<UserContextType>({
   updateTransaction: () => {},
   loading: false,
   logout: async () => {},
+  updateUser: async () => {},
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -215,6 +219,27 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Logout error:", error);
       throw new Error("Erro ao fazer logout");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUser = async (
+    userData: Partial<IUser & { password: string }>
+  ) => {
+    if (!user) {
+      throw new Error("Nenhum usuário logado");
+    }
+    setLoading(true);
+    try {
+      const updatedUser = await UpdateUserController(user.id, {
+        name: userData.name,
+      });
+      setUser(updatedUser);
+      localStorage.setItem("user-finan-flow", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw new Error("Falha ao atualizar usuário: " + error);
     } finally {
       setLoading(false);
     }
@@ -624,6 +649,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         updateTransaction,
         loading,
         logout,
+        updateUser,
       }}
     >
       {children}
