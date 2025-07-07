@@ -36,13 +36,16 @@ export const TransactionItemList = ({
     <>
       <li
         key={transaction.id}
-        className={`flex items-center gap-2 p-3 bg-gray-800 rounded-xl  ${
+        className={`flex items-center gap-2 p-3 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 transition-all ${
           transaction.type === TransactionTypes.DEPOSIT
             ? "border-l-4 border-green-500"
             : "border-l-4 border-red-500"
         }`}
       >
-        <div className="w-full text-nowrap overflow-hidden text-ellipsis">
+        <div
+          onClick={() => setIsOpen(true)}
+          className="w-full text-nowrap overflow-hidden text-ellipsis"
+        >
           <div>
             {transaction && (
               <p className="text-gray-300 text-sm md:text-base">
@@ -67,32 +70,44 @@ export const TransactionItemList = ({
             </div>
           </div>
         </div>
-        <div className="w-[250px] text-right mr-2 text-gray-300">
+        <div
+          onClick={() => setIsOpen(true)}
+          className="w-[250px] text-right mr-2 text-gray-300"
+        >
           {transaction.amount.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
           })}
         </div>
-        <button
-          onClick={() => {
-            if (index === -1 && transaction.kind !== TransactionKind.FIXED) {
-              return;
+        <div className="flex flex-col items-center justify-center">
+          <button
+            onClick={() => {
+              if (index === -1 && transaction.kind !== TransactionKind.FIXED) {
+                return;
+              }
+              payTransaction(transaction.id);
+            }}
+            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 rounded-full text-gray-100 ${
+              payment?.isPaid ? "bg-green-500" : "bg-red-500"
+            }`}
+            disabled={
+              index === -1 && transaction.kind !== TransactionKind.FIXED
             }
-            payTransaction(transaction.id);
-          }}
-          className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 rounded-full text-gray-100 ${
-            payment?.isPaid ? "bg-green-500" : "bg-red-500"
-          }`}
-          disabled={index === -1 && transaction.kind !== TransactionKind.FIXED}
-        >
-          {payment?.isPaid ? <FiCheck /> : <FiX />}
-        </button>
-        <button
+          >
+            {payment?.isPaid ? (
+              <FiCheck className="h-5 w-5" />
+            ) : (
+              <FiX className="h-5 w-5" />
+            )}
+          </button>
+          <span className="text-gray-500 text-[0.7rem]">Resolver</span>
+        </div>
+        {/* <button
           onClick={() => setIsOpen(true)}
           className="cursor-pointer p-1 rounded-full opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 bg-gray-500"
         >
           <CiMenuKebab />
-        </button>
+        </button> */}
       </li>
       {isOpen && (
         <TransactionDetails
