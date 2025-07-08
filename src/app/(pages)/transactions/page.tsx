@@ -8,6 +8,9 @@ import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 
 import { CiSearch } from "react-icons/ci";
+import { RiMoneyDollarCircleLine } from "react-icons/ri";
+import { LiaBalanceScaleLeftSolid } from "react-icons/lia";
+import { GoGraph } from "react-icons/go";
 
 type FilterProps = "all" | "revenues" | "expenses" | "paid" | "unpaid";
 
@@ -15,8 +18,16 @@ const styleFilter = `rounded-full bg-gray-900 text-xs py-3 px-4 flex items-cente
   cursor-pointer hover:bg-violet-900 hover:text-gray-200 transition-all`;
 
 export default function Transactions() {
-  const { transactions, paidTransactions, unpaidTransactions, year, month } =
-    useUser();
+  const {
+    transactions,
+    paidTransactions,
+    unpaidTransactions,
+    year,
+    month,
+    metrics,
+    currentBalance,
+    accumulatedFutureBalance,
+  } = useUser();
   const [transactionsSelected, setTransactionsSelected] = useState<
     ITransaction[] | null
   >(null);
@@ -65,6 +76,13 @@ export default function Transactions() {
     }
   };
 
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <Title navigateMonth={true}>Transações</Title>
@@ -108,7 +126,7 @@ export default function Transactions() {
               : "text-gray-400"
           }`}
         >
-          Pagas
+          Resolvidas
         </li>
         <li
           onClick={() => setFilterSelected("unpaid")}
@@ -118,16 +136,14 @@ export default function Transactions() {
               : "text-gray-400"
           }`}
         >
-          Não pagas
+          Não Resolvidas
         </li>
       </ul>
 
       <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl flex flex-col">
-        <div className="flex justify-between">
-          <h3 className="text-gray-400 text-lg hidden md:block">
-            Transações mensais
-          </h3>
-          <label className="flex items-center justify-between text-xs py-3 md:py-2 px-4 mb-4 border border-gray-700 rounded-full gap-2 w-[99%] md:w-60">
+        <div className="flex gap-4 flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          <h3 className="text-gray-400 text-lg">Transações mensais</h3>
+          <label className="flex items-center justify-between text-xs py-3 md:py-2 px-4 border border-gray-700 rounded-full gap-2 w-[99%] md:w-60">
             <input
               className=" focus:outline-none"
               type="text"
@@ -137,6 +153,72 @@ export default function Transactions() {
             <CiSearch className="h-5 w-5" />
           </label>
         </div>
+
+        <div className="flex justify-between w-full bg-gray-800  rounded-xl mb-4">
+          <div className="p-4 w-full border-r border-r-gray-700 hidden md:block">
+            <div className="flex items-center justify-between text-gray-400">
+              <h3 className="text-xs">Saldo atual</h3>
+              <RiMoneyDollarCircleLine
+                className={`h-7 w-7 ${
+                  currentBalance > 0 ? "text-green-400" : "text-red-400"
+                }`}
+              />
+            </div>
+
+            <div
+              className={`text-lg ${
+                currentBalance > 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {formatCurrency(currentBalance)}
+            </div>
+          </div>
+
+          <div className="p-4 w-full border-r border-r-gray-700">
+            <div className="flex items-center justify-between text-gray-400">
+              <h3 className="text-xs">Balanço mensal</h3>
+              <LiaBalanceScaleLeftSolid
+                className={`h-7 w-7 ${
+                  metrics && metrics?.futureBalance > 0
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              />
+            </div>
+
+            <div
+              className={`text-lg ${
+                metrics && metrics?.futureBalance > 0
+                  ? "text-green-400"
+                  : "text-red-400"
+              }`}
+            >
+              {formatCurrency(metrics?.futureBalance || 0)}
+            </div>
+          </div>
+
+          <div className="p-4 w-full">
+            <div className="flex items-center justify-between text-gray-400">
+              <h3 className="text-xs">Projeção</h3>
+              <GoGraph
+                className={`h-7 w-7 ${
+                  accumulatedFutureBalance > 0
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              />
+            </div>
+
+            <div
+              className={`text-lg ${
+                accumulatedFutureBalance > 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {formatCurrency(accumulatedFutureBalance)}
+            </div>
+          </div>
+        </div>
+
         {transactionsSelected && transactionsSelected.length > 0 ? (
           <TransactionList
             transactions={transactionsSelected.filter((transaction) =>

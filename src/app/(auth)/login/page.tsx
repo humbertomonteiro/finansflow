@@ -31,7 +31,7 @@ export default function Login() {
     <div className="bg-gray-900 h-screen w-screen flex flex-col justify-center items-center">
       <h1 className="text-2xl font-bold  text-gray-100">Login</h1>
       <form
-        className="flex flex-col gap-2 w-full max-w-md my-4"
+        className="flex flex-col gap-2 w-full max-w-md my-4 space-y-2"
         onSubmit={handleSubmit}
       >
         <input

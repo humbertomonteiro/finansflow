@@ -3,7 +3,7 @@ import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { useUser } from "@/app/hooks/useUser";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { FiCheck, FiX } from "react-icons/fi";
-import { CiMenuKebab } from "react-icons/ci";
+// import { CiMenuKebab } from "react-icons/ci";
 import { TransactionDetails } from "./TransactionDetails";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 
@@ -87,7 +87,7 @@ export const TransactionItemList = ({
               }
               payTransaction(transaction.id);
             }}
-            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 rounded-full text-gray-100 ${
+            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 rounded-full text-gray-100 ${
               payment?.isPaid ? "bg-green-500" : "bg-red-500"
             }`}
             disabled={
