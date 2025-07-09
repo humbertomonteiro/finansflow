@@ -48,10 +48,10 @@ export const TransactionItemList = ({
         >
           <div className={`flex flex-col items-center`}>
             <div
-              className={`rounded-full text-gray-900 w-fit p-1 ${
+              className={`rounded-full text-gray-200 w-fit p-1 ${
                 transaction.type === TransactionTypes.DEPOSIT
-                  ? "bg-green-500"
-                  : "bg-red-500"
+                  ? "bg-green-700"
+                  : "bg-red-700"
               }`}
             >
               {transaction.type === TransactionTypes.DEPOSIT ? (
@@ -75,7 +75,7 @@ export const TransactionItemList = ({
             )}
             <div className="flex gap-1">
               <p
-                className={`text-[0.7rem] bg-gray-800 px-2 text-gray-500 rounded-full`}
+                className={`text-[0.7rem] bg-gray-800 px-2 text-gray-400 rounded-full mt-[0.2rem]`}
               >
                 {getCategoryName(transaction.categoryId)}
               </p>
@@ -124,7 +124,10 @@ export const TransactionItemList = ({
               <FiX className="h-5 w-5" />
             )}
           </button>
-          <span className="text-gray-500 text-[0.7rem]">Resolver</span>
+          <span className="text-gray-500 text-[0.7rem]">
+            {" "}
+            {payment?.isPaid ? "Resolvido" : "Resolver"}
+          </span>
         </div>
 
         <div className="flex flex-col items-center justify-center">

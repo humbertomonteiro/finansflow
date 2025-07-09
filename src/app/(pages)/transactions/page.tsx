@@ -154,7 +154,7 @@ export default function Transactions() {
           </label>
         </div>
 
-        <div className="flex justify-between w-full rounded-xl mb-4 border border-gray-800">
+        <div className="flex justify-between w-full rounded-xl mb-4 border border-gray-700 bg-gray-800">
           <div className="p-4 w-full border-r border-r-gray-700 hidden md:block">
             <div className="flex items-center justify-between text-gray-400">
               <h3 className="text-xs">Saldo atual</h3>
@@ -180,8 +180,8 @@ export default function Transactions() {
               <LiaBalanceScaleLeftSolid
                 className={`h-6 w-6 ${
                   metrics && metrics?.futureBalance > 0
-                    ? "text-green-400"
-                    : "text-red-400"
+                    ? "text-green-500"
+                    : "text-red-500"
                 }`}
               />
             </div>
@@ -189,8 +189,8 @@ export default function Transactions() {
             <div
               className={`text-lg ${
                 metrics && metrics?.futureBalance > 0
-                  ? "text-green-400"
-                  : "text-red-400"
+                  ? "text-green-500"
+                  : "text-red-500"
               }`}
             >
               {formatCurrency(metrics?.futureBalance || 0)}

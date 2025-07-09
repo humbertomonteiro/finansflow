@@ -45,11 +45,11 @@ export default function Performance() {
       return {
         message:
           "Você ainda não registrou receitas este mês. Adicione suas receitas para acompanhar seu orçamento!",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
         action: (
           <Link
             href="/transactions"
-            className="underline hover:text-blue-400"
+            className="underline hover:text-blue-500"
             aria-label="Adicionar nova receita"
           >
             Adicionar Receita
@@ -61,11 +61,11 @@ export default function Performance() {
       return {
         message:
           "Você não registrou despesas este mês. Isso pode indicar que seus gastos ainda não foram cadastrados.",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
         action: (
           <Link
             href="/transactions/add"
-            className="underline hover:text-blue-400"
+            className="underline hover:text-blue-500"
             aria-label="Adicionar nova despesa"
           >
             Adicionar Despesa
@@ -77,11 +77,11 @@ export default function Performance() {
       return {
         message:
           "Suas despesas estão bem controladas, representando menos de 50% das suas receitas. Continue assim para manter uma boa sobra financeira!",
-        color: "text-green-400",
+        color: "text-green-500",
         action: (
           <Link
             href="/performance"
-            className="underline hover:text-blue-400"
+            className="underline hover:text-blue-500"
             aria-label="Ver detalhes do orçamento"
           >
             Ver Detalhes
@@ -93,11 +93,11 @@ export default function Performance() {
       return {
         message:
           "Suas despesas estão em um nível moderado, entre 50% e 80% das suas receitas. Considere revisar categorias de gastos para aumentar sua sobra.",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
         action: (
           <Link
             href="/performance"
-            className="underline hover:text-blue-400"
+            className="underline hover:text-blue-500"
             aria-label="Analisar categorias de gastos"
           >
             Analisar Gastos
@@ -108,11 +108,11 @@ export default function Performance() {
     return {
       message:
         "Atenção: Suas despesas estão altas, consumindo mais de 80% das suas receitas. Reveja seus gastos para evitar problemas financeiros.",
-      color: "text-red-400",
+      color: "text-red-500",
       action: (
         <Link
           href="/transactions"
-          className="underline hover:text-blue-400"
+          className="underline hover:text-blue-500"
           aria-label="Revisar despesas"
         >
           Revisar Despesas
@@ -126,27 +126,27 @@ export default function Performance() {
       return {
         message:
           "Nenhum dado de balanço disponível. Registre suas transações para começar!",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
       };
     }
     if (metrics.futureBalance > 0) {
       return {
         message:
           "Seu balanço está positivo! Isso significa que você tem uma sobra financeira para poupar ou investir.",
-        color: "text-green-400",
+        color: "text-green-500",
       };
     }
     if (metrics.futureBalance === 0) {
       return {
         message:
           "Seu balanço está zerado. Você gastou exatamente o que recebeu. Tente reduzir despesas para criar uma sobra.",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
       };
     }
     return {
       message:
         "Seu balanço está negativo, indicando que você gastou mais do que recebeu. Considere cortar gastos ou aumentar suas receitas.",
-      color: "text-red-400",
+      color: "text-red-500",
     };
   };
 
@@ -169,7 +169,7 @@ export default function Performance() {
         <div className="space-y-4">
           {/* Receitas */}
           <p className="text-sm text-gray-400 leading-6">
-            <strong className="text-green-400 text-base">
+            <strong className="text-green-500 text-base">
               Receitas: {metrics ? formatCurrency(metrics.revenues) : "R$ 0,00"}
             </strong>
             <br />
@@ -180,7 +180,7 @@ export default function Performance() {
 
           {/* Despesas */}
           <p className="text-sm text-gray-400 leading-6">
-            <strong className="text-red-400 text-base">
+            <strong className="text-red-500 text-base">
               Despesas: {metrics ? formatCurrency(metrics.expenses) : "R$ 0,00"}
             </strong>
             <br />
@@ -202,8 +202,8 @@ export default function Performance() {
             <strong
               className={`text-base ${
                 metrics && metrics?.futureBalance > 0
-                  ? "text-green-400"
-                  : "text-red-400"
+                  ? "text-green-500"
+                  : "text-red-500"
               }`}
             >
               Balanço:{" "}
