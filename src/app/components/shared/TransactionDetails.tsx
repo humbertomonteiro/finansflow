@@ -96,7 +96,7 @@ export const TransactionDetails = ({
       <div className="bg-gray-800 rounded-xl p-4 text-gray-100 w-[500px] max-w-[100%] max-h-[100%] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Detalhes da Transação</h2>
         <div className="space-y-2 bg-gray-900 rounded-xl px-4 py-2">
-          <p className="flex gap-2  items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2  items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Descrição:</strong>{" "}
             {isEditing ? (
               <input
@@ -114,7 +114,7 @@ export const TransactionDetails = ({
               transaction.description || "Sem descrição"
             )}
           </p>
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Valor:</strong>{" "}
             {isEditing ? (
               <input
@@ -135,7 +135,7 @@ export const TransactionDetails = ({
               })
             )}
           </p>
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Categoria:</strong>{" "}
             {isEditing ? (
               <select
@@ -158,13 +158,13 @@ export const TransactionDetails = ({
               getCategoryName(transaction.categoryId)
             )}
           </p>
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Tipo:</strong>{" "}
             {transaction.type === TransactionTypes.DEPOSIT
               ? "Receita"
               : "Despesa"}
           </p>
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Tipo de Transação:</strong>{" "}
             {transaction.kind === TransactionKind.SIMPLE
               ? "Simples"
@@ -172,7 +172,7 @@ export const TransactionDetails = ({
               ? `Parcelada (${transaction.paymentHistory.length} de ${transaction.recurrence.installmentsCount})`
               : "Fixa"}
           </p>
-          <p className="flex gap-2 items-center py-4 border-b border-b-gray-700 text-gray-300">
+          <p className="flex gap-2 items-center py-4 border-b border-b-gray-800 text-gray-300">
             <strong>Data de Vencimento:</strong>{" "}
             {format(transaction.dueDate, "dd/MM/yyyy", { locale: ptBR })}
           </p>

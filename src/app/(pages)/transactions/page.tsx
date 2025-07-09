@@ -140,10 +140,10 @@ export default function Transactions() {
         </li>
       </ul>
 
-      <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl flex flex-col">
+      <div className="bg-gray-900 p-4 rounded-xl flex flex-col border border-gray-800">
         <div className="flex gap-4 flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <h3 className="text-gray-400 text-lg">Transações mensais</h3>
-          <label className="flex items-center justify-between text-xs py-3 md:py-2 px-4 border border-gray-700 rounded-full gap-2 w-[99%] md:w-60">
+          <label className="flex items-center justify-between text-xs py-3 md:py-2 px-4 border border-gray-800 rounded-full gap-2 w-[99%] md:w-60">
             <input
               className=" focus:outline-none"
               type="text"
@@ -154,12 +154,12 @@ export default function Transactions() {
           </label>
         </div>
 
-        <div className="flex justify-between w-full bg-gray-800  rounded-xl mb-4">
+        <div className="flex justify-between w-full rounded-xl mb-4 border border-gray-800">
           <div className="p-4 w-full border-r border-r-gray-700 hidden md:block">
             <div className="flex items-center justify-between text-gray-400">
               <h3 className="text-xs">Saldo atual</h3>
               <RiMoneyDollarCircleLine
-                className={`h-7 w-7 ${
+                className={`h-6 w-6 ${
                   currentBalance > 0 ? "text-green-400" : "text-red-400"
                 }`}
               />
@@ -178,7 +178,7 @@ export default function Transactions() {
             <div className="flex items-center justify-between text-gray-400">
               <h3 className="text-xs">Balanço mensal</h3>
               <LiaBalanceScaleLeftSolid
-                className={`h-7 w-7 ${
+                className={`h-6 w-6 ${
                   metrics && metrics?.futureBalance > 0
                     ? "text-green-400"
                     : "text-red-400"
@@ -201,7 +201,7 @@ export default function Transactions() {
             <div className="flex items-center justify-between text-gray-400">
               <h3 className="text-xs">Projeção</h3>
               <GoGraph
-                className={`h-7 w-7 ${
+                className={`h-6 w-6 ${
                   accumulatedFutureBalance > 0
                     ? "text-green-400"
                     : "text-red-400"

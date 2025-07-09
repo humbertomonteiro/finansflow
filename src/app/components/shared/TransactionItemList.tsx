@@ -3,9 +3,12 @@ import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { useUser } from "@/app/hooks/useUser";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { FiCheck, FiX } from "react-icons/fi";
+
+import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
 // import { CiMenuKebab } from "react-icons/ci";
 import { TransactionDetails } from "./TransactionDetails";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
+import { PiDotsThreeOutlineVerticalThin } from "react-icons/pi";
 
 interface TransactionItemListProps {
   transaction: (ITransaction & { installmentsNumber: number }) | null;
@@ -36,24 +39,44 @@ export const TransactionItemList = ({
     <>
       <li
         key={transaction.id}
-        className={`flex items-center gap-2 p-3 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 transition-all ${
-          transaction.type === TransactionTypes.DEPOSIT
-            ? "border-l-4 border-green-500"
-            : "border-l-4 border-red-500"
-        }`}
+        className={`flex items-center gap-2 p-3 rounded-xl 
+          cursor-pointer border border-gray-800`}
       >
         <div
           onClick={() => setIsOpen(true)}
-          className="w-full text-nowrap overflow-hidden text-ellipsis"
+          className={`w-full text-nowrap overflow-hidden text-ellipsis flex gap-2 md:gap-4 items-center`}
         >
+          <div className={`flex flex-col items-center`}>
+            <div
+              className={`rounded-full text-gray-900 w-fit p-1 ${
+                transaction.type === TransactionTypes.DEPOSIT
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              }`}
+            >
+              {transaction.type === TransactionTypes.DEPOSIT ? (
+                <IoMdArrowUp className="h-5 w-5" />
+              ) : (
+                <IoMdArrowDown className="h-5 w-5" />
+              )}
+            </div>
+            <p className={`text-[0.7rem] block text-gray-500`}>
+              {transaction.type === TransactionTypes.DEPOSIT
+                ? "Receita"
+                : "Despesa"}
+            </p>
+          </div>
+
           <div>
             {transaction && (
-              <p className="text-gray-300 text-sm md:text-base">
+              <p className={`text-base md:text-lg text-gray-300`}>
                 {transaction.description}
               </p>
             )}
             <div className="flex gap-1">
-              <p className="text-xs block text-gray-400">
+              <p
+                className={`text-[0.7rem] bg-gray-800 px-2 text-gray-500 rounded-full`}
+              >
                 {getCategoryName(transaction.categoryId)}
               </p>
               <p className="text-xs block text-gray-500">
@@ -72,13 +95,14 @@ export const TransactionItemList = ({
         </div>
         <div
           onClick={() => setIsOpen(true)}
-          className="w-[250px] text-right mr-2 text-gray-300"
+          className="w-[250px] text-right mr-2 text-gray-300 text-base md:text-lg"
         >
           {transaction.amount.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
           })}
         </div>
+
         <div className="flex flex-col items-center justify-center">
           <button
             onClick={() => {
@@ -87,9 +111,9 @@ export const TransactionItemList = ({
               }
               payTransaction(transaction.id);
             }}
-            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity duration-200 rounded-full text-gray-100 ${
-              payment?.isPaid ? "bg-green-500" : "bg-red-500"
-            }`}
+            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity 
+              duration-200 rounded-full text-gray-200 
+              ${payment?.isPaid ? "bg-violet-700" : "bg-gray-500"}`}
             disabled={
               index === -1 && transaction.kind !== TransactionKind.FIXED
             }
@@ -102,12 +126,16 @@ export const TransactionItemList = ({
           </button>
           <span className="text-gray-500 text-[0.7rem]">Resolver</span>
         </div>
-        {/* <button
-          onClick={() => setIsOpen(true)}
-          className="cursor-pointer p-1 rounded-full opacity-90 hover:opacity-100 transition-opacity duration-200 z-10 bg-gray-500"
-        >
-          <CiMenuKebab />
-        </button> */}
+
+        <div className="flex flex-col items-center justify-center">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="cursor-pointer p-1 rounded-full opacity-90 hover:bg-violet-700 transition-opacity duration-200"
+          >
+            <PiDotsThreeOutlineVerticalThin className="h-5 w-5" />
+          </button>
+          <span className="text-gray-500 text-[0.7rem]">Menu</span>
+        </div>
       </li>
       {isOpen && (
         <TransactionDetails
