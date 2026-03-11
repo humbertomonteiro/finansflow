@@ -9,7 +9,12 @@ export const Title = ({
 }) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-semibold text-gray-300 ml-1">{children}</h2>
+      <h2
+        className="text-xl font-semibold tracking-tight"
+        style={{ color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}
+      >
+        {children}
+      </h2>
       {navigateMonth && <NavigateMonth />}
     </div>
   );

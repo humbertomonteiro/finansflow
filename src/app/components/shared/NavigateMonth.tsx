@@ -1,61 +1,84 @@
 import { useUser } from "@/app/hooks/useUser";
-import { FiChevronLeft, FiChevronRight, FiCalendar } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const NavigateMonth = () => {
   const { month, year, setMonth, setYear } = useUser();
 
-  const handlePreviousMonth = () => {
+  const handlePrev = () => {
     if (month === 1) {
       setMonth(12);
       setYear(year - 1);
-    } else {
-      setMonth(month - 1);
-    }
+    } else setMonth(month - 1);
   };
 
-  const handleNextMonth = () => {
+  const handleNext = () => {
     if (month === 12) {
       setMonth(1);
       setYear(year + 1);
-    } else {
-      setMonth(month + 1);
-    }
+    } else setMonth(month + 1);
   };
 
+  const label = format(new Date(year, month - 1, 1), "MMM yyyy", {
+    locale: ptBR,
+  });
+
   return (
-    <div className="flex items-center rounded-full shadow-sm bg-gray-900 p-1">
+    <div
+      className="flex items-center gap-1 rounded-xl p-1"
+      style={{
+        background: "var(--bg-elevated)",
+        border: "1px solid var(--border-default)",
+      }}
+    >
       <button
-        className="flex items-center bg-gray-800 hover:bg-violet-900 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
-        onClick={handlePreviousMonth}
+        onClick={handlePrev}
         aria-label="Mês anterior"
+        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+        style={{ color: "var(--text-secondary)" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--bg-hover)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
-        <FiChevronLeft className="h-5 w-5" />
+        <FiChevronLeft className="h-4 w-4" />
       </button>
-      <label className="flex items-center gap-1 px-4 py-2 text-gray-200 font-medium">
-        <span className="text-sm">
-          {month < 10 ? `0${month}` : month}/{year}
+
+      <div className="relative">
+        <span
+          className="px-3 text-sm font-medium capitalize select-none"
+          style={{
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          {label}
         </span>
-        <div className="relative overflow-hidden">
-          <FiCalendar className="h-5 w-5 text-indigo-400 cursor-pointer" />
-          <input
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            type="month"
-            value={`${year}-${month < 10 ? `0${month}` : month}`}
-            onChange={(e) => {
-              const date = new Date(e.target.value);
-              setMonth(date.getMonth() + 2);
-              setYear(date.getFullYear());
-            }}
-            aria-label="Selecionar mês e ano"
-          />
-        </div>
-      </label>
+        <input
+          type="month"
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          value={`${year}-${String(month).padStart(2, "0")}`}
+          onChange={(e) => {
+            const d = new Date(e.target.value);
+            setMonth(d.getMonth() + 2);
+            setYear(d.getFullYear());
+          }}
+          aria-label="Selecionar mês"
+        />
+      </div>
+
       <button
-        className="flex items-center bg-gray-800 hover:bg-violet-900 text-gray-400 font-medium text-sm p-2 rounded-full transition-colors duration-200 cursor-pointer"
-        onClick={handleNextMonth}
+        onClick={handleNext}
         aria-label="Próximo mês"
+        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+        style={{ color: "var(--text-secondary)" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--bg-hover)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
-        <FiChevronRight className="h-5 w-5" />
+        <FiChevronRight className="h-4 w-4" />
       </button>
     </div>
   );

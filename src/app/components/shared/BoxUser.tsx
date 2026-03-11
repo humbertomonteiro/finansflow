@@ -1,58 +1,121 @@
 "use client";
 
 import { useUser } from "@/app/hooks/useUser";
-import { User } from "@/domain/entities/user/User";
 import { useState } from "react";
-
 import { CiEdit } from "react-icons/ci";
-import { FaCheck } from "react-icons/fa6";
+import { FiCheck, FiX } from "react-icons/fi";
 
 export const BoxUser = () => {
   const { user, updateUser } = useUser();
   const [edit, setEdit] = useState(false);
-  const [newName, setnewName] = useState<string>(user?.name || "");
+  const [newName, setNewName] = useState(user?.name || "");
 
-  const handleUpdateUser = () => {
-    updateUser({ name: newName });
+  const handleSave = () => {
+    if (newName.trim().length >= 2) {
+      updateUser({ name: newName.trim() });
+    }
+    setEdit(false);
   };
 
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "??";
+
   return (
-    <div className="bg-gray-900 p-4 rounded-2xl flex justify-between items-start gap-4 w-full ">
-      <div className="flex gap-4">
-        <div className="h-12 w-12 rounded-full bg-gray-800 flex justify-center items-center font-semibold">
-          {user?.name[0]}
-          {user?.name[1]}
+    <div
+      className="flex items-center justify-between gap-4 p-4 rounded-xl"
+      style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-default)",
+      }}
+    >
+      <div className="flex items-center gap-3">
+        {/* Avatar */}
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
+          style={{
+            background: "var(--accent-dim)",
+            color: "var(--accent-light)",
+            border: "1px solid var(--border-accent)",
+          }}
+        >
+          {initials}
         </div>
+
+        {/* Info */}
         <div>
           {edit ? (
             <input
-              className="input mb-2"
+              className="input h-8 text-sm"
+              style={{ width: "160px" }}
               type="text"
               value={newName}
-              onChange={(e) => setnewName(e.target.value)}
-              placeholder="Digite seu nome..."
+              autoFocus
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSave()}
             />
           ) : (
-            <p className="text-lg">{user?.name}</p>
+            <p
+              className="text-sm font-medium"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {user?.name}
+            </p>
           )}
-          <p className="text-sm text-gray-400">{user?.email}</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {user?.email}
+          </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        {edit && (
+
+      {/* Actions */}
+      <div className="flex items-center gap-1">
+        {edit ? (
+          <>
+            <button
+              onClick={handleSave}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+              style={{ background: "var(--green-dim)", color: "var(--green)" }}
+            >
+              <FiCheck className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                setEdit(false);
+                setNewName(user?.name || "");
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--bg-hover)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
           <button
-            onClick={handleUpdateUser}
-            className="py-2 px-4 rounded-lg text-gray-200 hover:bg-green-500 transition-all cursor-pointer"
+            onClick={() => setEdit(true)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+            style={{ color: "var(--text-muted)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--bg-hover)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
           >
-            <FaCheck className="h-5 w-5" />
+            <CiEdit className="h-4 w-4" />
           </button>
         )}
-        <button
-          onClick={() => setEdit(!edit)}
-          className="py-2 px-4 rounded-lg hover:bg-violet-800 transition-all cursor-pointer"
-        >
-          <CiEdit className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
