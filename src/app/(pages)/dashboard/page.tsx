@@ -33,7 +33,7 @@ export default function Dashboard() {
                       currentBalance?.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }) || "$0.00"
+                      }) || "R$ 0,00"
                     }
                     title="Saldo"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
@@ -48,16 +48,16 @@ export default function Dashboard() {
                       metrics.revenues?.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }) || "$0.00"
+                      }) || "R$ 0,00"
                     }
                     title="Receitas"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-green-500"
-                    info={`Valor recebido: ${
+                    info={`Recebido: ${
                       metrics.revenuesPaid?.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }) || "$0.00"
+                      }) || "R$ 0,00"
                     }`}
                   />
                 </div>
@@ -67,16 +67,16 @@ export default function Dashboard() {
                       metrics.expenses?.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }) || "$0.00"
+                      }) || "R$ 0,00"
                     }
                     title="Despesas"
                     icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                     color="bg-red-500"
-                    info={`Valor pago: ${
+                    info={`Pago: ${
                       metrics.expensesPaid?.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }) || "$0.00"
+                      }) || "R$ 0,00"
                     }`}
                   />
                 </div>
@@ -87,12 +87,12 @@ export default function Dashboard() {
                     metrics.futureBalance?.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
-                    }) || "$0.00"
+                    }) || "R$ 0,00"
                   }
                   title="Balanço"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
                   color="bg-violet-500"
-                  info="Mês virgente"
+                  info="Mês vigente" // FIX: era 'virgente'
                 />
 
                 <Card
@@ -100,7 +100,7 @@ export default function Dashboard() {
                     accumulatedFutureBalance.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
-                    }) || "$0.00"
+                    }) || "R$ 0,00"
                   }
                   title="Projeção"
                   icon={<RiMoneyDollarCircleLine className="h-6 w-6" />}
@@ -110,7 +110,9 @@ export default function Dashboard() {
               </div>
             </>
           ) : (
-            <p>Carregando...</p>
+            <div className="col-span-2 py-8 flex items-center justify-center">
+              <p className="text-gray-400">Carregando métricas...</p>
+            </div>
           )}
         </div>
 
@@ -134,7 +136,7 @@ export default function Dashboard() {
 
           {overdueTransactions && overdueTransactions.length > 0 && (
             <div className="bg-gray-900 rounded-xl py-4 border border-gray-800">
-              <div className="px-4 max-w-[100%] flex-1  max-h-[400px] overflow-y-auto">
+              <div className="px-4 max-w-[100%] flex-1 max-h-[400px] overflow-y-auto">
                 <h2 className="text-gray-300 text-lg mb-4">
                   Transações Atrasadas
                 </h2>

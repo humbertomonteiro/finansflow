@@ -5,13 +5,6 @@
   --foreground: #171717;
 }
 
-/* @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-} */
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -37,14 +30,15 @@ body {
   padding: 20px;
 }
 
-/* globals.css */
 .button {
   border-radius: 0.5rem;
   padding: 0.3rem 1.5rem;
   height: 45px;
   cursor: pointer;
   opacity: 0.9;
-  transition: opacity 0.3s ease, background-color 0.2s ease;
+  transition:
+    opacity 0.3s ease,
+    background-color 0.2s ease;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -58,7 +52,6 @@ body {
 .input {
   width: 100%;
   max-width: 100%;
-  font-size: 1rem;
   font-weight: 500;
   border: 1px solid #1e2939;
   border-radius: 0.5rem;
@@ -66,6 +59,7 @@ body {
   padding: 0.5rem;
   height: 45px;
   color: #d4d5d8;
+  background: transparent;
 }
 
 .link {
@@ -76,12 +70,14 @@ body {
   transition: color 0.3s ease;
 }
 
-/* @media screen and (max-width: 768px) {
-  .button {
-    padding: 0.3rem 1rem;
+/* Animação para o expand inline do TransactionItemList */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
-  .input {
-    padding: 0.5rem 1rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-} */
+}

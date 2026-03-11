@@ -1,150 +1,417 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useRef } from "react";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
-import { useUser } from "@/app/hooks/useUser";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
-import { FiCheck, FiX } from "react-icons/fi";
+import { useUser } from "@/app/hooks/useUser";
+import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
+import { TransactionDetails } from "./TransactionDetails";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
-// import { CiMenuKebab } from "react-icons/ci";
-import { TransactionDetails } from "./TransactionDetails";
-import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
-import { PiDotsThreeOutlineVerticalThin } from "react-icons/pi";
+import {
+  FiCheck,
+  FiX,
+  FiTrash,
+  FiChevronDown,
+  FiChevronUp,
+  FiClock,
+} from "react-icons/fi";
+import { MdRepeat } from "react-icons/md";
 
 interface TransactionItemListProps {
-  transaction: (ITransaction & { installmentsNumber: number }) | null;
+  transaction: (ITransaction & { installmentsNumber?: number }) | null;
   index: number;
+  /** Modo seleção ativo na lista pai */
+  isSelecting?: boolean;
+  /** Este item está selecionado */
+  isSelected?: boolean;
+  /** Callback ao clicar no checkbox/card durante seleção */
+  onSelect?: (id: string) => void;
 }
 
 export const TransactionItemList = ({
   transaction,
   index = -1,
+  isSelecting = false,
+  isSelected = false,
+  onSelect,
 }: TransactionItemListProps) => {
-  const { categories, payTransaction } = useUser();
-  const [isOpen, setIsOpen] = useState(false);
+  const { categories, accounts, payTransaction, removeTransaction } = useUser();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
 
-  const onClose = () => {
-    setIsOpen(false);
-  };
-
-  const getCategoryName = (categoryId: string) => {
-    const category = categories?.find((category) => category.id === categoryId);
-    return category?.name || "Sem categoria";
-  };
+  // Swipe state
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeAction, setSwipeAction] = useState<"pay" | "delete" | null>(null);
 
   if (!transaction) return null;
 
-  const payment = transaction.paymentHistory[index];
+  const payment =
+    transaction.paymentHistory[index] ?? transaction.paymentHistory[0];
+  const isDeposit = transaction.type === TransactionTypes.DEPOSIT;
+  const isFixed = transaction.kind === TransactionKind.FIXED;
+  const isInstallment = transaction.kind === TransactionKind.INSTALLMENT;
+  const displayAmount = payment?.amount ?? transaction.amount;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(transaction.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+  const isOverdue = !payment?.isPaid && dueDate < today;
+  const isNearby =
+    !payment?.isPaid &&
+    !isOverdue &&
+    dueDate >= today &&
+    dueDate.getTime() - today.getTime() <= 10 * 24 * 60 * 60 * 1000;
+
+  const getCategoryName = (id: string) =>
+    categories?.find((c) => c.id === id)?.name ?? "Sem categoria";
+  const getAccountName = (id: string) =>
+    accounts?.find((a) => a.id === id)?.name ?? "Sem conta";
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // ── Handlers ──────────────────────────────────────────────
+  const handleCardClick = () => {
+    if (isSelecting) {
+      onSelect?.(transaction.id);
+    } else {
+      setIsExpanded((p) => !p);
+    }
+  };
+
+  const handlePay = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSelecting) return; // durante seleção, ignora pagar individual
+    if (index === -1 && !isFixed) return;
+    setIsPaying(true);
+    try {
+      await payTransaction(transaction.id);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  // ── Swipe (desativado em modo seleção) ────────────────────
+  const SWIPE_THRESHOLD = 72;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (isSelecting) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setSwipeAction(null);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (
+      isSelecting ||
+      touchStartX.current === null ||
+      touchStartY.current === null
+    )
+      return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    const clamped = Math.max(-120, Math.min(120, dx));
+    setSwipeOffset(clamped);
+    if (clamped > SWIPE_THRESHOLD) setSwipeAction("pay");
+    else if (clamped < -SWIPE_THRESHOLD) setSwipeAction("delete");
+    else setSwipeAction(null);
+  };
+
+  const onTouchEnd = async () => {
+    if (isSelecting) return;
+    if (swipeAction === "pay" && (index !== -1 || isFixed)) {
+      setIsPaying(true);
+      try {
+        await payTransaction(transaction.id);
+      } finally {
+        setIsPaying(false);
+      }
+    } else if (swipeAction === "delete") {
+      if (confirm(`Remover "${transaction.description}"?`)) {
+        await removeTransaction(
+          transaction.id,
+          isFixed || isInstallment
+            ? (
+                await import("@/domain/enums/transaction/TransactionRemovalScope")
+              ).TransactionRemovalScope.CURRENT_MONTH
+            : (
+                await import("@/domain/enums/transaction/TransactionRemovalScope")
+              ).TransactionRemovalScope.ALL,
+        );
+      }
+    }
+    setSwipeOffset(0);
+    setSwipeAction(null);
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  // ── Estilos dinâmicos ─────────────────────────────────────
+  const borderColor = isSelected
+    ? "border-violet-500"
+    : isOverdue
+      ? "border-red-800"
+      : payment?.isPaid
+        ? "border-green-900/40"
+        : isNearby
+          ? "border-yellow-800/60"
+          : "border-gray-800";
+
+  const bgColor = isSelected ? "bg-violet-950/40" : "bg-gray-900";
 
   return (
     <>
-      <li
-        key={transaction.id}
-        className={`flex items-center gap-2 p-3 rounded-xl 
-          cursor-pointer border border-gray-800`}
-      >
-        <div
-          onClick={() => setIsOpen(true)}
-          className={`w-full text-nowrap overflow-hidden text-ellipsis flex gap-2 md:gap-4 items-center`}
-        >
-          <div className={`flex flex-col items-center`}>
+      <li className="relative overflow-hidden rounded-xl select-none">
+        {/* Fundo swipe */}
+        {!isSelecting && (
+          <div className="absolute inset-0 flex items-stretch pointer-events-none">
             <div
-              className={`rounded-full text-gray-200 w-fit p-1 ${
-                transaction.type === TransactionTypes.DEPOSIT
-                  ? "bg-green-700"
-                  : "bg-red-700"
-              }`}
+              className={`flex-1 flex items-center justify-start px-5 transition-opacity
+              ${swipeAction === "pay" ? "bg-green-800 opacity-100" : "bg-green-900/30 opacity-0"}`}
             >
-              {transaction.type === TransactionTypes.DEPOSIT ? (
-                <IoMdArrowUp className="h-5 w-5" />
-              ) : (
-                <IoMdArrowDown className="h-5 w-5" />
-              )}
+              <FiCheck className="h-6 w-6 text-green-300" />
+              <span className="ml-2 text-green-300 text-sm font-semibold">
+                {payment?.isPaid ? "Desfazer" : "Pagar"}
+              </span>
             </div>
-            <p className={`text-[0.7rem] block text-gray-500`}>
-              {transaction.type === TransactionTypes.DEPOSIT
-                ? "Receita"
-                : "Despesa"}
-            </p>
+            <div
+              className={`flex-1 flex items-center justify-end px-5 transition-opacity
+              ${swipeAction === "delete" ? "bg-red-800 opacity-100" : "bg-red-900/30 opacity-0"}`}
+            >
+              <span className="mr-2 text-red-300 text-sm font-semibold">
+                Remover
+              </span>
+              <FiTrash className="h-5 w-5 text-red-300" />
+            </div>
           </div>
+        )}
 
-          <div>
-            {transaction && (
-              <p className={`text-base md:text-lg text-gray-300`}>
-                {transaction.description}
-              </p>
-            )}
-            <div className="flex gap-1">
-              <p
-                className={`text-[0.7rem] bg-gray-800 px-2 text-gray-400 rounded-full mt-[0.2rem]`}
+        {/* Card principal */}
+        <div
+          className={`relative flex flex-col border ${borderColor} ${bgColor} rounded-xl
+            transition-all duration-150 ease-out`}
+          style={
+            !isSelecting
+              ? { transform: `translateX(${swipeOffset}px)` }
+              : undefined
+          }
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          {/* Linha principal */}
+          <div
+            className="flex items-center gap-3 p-3 cursor-pointer"
+            onClick={handleCardClick}
+          >
+            {/* Checkbox de seleção OU ícone de tipo */}
+            {isSelecting ? (
+              <div
+                className={`shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center
+                  transition-all duration-150
+                  ${
+                    isSelected
+                      ? "bg-violet-600 border-violet-500"
+                      : "bg-transparent border-gray-600"
+                  }`}
               >
-                {getCategoryName(transaction.categoryId)}
-              </p>
-              <p className="text-xs block text-gray-500">
-                {transaction.kind === TransactionKind.FIXED && (
-                  <span>(Fixo)</span>
+                {isSelected && <FiCheck className="h-3 w-3 text-white" />}
+              </div>
+            ) : (
+              <div
+                className={`shrink-0 rounded-full p-2
+                  ${isDeposit ? "bg-green-700/60" : "bg-red-700/60"}`}
+              >
+                {isDeposit ? (
+                  <IoMdArrowUp className="h-4 w-4 text-green-300" />
+                ) : (
+                  <IoMdArrowDown className="h-4 w-4 text-red-300" />
                 )}
-                {transaction.kind === TransactionKind.INSTALLMENT && (
-                  <span>
-                    {transaction.installmentsNumber} de{" "}
-                    {transaction.recurrence.installmentsCount}
+              </div>
+            )}
+
+            {/* Descrição + badges */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-gray-200 text-sm font-medium truncate">
+                  {transaction.description || "Sem descrição"}
+                </p>
+                {isOverdue && (
+                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-red-900/70 text-red-400 font-semibold flex items-center gap-1">
+                    <FiClock className="h-2.5 w-2.5" /> Atrasado
                   </span>
                 )}
-              </p>
+                {isNearby && (
+                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-yellow-900/60 text-yellow-400 font-semibold">
+                    Vence em breve
+                  </span>
+                )}
+                {payment?.isPaid && (
+                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-green-900/50 text-green-400 font-semibold">
+                    Pago
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span className="text-[0.7rem] bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">
+                  {getCategoryName(transaction.categoryId)}
+                </span>
+                {isFixed && (
+                  <span className="text-[0.7rem] bg-violet-900/50 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
+                    <MdRepeat className="h-2.5 w-2.5" /> Fixo
+                  </span>
+                )}
+                {isInstallment && (
+                  <span className="text-[0.7rem] bg-blue-900/50 px-2 py-0.5 rounded-full text-blue-400">
+                    {transaction.installmentsNumber}/
+                    {transaction.recurrence.installmentsCount}x
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-        <div
-          onClick={() => setIsOpen(true)}
-          className="w-[250px] text-right mr-2 text-gray-300 text-base md:text-lg"
-        >
-          {transaction.amount.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-        </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <button
-            onClick={() => {
-              if (index === -1 && transaction.kind !== TransactionKind.FIXED) {
-                return;
-              }
-              payTransaction(transaction.id);
-            }}
-            className={`cursor-pointer p-1 opacity-90 hover:opacity-100 transition-opacity 
-              duration-200 rounded-full text-gray-200 
-              ${payment?.isPaid ? "bg-violet-700" : "bg-gray-500"}`}
-            disabled={
-              index === -1 && transaction.kind !== TransactionKind.FIXED
-            }
-          >
-            {payment?.isPaid ? (
-              <FiCheck className="h-5 w-5" />
-            ) : (
-              <FiX className="h-5 w-5" />
+            {/* Valor */}
+            <div className="shrink-0 text-right">
+              <p
+                className={`text-sm font-semibold ${isDeposit ? "text-green-400" : "text-red-400"}`}
+              >
+                {isDeposit ? "+" : "-"}
+                {formatCurrency(displayAmount)}
+              </p>
+              {isInstallment && transaction.recurrence.installmentsCount && (
+                <p className="text-[0.65rem] text-gray-600">
+                  total{" "}
+                  {formatCurrency(
+                    displayAmount *
+                      (transaction.recurrence.installmentsCount ?? 1),
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Botão pagar — oculto em modo seleção */}
+            {!isSelecting && (
+              <button
+                onClick={handlePay}
+                disabled={(index === -1 && !isFixed) || isPaying}
+                title={
+                  payment?.isPaid ? "Desfazer pagamento" : "Marcar como pago"
+                }
+                className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center
+                  transition-all duration-200 cursor-pointer
+                  disabled:opacity-30 disabled:cursor-not-allowed
+                  ${
+                    payment?.isPaid
+                      ? "bg-violet-700 hover:bg-violet-600 text-white"
+                      : "bg-gray-700 hover:bg-gray-600 text-gray-400"
+                  }
+                  ${isPaying ? "animate-pulse" : ""}`}
+              >
+                {payment?.isPaid ? (
+                  <FiCheck className="h-4 w-4" />
+                ) : (
+                  <FiX className="h-4 w-4" />
+                )}
+              </button>
             )}
-          </button>
-          <span className="text-gray-500 text-[0.7rem]">
-            {" "}
-            {payment?.isPaid ? "Resolvido" : "Resolver"}
-          </span>
-        </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="cursor-pointer p-1 rounded-full opacity-90 hover:bg-violet-700 transition-opacity duration-200"
-          >
-            <PiDotsThreeOutlineVerticalThin className="h-5 w-5" />
-          </button>
-          <span className="text-gray-500 text-[0.7rem]">Menu</span>
+            {/* Chevron expand — oculto em modo seleção */}
+            {!isSelecting && (
+              <div className="shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
+                {isExpanded ? (
+                  <FiChevronUp className="h-4 w-4" />
+                ) : (
+                  <FiChevronDown className="h-4 w-4" />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Expand inline — desativado em modo seleção */}
+          {isExpanded && !isSelecting && (
+            <div className="border-t border-gray-800 px-4 py-3 flex flex-col gap-2 animate-[fadeIn_0.15s_ease-out]">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                <div>
+                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    Vencimento
+                  </p>
+                  <p className="text-gray-300">
+                    {format(transaction.dueDate, "dd/MM/yyyy", {
+                      locale: ptBR,
+                    })}
+                  </p>
+                </div>
+                {payment?.paidAt && (
+                  <div>
+                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                      Pago em
+                    </p>
+                    <p className="text-gray-300">
+                      {format(new Date(payment.paidAt), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    Conta
+                  </p>
+                  <p className="text-gray-300">
+                    {getAccountName(transaction.accountId)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    Tipo
+                  </p>
+                  <p className="text-gray-300">
+                    {isFixed
+                      ? "Recorrente"
+                      : isInstallment
+                        ? "Parcelado"
+                        : "Simples"}
+                  </p>
+                </div>
+                {isInstallment && transaction.recurrence.installmentsCount && (
+                  <div>
+                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                      Parcela
+                    </p>
+                    <p className="text-gray-300">
+                      {transaction.installmentsNumber} de{" "}
+                      {transaction.recurrence.installmentsCount} (
+                      {formatCurrency(displayAmount)} / parcela)
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(true);
+                }}
+                className="mt-1 text-[0.7rem] text-violet-400 hover:text-violet-300 underline underline-offset-2 text-left transition-colors cursor-pointer w-fit"
+              >
+                Ver detalhes completos / Editar
+              </button>
+            </div>
+          )}
         </div>
       </li>
-      {isOpen && (
+
+      {isModalOpen && (
         <TransactionDetails
           transaction={transaction}
-          isOpen={isOpen}
-          onClose={onClose}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </>

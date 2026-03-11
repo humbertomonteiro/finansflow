@@ -6,34 +6,38 @@ export class Category {
   public readonly id: string;
   public readonly name: string;
   public readonly description?: string;
+  public readonly userId?: string;
 
   private constructor(props: ICategory) {
     this.id = props.id;
     this.name = props.name;
     this.description = props.description;
+    this.userId = props.userId;
   }
 
   static create(props: Omit<ICategory, "id">): Category {
-    if (props.name.length < 3) throw new InvalidCategoryNameError();
+    if (props.name.trim().length < 2) throw new InvalidCategoryNameError();
 
     return new Category({
       id: generateUID(),
       ...props,
+      name: props.name.trim(),
     });
   }
 
-  update(props: Partial<Omit<ICategory, "id">>): Category {
-    const mergedProps = {
-      name: props.name ?? this.name,
-      description: props.description ?? this.description,
-    };
+  static fromData(data: ICategory): Category {
+    return new Category(data);
+  }
 
-    if (props.name && props.name.length < 3)
+  update(props: Partial<Omit<ICategory, "id">>): Category {
+    if (props.name !== undefined && props.name.trim().length < 2)
       throw new InvalidCategoryNameError();
 
     return new Category({
       id: this.id,
-      ...mergedProps,
+      name: props.name?.trim() ?? this.name,
+      description: props.description ?? this.description,
+      userId: props.userId ?? this.userId,
     });
   }
 
@@ -42,6 +46,7 @@ export class Category {
       id: this.id,
       name: this.name,
       description: this.description,
+      ...(this.userId ? { userId: this.userId } : {}),
     };
   }
 }

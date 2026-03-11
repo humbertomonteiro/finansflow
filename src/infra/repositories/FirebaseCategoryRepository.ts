@@ -18,27 +18,28 @@ export class CategoryRepositoryFirestore implements IRepository<Category> {
   async save(category: Category): Promise<Category> {
     const docRef = doc(db, this.collection, category.id);
     await setDoc(docRef, category.toJSON());
-
     return category;
   }
 
   async findAll(): Promise<Category[]> {
     const snapshot = await getDocs(collection(db, this.collection));
-    return snapshot.docs.map((doc) => doc.data() as Category);
+    return snapshot.docs.map((d) => Category.fromData(d.data() as any));
   }
 
   async findById(id: string): Promise<Category | null> {
     const docRef = doc(db, this.collection, id);
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? (docSnap.data() as Category) : null;
+    if (!docSnap.exists()) return null;
+    return Category.fromData(docSnap.data() as any);
   }
 
   async update(id: string, category: Partial<Category>): Promise<Category> {
     const docRef = doc(db, this.collection, id);
-    await setDoc(docRef, category, { merge: true });
-    const updatedDoc = await this.findById(id);
-    if (!updatedDoc) throw new Error("category not found");
-    return updatedDoc;
+    const data = category.toJSON ? category.toJSON() : category;
+    await setDoc(docRef, data, { merge: true });
+    const updated = await this.findById(id);
+    if (!updated) throw new Error("Category not found after update");
+    return updated;
   }
 
   async delete(id: string): Promise<void> {
@@ -47,21 +48,25 @@ export class CategoryRepositoryFirestore implements IRepository<Category> {
   }
 
   async findByEmail(email: string): Promise<Category | null> {
-    const q = query(
-      collection(db, this.collection),
-      where("email", "==", email)
-    );
-    const snapshot = await getDocs(q);
-    const categoryDoc = snapshot.docs[0];
-    return categoryDoc ? (categoryDoc.data() as Category) : null;
+    return null; // não aplicável para categorias
   }
 
+  /** Retorna categorias padrão do sistema (campo default == true no Firestore) */
   async findCategoriesDefault(): Promise<Category[]> {
     const q = query(
       collection(db, this.collection),
-      where("default", "==", true)
+      where("default", "==", true),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => doc.data() as Category);
+    return snapshot.docs.map((d) => Category.fromData(d.data() as any));
+  }
+
+  async findByUserId(userId: string): Promise<Category[]> {
+    const q = query(
+      collection(db, this.collection),
+      where("userId", "==", userId),
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => Category.fromData(d.data() as any));
   }
 }

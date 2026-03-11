@@ -20,6 +20,7 @@ import { EditiTransactionController } from "@/controllers/transaction/EditTransa
 import { RemoveTransactionController } from "@/controllers/transaction/RemoveTransactionController";
 import { logoutController } from "@/controllers/user/LogoutController";
 import { UpdateUserController } from "@/controllers/user/UpdateUserController";
+import { updateAccountController } from "@/controllers/account/UpdateAccountController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
@@ -36,7 +37,6 @@ import {
 } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
 
 import { useRouter } from "next/navigation";
-import { User } from "@/domain/entities/user/User";
 
 const filteredTransactionsListUsecase = new FilteredTransactionsListUsecase();
 
@@ -79,6 +79,12 @@ interface UserContextType {
   loading: boolean;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<IUser>) => Promise<void>;
+  refreshAccounts: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
+  updateAccount: (
+    accountId: string,
+    props: { name?: string; balance?: number }
+  ) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -112,6 +118,9 @@ export const UserContext = createContext<UserContextType>({
   loading: false,
   logout: async () => {},
   updateUser: async () => {},
+  refreshAccounts: async () => {},
+  refreshCategories: async () => {},
+  updateAccount: async () => {},
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -158,15 +167,22 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
 
       if (user) {
-        const userLocalStorage = localStorage.getItem("user-finan-flow");
-        if (userLocalStorage) {
-          setUser(JSON.parse(userLocalStorage) as IUser);
+        // FIX: guarda check de SSR antes de usar localStorage
+        if (typeof window !== "undefined") {
+          const userLocalStorage = localStorage.getItem("user-finan-flow");
+          if (userLocalStorage) {
+            setUser(JSON.parse(userLocalStorage) as IUser);
+          } else {
+            setUser(user as unknown as IUser);
+          }
         } else {
           setUser(user as unknown as IUser);
         }
       } else {
         setUser(null);
-        localStorage.removeItem("user-finan-flow");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("user-finan-flow");
+        }
         router.push("/login");
       }
       setLoading(false);
@@ -206,7 +222,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, [allTransactions, year]);
 
   useEffect(() => {
-    updateAccumulatedBalance();
+    // FIX: guarda check de SSR para evitar erro no servidor
+    if (typeof window !== "undefined") {
+      updateAccumulatedBalance();
+    }
   }, [month, year]);
 
   const logout = async () => {
@@ -214,7 +233,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await logoutController();
       setUser(null);
-      localStorage.removeItem("user-finan-flow");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("user-finan-flow");
+      }
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -236,7 +257,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         name: userData.name,
       });
       setUser(updatedUser);
-      localStorage.setItem("user-finan-flow", JSON.stringify(updatedUser));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user-finan-flow", JSON.stringify(updatedUser));
+      }
     } catch (error) {
       console.error("Error updating user:", error);
       throw new Error("Falha ao atualizar usuário: " + error);
@@ -249,12 +272,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       try {
         const accounts = await listAccountByUserController(user.id);
-
         const totalBalance = accounts.reduce(
           (sum, account) => sum + account.balance,
           0
         );
-
         setCurrentBalance(totalBalance);
         setAccounts(accounts);
       } catch (error) {
@@ -263,14 +284,19 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Exposto publicamente para que Settings possa recarregar após criar/remover conta
+  const refreshAccounts = async () => {
+    await fetchAccounts();
+  };
+
+  // Exposto publicamente para que Settings possa recarregar após criar/remover categoria
+  const refreshCategories = async () => {
+    await fetchCategories();
+  };
+
   const fetchAllTransactions = async () => {
     if (accounts) {
       try {
-        console.log(
-          `Fetching all transactions for accounts: ${accounts
-            .map((a) => a.id)
-            .join(", ")}`
-        );
         const allTransactionsSet = new Set<string>();
         const newTransactions: ITransaction[] = [];
 
@@ -362,10 +388,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         );
         setMetrics(metrics);
 
-        localStorage.setItem(
-          `futureBalance${year}/${month}`,
-          JSON.stringify({ balance: metrics.futureBalance })
-        );
+        // FIX: guarda check de SSR
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            `futureBalance${year}/${month}`,
+            JSON.stringify({ balance: metrics.futureBalance })
+          );
+        }
       } catch (error) {
         console.error("Error fetching metrics:", error);
       }
@@ -378,7 +407,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(true);
         const annualData = await new AnnualMetricsUsecase().execute(
           allTransactions,
-          year // Use o estado `year` do seu contexto
+          year
         );
         setMonthlyMetrics(annualData);
       } catch (error) {
@@ -418,7 +447,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (paymentRecord) {
             const amount = paymentRecord.amount;
-
             setCurrentBalance((prevBalance) => {
               let newBalance = prevBalance ?? 0;
               if (paymentRecord.isPaid) {
@@ -438,13 +466,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                   newBalance += amount;
                 }
               }
-              console.log("Novo saldo:", newBalance);
               return newBalance;
             });
           }
         }
-      } else {
-        console.log("No user logged in or balance is not initialized");
       }
     } catch (error) {
       console.error("PayTransaction error:", error);
@@ -457,23 +482,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<void> => {
     setLoading(true);
     try {
-      // Chama o seu controller para executar a lógica de negócio
       const updatedTransaction = await EditiTransactionController(
         transactionId,
         newTransaction
       );
 
-      // Atualize o estado local da aplicação com a transação modificada
       setAllTransactions((prevTransactions) => {
         if (!prevTransactions) return null;
-
-        // Encontre a transação no estado e substitua-a
         return prevTransactions.map((t) =>
           t.id === updatedTransaction.id ? updatedTransaction : t
         );
       });
-
-      // return updatedTransaction;
     } catch (error) {
       console.error("Failed to edit transaction:", error);
       throw error;
@@ -485,12 +504,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const removeTransaction = async (
     transactionId: string,
     scope: TransactionRemovalScope = TransactionRemovalScope.ALL
-    // year?: number,
-    // month?: number
   ): Promise<string> => {
     setLoading(true);
     try {
-      // Chama o controller para remover a transação no backend
       const { message, balanceUpdate, removeCurrentMonth } =
         await RemoveTransactionController(transactionId, scope, year, month);
 
@@ -519,9 +535,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           return prevTransactions.map((t) => {
             const { recurrence } = t;
 
-            if (!removeCurrentMonth) {
-              return t;
-            }
+            if (!removeCurrentMonth) return t;
 
             if (removeCurrentMonth.index) {
               const excludedInstallments: number[] =
@@ -537,27 +551,27 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     ...t,
                     recurrence: {
                       ...t.recurrence,
-                      excludedInstallments: excludedInstallments,
+                      excludedInstallments,
                     },
                   }
                 : t;
             } else if (removeCurrentMonth.date) {
               const excludedFixeds = recurrence.excludedFixeds
                 ? [...recurrence.excludedFixeds, ...removeCurrentMonth.date]
-                : [...removeCurrentMonth?.date];
+                : [...removeCurrentMonth.date];
 
               return t.id === transactionId
                 ? {
                     ...t,
                     recurrence: {
                       ...t.recurrence,
-                      excludedFixeds: excludedFixeds,
+                      excludedFixeds,
                     },
                   }
                 : t;
-            } else {
-              return t;
             }
+
+            return t;
           });
         }
 
@@ -565,7 +579,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       setCurrentBalance(balanceUpdate);
-
       return message;
     } catch (error) {
       console.error("Failed to remove transaction:", error);
@@ -576,6 +589,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateAccumulatedBalance = () => {
+    // FIX: guarda contra execução no servidor (SSR)
+    if (typeof window === "undefined") return;
+
     let total = 0;
     const currentYear = year;
     const currentMonth = month;
@@ -617,6 +633,30 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const updateAccount = async (
+    accountId: string,
+    props: { name?: string; balance?: number }
+  ) => {
+    if (!user) throw new Error("Nenhum usuário logado");
+    setLoading(true);
+    try {
+      const updated = await updateAccountController(accountId, user.id, props);
+      // Atualiza o estado local sem novo fetch ao Firebase
+      setAccounts((prev) => {
+        if (!prev) return prev;
+        const next = prev.map((a) => (a.id === updated.id ? updated : a));
+        const total = next.reduce((sum, a) => sum + a.balance, 0);
+        setCurrentBalance(total);
+        return next;
+      });
+    } catch (error) {
+      console.error("Error updating account:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -650,6 +690,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         logout,
         updateUser,
+        refreshAccounts,
+        refreshCategories,
+        updateAccount,
       }}
     >
       {children}

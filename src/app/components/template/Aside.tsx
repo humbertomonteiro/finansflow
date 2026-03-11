@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { FiHome, FiList, FiDollarSign, FiPlus } from "react-icons/fi";
+import { FiHome, FiList, FiPlus } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
+import { MdOutlineFlagCircle } from "react-icons/md";
 import { useState } from "react";
 import { FormAddTransaction } from "../shared/FormAddTransaction";
 
@@ -13,14 +14,13 @@ export const Aside = () => {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex bg-gray-900 text-white w-[260px] h-screen fixed top-0 left-0 flex-col justify-between shadow-lg">
-        {/* Logo/Title Section */}
         <div className="">
           <Link href="/dashboard" className="p-6 border-gray-800">
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2 ml-6 text-gray-200">
               Finans Flow
             </h1>
           </Link>
-          {/* Navigation Menu */}
+
           <nav className="flex-1 p-4">
             <ul className="space-y-1">
               <li>
@@ -52,6 +52,15 @@ export const Aside = () => {
               </li>
               <li>
                 <Link
+                  href="/goals"
+                  className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
+                >
+                  <MdOutlineFlagCircle className="h-5 w-5" />
+                  Metas
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/settings"
                   className="link flex items-center gap-3 p-3 rounded-lg hover:bg-violet-900 hover:text-indigo-400 transition-all duration-200 text-sm font-medium"
                 >
@@ -73,8 +82,7 @@ export const Aside = () => {
           </nav>
         </div>
 
-        {/* Footer Section */}
-        <div className="p-4 border-t border-gray-800 ">
+        <div className="p-4 border-t border-gray-800">
           <p className="text-xs text-gray-400">© 2025 Finans Flow</p>
         </div>
       </aside>
@@ -103,6 +111,14 @@ export const Aside = () => {
         >
           <FiPlus className="h-5 w-5" />
         </button>
+
+        <Link
+          href="/goals"
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
+        >
+          <MdOutlineFlagCircle className="h-5 w-5" />
+          Metas
+        </Link>
         <Link
           href="/performance"
           className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
@@ -115,7 +131,7 @@ export const Aside = () => {
           className="flex flex-col items-center gap-1 text-gray-400 hover:text-violet-200 text-xs"
         >
           <IoSettingsOutline className="h-5 w-5" />
-          Configurações
+          Config
         </Link>
       </nav>
 
@@ -129,7 +145,6 @@ export const Aside = () => {
         </Link>
       </header>
 
-      {/* FormAddTransaction Modal */}
       {showForm && <FormAddTransaction onClose={() => setShowForm(false)} />}
     </>
   );
