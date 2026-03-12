@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useUser } from "@/app/hooks/useUser";
 import Card from "@/app/components/shared/Card";
 import { Title } from "@/app/components/shared/Title";
 import { TransactionList } from "@/app/components/shared/TransactionList";
 import { LineChart } from "@/app/components/shared/LineChart";
+import {
+  DashboardCardModal,
+  DashboardModalType,
+} from "@/app/components/shared/DashboardCardModal";
 import {
   RiMoneyDollarCircleLine,
   RiArrowUpCircleLine,
@@ -27,6 +32,11 @@ export default function Dashboard() {
     monthlyMetrics,
   } = useUser();
 
+  // Qual modal está aberto (null = nenhum)
+  const [activeModal, setActiveModal] = useState<DashboardModalType | null>(
+    null
+  );
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
       <Title navigateMonth>Dashboard</Title>
@@ -40,7 +50,7 @@ export default function Dashboard() {
         </div>
       ) : metrics ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {/* Saldo — destaque */}
+          {/* Saldo — destaque → modal de contas */}
           <div className="col-span-2 lg:col-span-1">
             <Card
               value={fmt(currentBalance ?? 0)}
@@ -49,42 +59,57 @@ export default function Dashboard() {
               color="bg-indigo-600"
               highligth
               info="Soma de todas as contas"
+              onClick={() => setActiveModal("balance")}
             />
           </div>
 
+          {/* Receitas → modal de progresso */}
           <Card
             value={fmt(metrics.revenues ?? 0)}
             title="Receitas"
             icon={<RiArrowUpCircleLine className="h-5 w-5 text-white" />}
             color="bg-emerald-600"
             info={`Recebido: ${fmt(metrics.revenuesPaid ?? 0)}`}
+            onClick={() => setActiveModal("revenues")}
           />
 
+          {/* Despesas → modal de categorias */}
           <Card
             value={fmt(metrics.expenses ?? 0)}
             title="Despesas"
             icon={<RiArrowDownCircleLine className="h-5 w-5 text-white" />}
             color="bg-rose-600"
             info={`Pago: ${fmt(metrics.expensesPaid ?? 0)}`}
+            onClick={() => setActiveModal("expenses")}
           />
 
+          {/* Balanço → comparativo com mês anterior */}
           <Card
             value={fmt(metrics.futureBalance ?? 0)}
             title="Balanço do mês"
             icon={<TbScale className="h-5 w-5 text-white" />}
             color="bg-violet-600"
             info="Receitas − Despesas"
+            onClick={() => setActiveModal("monthly")}
           />
 
+          {/* Projeção → mini histórico */}
           <Card
             value={fmt(accumulatedFutureBalance)}
             title="Projeção acumulada"
             icon={<TbTrendingUp className="h-5 w-5 text-white" />}
             color="bg-sky-600"
             info="Soma histórica de balanços"
+            onClick={() => setActiveModal("projection")}
           />
         </div>
       ) : null}
+
+      {/* ── Modal dos cards ───────────────────────── */}
+      <DashboardCardModal
+        type={activeModal}
+        onClose={() => setActiveModal(null)}
+      />
 
       {/* ── Gráfico de linha ──────────────────────── */}
       {monthlyMetrics && monthlyMetrics.labels.length > 0 && (

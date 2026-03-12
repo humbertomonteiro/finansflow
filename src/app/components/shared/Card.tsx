@@ -7,7 +7,8 @@ interface CardProps {
   color: string;
   highligth?: boolean;
   info?: string;
-  trend?: { value: number; label: string }; // delta opcional
+  trend?: { value: number; label: string };
+  onClick?: () => void; // ← novo: torna o card clicável
 }
 
 const Card = ({
@@ -18,11 +19,19 @@ const Card = ({
   highligth,
   info,
   trend,
+  onClick,
 }: CardProps) => {
   const isPositive = trend && trend.value >= 0;
+  const isClickable = !!onClick;
 
   return (
     <div
+      onClick={onClick}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable ? (e) => e.key === "Enter" && onClick?.() : undefined
+      }
       className="relative flex flex-col gap-3 rounded-xl p-4 w-full overflow-hidden transition-all duration-200 group"
       style={{
         background: highligth
@@ -34,6 +43,7 @@ const Card = ({
         boxShadow: highligth
           ? "var(--shadow-accent), var(--shadow-card)"
           : "var(--shadow-card)",
+        cursor: isClickable ? "pointer" : "default",
       }}
     >
       {/* Glow decorativo no highlight */}
@@ -41,6 +51,14 @@ const Card = ({
         <div
           className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-20 pointer-events-none"
           style={{ background: "var(--accent)", filter: "blur(24px)" }}
+        />
+      )}
+
+      {/* Hover overlay — só aparece quando clicável */}
+      {isClickable && (
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"
+          style={{ background: "rgba(255,255,255,0.03)" }}
         />
       )}
 
@@ -54,11 +72,26 @@ const Card = ({
         >
           {title}
         </p>
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}
-          style={{ opacity: 0.9 }}
-        >
-          {icon}
+        <div className="flex items-center gap-2">
+          {/* Ícone de "clique para ver mais" */}
+          {isClickable && (
+            <span
+              className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{
+                color: highligth
+                  ? "rgba(199,210,254,0.6)"
+                  : "var(--text-muted)",
+              }}
+            >
+              ver detalhes
+            </span>
+          )}
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}
+            style={{ opacity: 0.9 }}
+          >
+            {icon}
+          </div>
         </div>
       </div>
 

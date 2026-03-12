@@ -17,6 +17,4 @@ export const editTransactionController = async (
   return useCase.execute(transactionId, payload, scope, year, month);
 };
 
-// Re-exporta EditScope e EditPayload para que a UI não precise importar
-// de dois lugares diferentes
 export { EditScope };
