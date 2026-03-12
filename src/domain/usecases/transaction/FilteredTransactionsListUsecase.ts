@@ -155,11 +155,31 @@ export class FilteredTransactionsListUsecase {
     );
 
     if (isAfterStartDate && isBeforeEndDate && !isExcluded) {
+      // Busca o payment gravado para este mês/ano específico.
+      // Para FIXED, o paymentHistory só cresce quando o mês é pago —
+      // meses futuros ainda não têm entrada no array.
+      const paymentForMonth = transaction.paymentHistory.find((p) => {
+        const d = new Date(p.dueDate);
+        return d.getFullYear() === year && d.getMonth() + 1 === month;
+      });
+
+      // Se não existe payment para este mês, cria um registro virtual
+      // com isPaid: false apenas para a UI — não é gravado no banco.
+      const effectivePayment = paymentForMonth ?? {
+        isPaid: false,
+        dueDate: occurrenceDate,
+        paidAt: null,
+        amount: transaction.amount,
+      };
+
       result.push({
         ...transaction,
-        id: transaction.id,
         dueDate: occurrenceDate,
         description: transaction.description || "",
+        // Passa SOMENTE o payment deste mês, igual ao que INSTALLMENT já faz.
+        // Garante que paymentHistory[0] seja sempre o mês em exibição,
+        // não o primeiro pagamento histórico (que estaria isPaid: true).
+        paymentHistory: [effectivePayment],
       });
     }
 

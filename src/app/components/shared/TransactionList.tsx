@@ -48,13 +48,14 @@ export const TransactionList = ({
 
   // ── Helpers ──────────────────────────────────────────────────
   const getPaymentIndex = (transaction: ITransaction): number => {
-    const idx = transaction.paymentHistory.findIndex(
-      (p) =>
-        new Date(p.dueDate).getFullYear() === year &&
-        new Date(p.dueDate).getMonth() + 1 === month
-    );
-    if (idx === -1 && transaction.kind === TransactionKind.FIXED) return 0;
-    return idx;
+    // Após a correção do FilteredTransactionsListUsecase, as transações FIXED
+    // chegam aqui com paymentHistory: [paymentDoMês] — um único elemento,
+    // igual ao que INSTALLMENT já fazia. Por isso o índice correto é sempre 0.
+    //
+    // O fallback antigo "return 0 quando idx === -1" era o bug:
+    // devolvia o primeiro payment histórico (isPaid: true do mês já pago)
+    // em vez do payment do mês atual — fazendo tudo aparecer como pago.
+    return 0;
   };
 
   const getDisplayDate = (transaction: ITransaction): Date => {
@@ -223,23 +224,35 @@ export const TransactionList = ({
   // ── Ordenação UI ─────────────────────────────────────────────
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortField(field); setSortDir("asc"); }
+    else {
+      setSortField(field);
+      setSortDir("asc");
+    }
   };
 
-  const SortButton = ({ field, label }: { field: SortField; label: string }) => (
+  const SortButton = ({
+    field,
+    label,
+  }: {
+    field: SortField;
+    label: string;
+  }) => (
     <button
       onClick={() => handleSort(field)}
       className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer
-        ${sortField === field
-          ? "bg-violet-800 text-violet-200"
-          : "bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300"
+        ${
+          sortField === field
+            ? "bg-violet-800 text-violet-200"
+            : "bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300"
         }`}
     >
       {label}
       {sortField === field &&
-        (sortDir === "asc"
-          ? <FiArrowUp className="h-3 w-3" />
-          : <FiArrowDown className="h-3 w-3" />)}
+        (sortDir === "asc" ? (
+          <FiArrowUp className="h-3 w-3" />
+        ) : (
+          <FiArrowDown className="h-3 w-3" />
+        ))}
     </button>
   );
 
@@ -258,10 +271,8 @@ export const TransactionList = ({
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-
       {/* ── Toolbar superior ─────────────────────────── */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-
         {/* Ordenação (oculta em modo seleção) */}
         {!hideSort && !isSelecting && (
           <div className="flex items-center gap-2 flex-wrap">
@@ -303,18 +314,25 @@ export const TransactionList = ({
 
         {/* Botão entrar/sair do modo seleção */}
         <button
-          onClick={() => (isSelecting ? exitSelectionMode() : setIsSelecting(true))}
+          onClick={() =>
+            isSelecting ? exitSelectionMode() : setIsSelecting(true)
+          }
           className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
             transition-all cursor-pointer ml-auto
-            ${isSelecting
-              ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+            ${
+              isSelecting
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
             }`}
         >
           {isSelecting ? (
-            <><FiX className="h-3 w-3" /> Cancelar</>
+            <>
+              <FiX className="h-3 w-3" /> Cancelar
+            </>
           ) : (
-            <><MdOutlineSelectAll className="h-4 w-4" /> Selecionar</>
+            <>
+              <MdOutlineSelectAll className="h-4 w-4" /> Selecionar
+            </>
           )}
         </button>
       </div>
@@ -387,7 +405,9 @@ export const TransactionList = ({
                   <TransactionItemList
                     key={`${transaction.id}-${key}`}
                     transaction={
-                      transaction as ITransaction & { installmentsNumber?: number }
+                      transaction as ITransaction & {
+                        installmentsNumber?: number;
+                      }
                     }
                     index={getPaymentIndex(transaction)}
                     isSelecting={isSelecting}
@@ -413,7 +433,9 @@ export const TransactionList = ({
           <div className="px-4 pt-4 pb-3 border-b border-gray-800">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-gray-500 uppercase tracking-wide">
-                {selectionMetrics.count} transaç{selectionMetrics.count !== 1 ? "ões" : "ão"} selecionada{selectionMetrics.count !== 1 ? "s" : ""}
+                {selectionMetrics.count} transaç
+                {selectionMetrics.count !== 1 ? "ões" : "ão"} selecionada
+                {selectionMetrics.count !== 1 ? "s" : ""}
               </span>
               <button
                 onClick={exitSelectionMode}
@@ -446,7 +468,9 @@ export const TransactionList = ({
                 </p>
                 <p
                   className={`text-sm font-semibold ${
-                    selectionMetrics.saldo >= 0 ? "text-green-300" : "text-red-300"
+                    selectionMetrics.saldo >= 0
+                      ? "text-green-300"
+                      : "text-red-300"
                   }`}
                 >
                   {selectionMetrics.saldo >= 0 ? "+" : ""}
@@ -458,27 +482,37 @@ export const TransactionList = ({
             {/* Status de pendentes */}
             {selectionMetrics.pendentes > 0 && (
               <p className="text-center text-[0.65rem] text-gray-600 mt-2">
-                {selectionMetrics.pendentes} pendente{selectionMetrics.pendentes !== 1 ? "s" : ""}
+                {selectionMetrics.pendentes} pendente
+                {selectionMetrics.pendentes !== 1 ? "s" : ""}
                 {selectionMetrics.jaResolvidos > 0
-                  ? ` · ${selectionMetrics.jaResolvidos} já resolvida${selectionMetrics.jaResolvidos !== 1 ? "s" : ""}`
+                  ? ` · ${selectionMetrics.jaResolvidos} já resolvida${
+                      selectionMetrics.jaResolvidos !== 1 ? "s" : ""
+                    }`
                   : ""}
               </p>
             )}
-            {selectionMetrics.pendentes === 0 && selectionMetrics.jaResolvidos > 0 && (
-              <p className="text-center text-[0.65rem] text-green-700 mt-2">
-                Todas já resolvidas ✓
-              </p>
-            )}
+            {selectionMetrics.pendentes === 0 &&
+              selectionMetrics.jaResolvidos > 0 && (
+                <p className="text-center text-[0.65rem] text-green-700 mt-2">
+                  Todas já resolvidas ✓
+                </p>
+              )}
           </div>
 
           {/* Feedback de resultado */}
           {resolveResult && (
             <div
               className={`px-4 py-2 text-xs text-center
-                ${resolveResult.failed > 0 ? "text-yellow-400" : "text-green-400"}`}
+                ${
+                  resolveResult.failed > 0
+                    ? "text-yellow-400"
+                    : "text-green-400"
+                }`}
             >
               {resolveResult.success > 0 &&
-                `✓ ${resolveResult.success} resolvida${resolveResult.success !== 1 ? "s" : ""}`}
+                `✓ ${resolveResult.success} resolvida${
+                  resolveResult.success !== 1 ? "s" : ""
+                }`}
               {resolveResult.failed > 0 &&
                 ` · ${resolveResult.failed} falharam`}
             </div>
@@ -492,9 +526,10 @@ export const TransactionList = ({
               className={`w-full h-10 rounded-xl flex items-center justify-center gap-2
                 font-semibold text-sm transition-all cursor-pointer
                 disabled:opacity-40 disabled:cursor-not-allowed
-                ${selectionMetrics.pendentes > 0
-                  ? "bg-violet-700 hover:bg-violet-600 text-white"
-                  : "bg-gray-800 text-gray-500"
+                ${
+                  selectionMetrics.pendentes > 0
+                    ? "bg-violet-700 hover:bg-violet-600 text-white"
+                    : "bg-gray-800 text-gray-500"
                 }`}
             >
               {isResolvingAll ? (
@@ -505,8 +540,11 @@ export const TransactionList = ({
               ) : (
                 <>
                   <FiCheck className="h-4 w-4" />
-                  Resolver {selectionMetrics.pendentes > 0
-                    ? `${selectionMetrics.pendentes} pendente${selectionMetrics.pendentes !== 1 ? "s" : ""}`
+                  Resolver{" "}
+                  {selectionMetrics.pendentes > 0
+                    ? `${selectionMetrics.pendentes} pendente${
+                        selectionMetrics.pendentes !== 1 ? "s" : ""
+                      }`
                     : "selecionadas"}
                 </>
               )}

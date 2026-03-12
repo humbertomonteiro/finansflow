@@ -1,19 +1,22 @@
 import { TransactionRepositoryFirestore } from "@/infra/repositories/FirebaseTransactionRepository";
-import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
-import { EditTransactionUseCase } from "@/domain/usecases/transaction/EditTransactionUseCase";
+import {
+  EditTransactionUseCase,
+  EditScope,
+  EditPayload,
+} from "@/domain/usecases/transaction/EditTransactionUseCase";
 
-export const EditiTransactionController = async (
+export const editTransactionController = async (
   transactionId: string,
-  newTransaction: Partial<ITransaction>
+  payload: EditPayload,
+  scope: EditScope,
+  year?: number,
+  month?: number
 ) => {
   const transactionRepository = new TransactionRepositoryFirestore();
-  const editTransactionUsecase = new EditTransactionUseCase(
-    transactionRepository
-  );
-
-  const edit = editTransactionUsecase.execute(transactionId, newTransaction);
-
-  console.log("Transaction edited successfull!");
-
-  return edit;
+  const useCase = new EditTransactionUseCase(transactionRepository);
+  return useCase.execute(transactionId, payload, scope, year, month);
 };
+
+// Re-exporta EditScope e EditPayload para que a UI não precise importar
+// de dois lugares diferentes
+export { EditScope };

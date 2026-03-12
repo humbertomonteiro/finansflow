@@ -16,7 +16,7 @@ import { listAccountByUserController } from "@/controllers/account/ListAccountBy
 import { listCategoryController } from "@/controllers/category/ListCategoryController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { ListAllTransactionsController } from "@/controllers/transaction/ListAllTransactionsController";
-import { EditiTransactionController } from "@/controllers/transaction/EditTransactionController";
+import { editTransactionController, EditScope } from "@/controllers/transaction/EditTransactionController";
 import { RemoveTransactionController } from "@/controllers/transaction/RemoveTransactionController";
 import { logoutController } from "@/controllers/user/LogoutController";
 import { UpdateUserController } from "@/controllers/user/UpdateUserController";
@@ -482,9 +482,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<void> => {
     setLoading(true);
     try {
-      const updatedTransaction = await EditiTransactionController(
+      const updatedTransaction = await editTransactionController(
         transactionId,
-        newTransaction
+        newTransaction,
+        EditScope.ALL
       );
 
       setAllTransactions((prevTransactions) => {
