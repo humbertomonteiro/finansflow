@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useUser } from "@/app/hooks/useUser";
+import { useAmountInput } from "@/app/hooks/useAmountInput";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { TransactionRemovalScope } from "@/domain/enums/transaction/TransactionRemovalScope";
@@ -240,8 +241,9 @@ interface EditFormScreenProps {
   isInstallment: boolean;
   editedDesc: string;
   setEditedDesc: (v: string) => void;
-  editedAmount: number;
+  editedAmount: string;
   setEditedAmount: (v: number) => void;
+  onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   editedCategory: string;
   setEditedCategory: (v: string) => void;
   categories: ICategory[] | null;
@@ -256,7 +258,7 @@ function EditFormScreen({
   editedDesc,
   setEditedDesc,
   editedAmount,
-  setEditedAmount,
+  onAmountChange,
   editedCategory,
   setEditedCategory,
   categories,
@@ -344,11 +346,11 @@ function EditFormScreen({
             <input
               className="input money"
               style={{ paddingLeft: "2.25rem" }}
-              type="number"
-              step="0.01"
-              min="0.01"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex: 1.500,00"
               value={editedAmount}
-              onChange={(e) => setEditedAmount(Number(e.target.value))}
+              onChange={onAmountChange}
             />
           </div>
           {isInstallment &&
@@ -357,7 +359,11 @@ function EditFormScreen({
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 Parcela:{" "}
                 <span style={{ color: "var(--text-secondary)" }}>
-                  {fmt(editedAmount / installmentsCount)} × {installmentsCount}x
+                  {fmt(
+                    parseFloat(editedAmount.replace(",", ".")) /
+                      installmentsCount
+                  )}{" "}
+                  × {installmentsCount}x
                 </span>
               </p>
             )}
@@ -382,6 +388,7 @@ export const TransactionDetails = ({
   const [editScope, setEditScope] = useState<EditScope>(EditScope.SINGLE);
   const [editedDesc, setEditedDesc] = useState("");
   const [editedAmount, setEditedAmount] = useState(0);
+  const amountInput = useAmountInput();
   const [editedCategory, setEditedCategory] = useState("");
 
   useEffect(() => {
@@ -395,6 +402,7 @@ export const TransactionDetails = ({
       setEditedAmount(transaction.amount);
       setEditedCategory(transaction.categoryId);
       setEditScope(EditScope.SINGLE);
+      amountInput.reset(transaction.amount);
     }
   }, [transaction?.id]);
 
@@ -434,7 +442,9 @@ export const TransactionDetails = ({
       const payload = {
         description: editedDesc,
         categoryId: editedCategory,
-        ...(editScope !== EditScope.SINGLE && { amount: editedAmount }),
+        ...(editScope !== EditScope.SINGLE && {
+          amount: amountInput.parseAmount(),
+        }),
       };
       const updated = await editTransactionController(
         transaction.id,
@@ -665,8 +675,9 @@ export const TransactionDetails = ({
             isInstallment={isInstallment}
             editedDesc={editedDesc}
             setEditedDesc={setEditedDesc}
-            editedAmount={editedAmount}
-            setEditedAmount={setEditedAmount}
+            editedAmount={amountInput.raw}
+            setEditedAmount={() => {}}
+            onAmountChange={amountInput.handleChange}
             editedCategory={editedCategory}
             setEditedCategory={setEditedCategory}
             categories={categories}

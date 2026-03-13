@@ -7,6 +7,9 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
 import { useState } from "react";
 import { FormAddTransaction } from "../shared/FormAddTransaction";
+import { NotificationPanel } from "../shared/NotificationPanel";
+import { GlobalSearch } from "../shared/GlobalSearch";
+import { TransactionDetails } from "../shared/TransactionDetails";
 import { useUser } from "@/app/hooks/useUser";
 
 const navItems = [
@@ -20,7 +23,25 @@ const navItems = [
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, overdueTransactions, nearbyTransactions } = useUser();
+
+  const { BellButton, Panel: NotifPanel, total } = NotificationPanel();
+  const {
+    SearchButton,
+    SearchIconButton,
+    Overlay: SearchOverlay,
+    selectedTransaction,
+    clearSelected,
+  } = GlobalSearch();
+
+  const overdueCount = overdueTransactions?.length ?? 0;
+  const nearbyCount = nearbyTransactions?.length ?? 0;
+
+  const getBadge = (href: string): number => {
+    if (href === "/dashboard" || href === "/transactions")
+      return overdueCount + nearbyCount;
+    return 0;
+  };
 
   return (
     <>
@@ -33,31 +54,31 @@ export const Aside = () => {
           boxShadow: "4px 0 24px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Logo */}
         <div>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2.5 px-6 py-7 group"
-          >
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{
-                background: "var(--accent)",
-                boxShadow: "0 0 12px var(--accent-glow)",
-              }}
-            >
-              <span className="text-white font-bold text-xs">FF</span>
-            </div>
-            <span
-              className="font-semibold text-base tracking-tight transition-colors"
-              style={{
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              FinansFlow
-            </span>
-          </Link>
+          {/* Logo + sino */}
+          <div className="flex items-center justify-between px-4 py-5">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{
+                  background: "var(--accent)",
+                  boxShadow: "0 0 12px var(--accent-glow)",
+                }}
+              >
+                <span className="text-white font-bold text-xs">FF</span>
+              </div>
+              <span
+                className="font-semibold text-base tracking-tight"
+                style={{ color: "var(--text-primary)" }}
+              >
+                FinansFlow
+              </span>
+            </Link>
+            {BellButton}
+          </div>
+
+          {/* Barra de busca desktop */}
+          <div className="px-4 mb-4">{SearchButton}</div>
 
           {/* Perfil mini */}
           {user && (
@@ -107,6 +128,7 @@ export const Aside = () => {
             <ul className="space-y-0.5">
               {navItems.map(({ href, icon: Icon, label }) => {
                 const active = pathname === href;
+                const badge = getBadge(href);
                 return (
                   <li key={href}>
                     <Link
@@ -132,14 +154,28 @@ export const Aside = () => {
                             : "var(--text-muted)",
                         }}
                       />
-                      {label}
+                      <span className="flex-1">{label}</span>
+                      {badge > 0 && (
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                          style={{
+                            background:
+                              overdueCount > 0
+                                ? "var(--red-dim)"
+                                : "var(--yellow-dim)",
+                            color:
+                              overdueCount > 0 ? "var(--red)" : "var(--yellow)",
+                          }}
+                        >
+                          {badge > 9 ? "9+" : badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
               })}
             </ul>
 
-            {/* Botão adicionar */}
             <div className="mt-4">
               <button
                 onClick={() => setShowForm(true)}
@@ -153,7 +189,6 @@ export const Aside = () => {
           </nav>
         </div>
 
-        {/* Footer */}
         <div
           className="px-6 py-4"
           style={{ borderTop: "1px solid var(--border-subtle)" }}
@@ -190,17 +225,22 @@ export const Aside = () => {
             FinansFlow
           </span>
         </Link>
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-          style={{
-            background: "var(--accent)",
-            boxShadow: "0 0 12px var(--accent-glow)",
-          }}
-          aria-label="Nova transação"
-        >
-          <FiPlus className="h-4 w-4 text-white" />
-        </button>
+
+        <div className="flex items-center gap-1">
+          {SearchIconButton}
+          {BellButton}
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all ml-1"
+            style={{
+              background: "var(--accent)",
+              boxShadow: "0 0 12px var(--accent-glow)",
+            }}
+            aria-label="Nova transação"
+          >
+            <FiPlus className="h-4 w-4 text-white" />
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile Bottom Nav ────────────────────────── */}
@@ -214,21 +254,48 @@ export const Aside = () => {
       >
         {navItems.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
+          const badge = getBadge(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
+              className="relative flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
               style={{
                 color: active ? "var(--accent-light)" : "var(--text-muted)",
               }}
             >
-              <Icon className="h-5 w-5" />
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {badge > 0 && (
+                  <span
+                    className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5"
+                    style={{
+                      background:
+                        overdueCount > 0 ? "var(--red)" : "var(--yellow)",
+                    }}
+                  >
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
+              </div>
               <span className="text-[0.6rem] font-medium">{label}</span>
             </Link>
           );
         })}
       </nav>
+
+      {/* Portais */}
+      {NotifPanel}
+      {SearchOverlay}
+
+      {/* Modal de detalhes ao clicar num resultado da busca */}
+      {selectedTransaction && (
+        <TransactionDetails
+          transaction={selectedTransaction}
+          isOpen={!!selectedTransaction}
+          onClose={clearSelected}
+        />
+      )}
 
       {showForm && <FormAddTransaction onClose={() => setShowForm(false)} />}
     </>

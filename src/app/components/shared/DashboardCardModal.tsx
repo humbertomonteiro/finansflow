@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAmountInput } from "@/app/hooks/useAmountInput";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks/useUser";
@@ -162,14 +163,14 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
   const { accounts, updateAccount, currentBalance } = useUser();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editBal, setEditBal] = useState("");
+  const balInput = useAmountInput();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const startEdit = (acc: IAccount) => {
     setEditingId(acc.id);
     setEditName(acc.name);
-    setEditBal(String(acc.balance));
+    balInput.reset(acc.balance);
     setError(null);
   };
 
@@ -180,7 +181,7 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
 
   const saveEdit = async (acc: IAccount) => {
     setError(null);
-    const balance = Number(editBal.replace(",", ".").replace(/[^\d.]/g, ""));
+    const balance = balInput.parseAmount();
     if (isNaN(balance) || balance < 0) {
       setError("Saldo inválido");
       return;
@@ -258,10 +259,11 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
                 <input
                   className="input money text-sm"
                   style={{ paddingLeft: "2.25rem" }}
-                  type="number"
-                  step="0.01"
-                  value={editBal}
-                  onChange={(e) => setEditBal(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex: 1.500,00"
+                  value={balInput.raw}
+                  onChange={balInput.handleChange}
                 />
               </div>
               {error && (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@/app/hooks/useUser";
+import { useAmountInput } from "@/app/hooks/useAmountInput";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { IRecurrence } from "@/domain/interfaces/transaction/IRecurrence";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
@@ -18,7 +19,7 @@ interface FormErrors {
 }
 
 export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
-  const { categories, accounts, addTransaction } = useUser();
+  const { categories, accounts, addTransaction, payTransaction } = useUser();
 
   const [showInstallment, setShowInstallment] = useState(true);
   const [type, setType] = useState<TransactionTypes>(TransactionTypes.DEPOSIT);
@@ -27,7 +28,14 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Toggle "já pago/recebido"
+  const [markAsPaid, setMarkAsPaid] = useState(false);
+
+  // Hook de valor — aceita vírgula e ponto
+  const amountInput = useAmountInput();
+
   const toggleInstallmentVisibility = () => setShowInstallment((prev) => !prev);
+
   const handleTypeChange = (selectedType: TransactionTypes) => {
     setType(selectedType);
     setErrors({});
@@ -41,45 +49,28 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     accountId: string;
   }): FormErrors => {
     const newErrors: FormErrors = {};
-
-    if (!data.description.trim()) {
+    if (!data.description.trim())
       newErrors.description = "Descrição é obrigatória";
-    } else if (data.description.trim().length < 3) {
+    else if (data.description.trim().length < 3)
       newErrors.description = "Descrição deve ter ao menos 3 caracteres";
-    }
-
-    if (!data.amount || isNaN(data.amount) || data.amount <= 0) {
+    if (!data.amount || isNaN(data.amount) || data.amount <= 0)
       newErrors.amount = "Informe um valor válido maior que zero";
-    }
-
-    if (!data.dueDate) {
-      newErrors.dueDate = "Data de vencimento é obrigatória";
-    }
-
-    if (!data.categoryId) {
-      newErrors.categoryId = "Selecione uma categoria";
-    }
-
-    if (!data.accountId) {
-      newErrors.accountId = "Selecione uma conta";
-    }
-
+    if (!data.dueDate) newErrors.dueDate = "Data de vencimento é obrigatória";
+    if (!data.categoryId) newErrors.categoryId = "Selecione uma categoria";
+    if (!data.accountId) newErrors.accountId = "Selecione uma conta";
     return newErrors;
   };
 
   const getTransactionKindAndRecurrence = (
     isFixed: boolean,
-    installments: number,
+    installments: number
   ): { kind: TransactionKind; recurrence: IRecurrence } => {
-    if (isFixed) {
-      return { kind: TransactionKind.FIXED, recurrence: {} };
-    }
-    if (!isFixed && showInstallment && installments > 1) {
+    if (isFixed) return { kind: TransactionKind.FIXED, recurrence: {} };
+    if (!isFixed && showInstallment && installments > 1)
       return {
         kind: TransactionKind.INSTALLMENT,
         recurrence: { installmentsCount: installments },
       };
-    }
     return { kind: TransactionKind.SIMPLE, recurrence: {} };
   };
 
@@ -90,10 +81,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
     const formData = new FormData(e.currentTarget);
     const description = String(formData.get("description") || "").trim();
-    const rawAmount = String(formData.get("amount") || "")
-      .replace(",", ".")
-      .replace(/[^\d.]/g, "");
-    const amount = Number(rawAmount);
+    const amount = amountInput.parseAmount(); // usa o hook
     const dueDate = String(formData.get("dueDate") || "");
     const categoryId = String(formData.get("categoryId") || "");
     const accountId = String(formData.get("accountId") || "");
@@ -107,7 +95,6 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
       categoryId,
       accountId,
     });
-
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -118,7 +105,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
     const { kind, recurrence } = getTransactionKindAndRecurrence(
       isFixed,
-      installments,
+      installments
     );
 
     const dueDateString = new Date(dueDate).toISOString().split("T")[0];
@@ -136,25 +123,44 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     };
 
     try {
-      const createdTransaction =
-        await createTransactionController(newTransaction);
+      const createdTransaction = await createTransactionController(
+        newTransaction
+      );
 
       if (createdTransaction) {
         addTransaction(createdTransaction);
+
+        // Se o usuário marcou "já pago/recebido", dispara o pagamento
+        // do mês de vencimento da transação recém-criada
+        if (markAsPaid) {
+          const txYear = new Date(year, month - 1, day).getFullYear();
+          const txMonth = new Date(year, month - 1, day).getMonth() + 1;
+          try {
+            // payTransaction do contexto usa year/month atual —
+            // mas como acabamos de criar com dueDate no mês certo,
+            // o PayerTransactionUseCase vai encontrar o payment correto
+            await payTransaction(createdTransaction.id);
+          } catch {
+            // Não bloqueia o sucesso da criação se o pagamento falhar
+            console.warn("Não foi possível marcar como pago automaticamente");
+          }
+        }
       }
 
+      const label = type === TransactionTypes.DEPOSIT ? "Receita" : "Despesa";
       setSuccessMessage(
-        `${type === TransactionTypes.DEPOSIT ? "Receita" : "Despesa"} adicionada com sucesso!`,
+        markAsPaid
+          ? `${label} adicionada e marcada como ${
+              type === TransactionTypes.DEPOSIT ? "recebida" : "paga"
+            }!`
+          : `${label} adicionada com sucesso!`
       );
 
-      // Fecha após breve delay para o usuário ver o feedback
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      setTimeout(() => onClose(), 1000);
     } catch (error) {
       console.error(error);
       setErrorMessage(
-        "Ocorreu um erro ao adicionar a transação. Tente novamente.",
+        "Ocorreu um erro ao adicionar a transação. Tente novamente."
       );
     } finally {
       setIsLoading(false);
@@ -185,23 +191,19 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </button>
       </div>
 
-      {/* Feedback de sucesso */}
+      {/* Feedback */}
       {successMessage && (
         <div className="mx-2 flex items-center gap-2 p-3 bg-green-900/50 border border-green-700 rounded-lg text-green-400 text-sm">
-          <FiCheck className="h-4 w-4 shrink-0" />
-          {successMessage}
+          <FiCheck className="h-4 w-4 shrink-0" /> {successMessage}
         </div>
       )}
-
-      {/* Feedback de erro global */}
       {errorMessage && (
         <div className="mx-2 flex items-center gap-2 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-400 text-sm">
-          <FiAlertCircle className="h-4 w-4 shrink-0" />
-          {errorMessage}
+          <FiAlertCircle className="h-4 w-4 shrink-0" /> {errorMessage}
         </div>
       )}
 
-      {/* Seletor Receita/Despesa */}
+      {/* Tipo Receita/Despesa */}
       <div className="flex items-center justify-around gap-4 mb-2 px-2">
         {Object.values(TransactionTypes).map((transactionType) => (
           <button
@@ -224,7 +226,6 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         ))}
       </div>
 
-      {/* Formulário */}
       <form
         className="flex flex-col gap-4 overflow-x-hidden px-2 w-full"
         onSubmit={handleSubmit}
@@ -236,7 +237,9 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             Descrição <span className="text-red-400">*</span>
           </p>
           <input
-            className={`input ${errors.description ? "border-red-500 focus:border-red-400" : ""}`}
+            className={`input ${
+              errors.description ? "border-red-500 focus:border-red-400" : ""
+            }`}
             type="text"
             placeholder="Ex: Salário, Mercado, Netflix..."
             name="description"
@@ -249,16 +252,20 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           )}
         </label>
 
-        {/* Valor */}
+        {/* Valor — usa raw string do hook, aceita vírgula e ponto */}
         <label>
           <p className="text-gray-500 text-xs ml-1 mb-1">
             Valor <span className="text-red-400">*</span>
           </p>
           <input
-            className={`input ${errors.amount ? "border-red-500 focus:border-red-400" : ""}`}
+            className={`input money ${
+              errors.amount ? "border-red-500 focus:border-red-400" : ""
+            }`}
             type="text"
-            placeholder="Ex: 1500,00"
-            name="amount"
+            inputMode="decimal"
+            placeholder="Ex: 1.500,00 ou 1500.00"
+            value={amountInput.raw}
+            onChange={amountInput.handleChange}
             disabled={isLoading}
           />
           {errors.amount && (
@@ -274,7 +281,9 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             Data de vencimento <span className="text-red-400">*</span>
           </p>
           <input
-            className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
+            className={`input max-w-[100%] ${
+              errors.dueDate ? "border-red-500" : ""
+            }`}
             type="date"
             name="dueDate"
             disabled={isLoading}
@@ -372,7 +381,64 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           </div>
         </label>
 
-        {/* Botão de submit */}
+        {/* ── Toggle "já pago/recebido" ─────────────────────────────────── */}
+        {/* Por que está aqui: o usuário frequentemente está registrando algo
+            que já aconteceu (ex: salário que já caiu, conta que já pagou).
+            Sem esse toggle, ele precisa criar, encontrar na lista, e marcar —
+            3 passos viram 1. Só aparece como opção, nunca obrigatório. */}
+        <div
+          className="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-all"
+          style={{
+            background: markAsPaid
+              ? isDeposit
+                ? "rgba(34,197,94,0.1)"
+                : "rgba(239,68,68,0.1)"
+              : "rgba(255,255,255,0.04)",
+            border: markAsPaid
+              ? isDeposit
+                ? "1px solid rgba(34,197,94,0.3)"
+                : "1px solid rgba(239,68,68,0.3)"
+              : "1px solid var(--border-subtle, rgba(255,255,255,0.08))",
+          }}
+          onClick={() => !isLoading && setMarkAsPaid((p) => !p)}
+        >
+          <div className="flex flex-col gap-0.5">
+            <p
+              className="text-sm font-medium"
+              style={{ color: "var(--text-primary, #f0f4ff)" }}
+            >
+              {isDeposit ? "Já recebi este valor" : "Já paguei esta conta"}
+            </p>
+            <p
+              className="text-xs"
+              style={{ color: "var(--text-muted, #475569)" }}
+            >
+              {markAsPaid
+                ? isDeposit
+                  ? "Será marcada como recebida ao salvar"
+                  : "Será marcada como paga ao salvar"
+                : "Marcar como pendente por ora"}
+            </p>
+          </div>
+          {/* Toggle visual */}
+          <div
+            className="w-10 h-5 rounded-full relative transition-all duration-200 shrink-0"
+            style={{
+              background: markAsPaid
+                ? isDeposit
+                  ? "var(--green, #22c55e)"
+                  : "var(--red, #ef4444)"
+                : "rgba(255,255,255,0.12)",
+            }}
+          >
+            <div
+              className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-200"
+              style={{ left: markAsPaid ? "calc(100% - 18px)" : "2px" }}
+            />
+          </div>
+        </div>
+
+        {/* Submit */}
         <button
           className={`button min-h-[45px] font-semibold text-gray-900 ${activeColor} disabled:opacity-50 disabled:cursor-not-allowed`}
           type="submit"
@@ -381,7 +447,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           {isLoading ? (
             <span className="flex items-center gap-2">
               <FiLoader className="h-4 w-4 animate-spin" />
-              Salvando...
+              {markAsPaid ? "Salvando e marcando..." : "Salvando..."}
             </span>
           ) : (
             `Adicionar ${isDeposit ? "Receita" : "Despesa"}`
