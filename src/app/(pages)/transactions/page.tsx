@@ -29,12 +29,12 @@ const fmt = (v: number) =>
 function getPaymentIndex(
   tx: ITransaction,
   year: number,
-  month: number,
+  month: number
 ): number {
   const idx = tx.paymentHistory.findIndex(
     (p) =>
       new Date(p.dueDate).getFullYear() === year &&
-      new Date(p.dueDate).getMonth() + 1 === month,
+      new Date(p.dueDate).getMonth() + 1 === month
   );
   if (idx === -1 && tx.kind === TransactionKind.FIXED) return 0;
   return idx;
@@ -188,7 +188,7 @@ export default function Transactions() {
 
   // ── Render ──────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-5 animate-fade-in">
+    <div className="flex flex-col gap-5 animate-fade-in b-52">
       <Title navigateMonth>Transações</Title>
 
       {/* ── Cards de contexto ─────────────────────────── */}
@@ -354,8 +354,8 @@ export default function Transactions() {
                   {v === "all"
                     ? "Todos"
                     : v === "paid"
-                      ? "✓ Resolvidos"
-                      : "○ Pendentes"}
+                    ? "✓ Resolvidos"
+                    : "○ Pendentes"}
                 </Chip>
               ))}
             </div>
@@ -379,8 +379,8 @@ export default function Transactions() {
                   {v === "all"
                     ? "Todos"
                     : v === "deposit"
-                      ? "↑ Receitas"
-                      : "↓ Despesas"}
+                    ? "↑ Receitas"
+                    : "↓ Despesas"}
                 </Chip>
               ))}
             </div>
@@ -405,12 +405,12 @@ export default function Transactions() {
                     {v === "all"
                       ? "Todos"
                       : v === "simple"
-                        ? "Simples"
-                        : v === "fixed"
-                          ? "Fixo"
-                          : "Parcelado"}
+                      ? "Simples"
+                      : v === "fixed"
+                      ? "Fixo"
+                      : "Parcelado"}
                   </Chip>
-                ),
+                )
               )}
             </div>
           </div>
@@ -468,8 +468,14 @@ export default function Transactions() {
             {v === "all"
               ? `Todas (${transactions?.length ?? 0})`
               : v === "unpaid"
-                ? `Pendentes (${transactions?.filter((tx) => !isTxPaid(tx, year, month)).length ?? 0})`
-                : `Resolvidas (${transactions?.filter((tx) => isTxPaid(tx, year, month)).length ?? 0})`}
+              ? `Pendentes (${
+                  transactions?.filter((tx) => !isTxPaid(tx, year, month))
+                    .length ?? 0
+                })`
+              : `Resolvidas (${
+                  transactions?.filter((tx) => isTxPaid(tx, year, month))
+                    .length ?? 0
+                })`}
           </Chip>
         ))}
         <Chip
@@ -510,7 +516,9 @@ export default function Transactions() {
             >
               {filtered.length === 0
                 ? "Nenhuma transação"
-                : `${filtered.length} transaç${filtered.length !== 1 ? "ões" : "ão"}`}
+                : `${filtered.length} transaç${
+                    filtered.length !== 1 ? "ões" : "ão"
+                  }`}
             </p>
             {(activeFilterCount > 0 || search) && (
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>

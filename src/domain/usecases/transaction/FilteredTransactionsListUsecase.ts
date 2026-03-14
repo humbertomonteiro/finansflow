@@ -205,7 +205,9 @@ export class FilteredTransactionsListUsecase {
 
         const isNearby =
           Math.abs(dueDate.getTime() - today.getTime()) <=
-            this.nearbyDaysThreshold && dueDate >= today;
+            this.nearbyDaysThreshold &&
+          dueDate >= today &&
+          !isPaid;
 
         switch (filter) {
           case "paid":

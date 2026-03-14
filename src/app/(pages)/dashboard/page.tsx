@@ -38,7 +38,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in">
+    <div className="flex flex-col gap-6 animate-fade-in pb-52">
       <Title navigateMonth>Dashboard</Title>
 
       {/* ── Cards de métricas ─────────────────────── */}
