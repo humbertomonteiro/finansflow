@@ -34,7 +34,7 @@ export const CategoryExpensesSummary = ({
         border: "1px solid var(--border-default)",
       }}
     >
-      <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+      <div style={{ borderColor: "var(--border-subtle)" }}>
         {dataCategoryExpenses.expenses.map((expense, i) => {
           const color = COLORS[i % COLORS.length];
           return (

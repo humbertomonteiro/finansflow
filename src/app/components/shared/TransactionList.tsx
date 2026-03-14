@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useUser } from "@/app/hooks/useUser";
 import { format, isSameDay, isToday, isYesterday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +41,8 @@ export const TransactionList = ({
   // ── Seleção múltipla ─────────────────────────────────────────
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [isResolvingAll, setIsResolvingAll] = useState(false);
   const [resolveResult, setResolveResult] = useState<{
     success: number;
@@ -422,108 +425,111 @@ export const TransactionList = ({
       </div>
 
       {/* ── Painel flutuante de seleção ───────────────── */}
-      {isSelecting && selectedIds.size > 0 && (
-        <div
-          className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50
+      {isSelecting &&
+        selectedIds.size > 0 &&
+        mounted &&
+        createPortal(
+          <div
+            className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50
             w-[calc(100%-2rem)] max-w-md
             bg-gray-900 border border-violet-800/60 rounded-2xl shadow-2xl
             shadow-violet-900/30 animate-[fadeIn_0.2s_ease-out]"
-        >
-          {/* Resumo financeiro */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-800">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-gray-500 uppercase tracking-wide">
-                {selectionMetrics.count} transaç
-                {selectionMetrics.count !== 1 ? "ões" : "ão"} selecionada
-                {selectionMetrics.count !== 1 ? "s" : ""}
-              </span>
-              <button
-                onClick={exitSelectionMode}
-                className="text-gray-600 hover:text-gray-400 transition-colors cursor-pointer"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
-                  Receitas
-                </p>
-                <p className="text-sm font-semibold text-green-400">
-                  +{formatCurrency(selectionMetrics.totalReceitas)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
-                  Despesas
-                </p>
-                <p className="text-sm font-semibold text-red-400">
-                  -{formatCurrency(selectionMetrics.totalDespesas)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
-                  Resultado
-                </p>
-                <p
-                  className={`text-sm font-semibold ${
-                    selectionMetrics.saldo >= 0
-                      ? "text-green-300"
-                      : "text-red-300"
-                  }`}
+          >
+            {/* Resumo financeiro */}
+            <div className="px-4 pt-4 pb-3 border-b border-gray-800">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-gray-500 uppercase tracking-wide">
+                  {selectionMetrics.count} transaç
+                  {selectionMetrics.count !== 1 ? "ões" : "ão"} selecionada
+                  {selectionMetrics.count !== 1 ? "s" : ""}
+                </span>
+                <button
+                  onClick={exitSelectionMode}
+                  className="text-gray-600 hover:text-gray-400 transition-colors cursor-pointer"
                 >
-                  {selectionMetrics.saldo >= 0 ? "+" : ""}
-                  {formatCurrency(selectionMetrics.saldo)}
-                </p>
+                  <FiX className="h-4 w-4" />
+                </button>
               </div>
-            </div>
 
-            {/* Status de pendentes */}
-            {selectionMetrics.pendentes > 0 && (
-              <p className="text-center text-[0.65rem] text-gray-600 mt-2">
-                {selectionMetrics.pendentes} pendente
-                {selectionMetrics.pendentes !== 1 ? "s" : ""}
-                {selectionMetrics.jaResolvidos > 0
-                  ? ` · ${selectionMetrics.jaResolvidos} já resolvida${
-                      selectionMetrics.jaResolvidos !== 1 ? "s" : ""
-                    }`
-                  : ""}
-              </p>
-            )}
-            {selectionMetrics.pendentes === 0 &&
-              selectionMetrics.jaResolvidos > 0 && (
-                <p className="text-center text-[0.65rem] text-green-700 mt-2">
-                  Todas já resolvidas ✓
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                    Receitas
+                  </p>
+                  <p className="text-sm font-semibold text-green-400">
+                    +{formatCurrency(selectionMetrics.totalReceitas)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                    Despesas
+                  </p>
+                  <p className="text-sm font-semibold text-red-400">
+                    -{formatCurrency(selectionMetrics.totalDespesas)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                    Resultado
+                  </p>
+                  <p
+                    className={`text-sm font-semibold ${
+                      selectionMetrics.saldo >= 0
+                        ? "text-green-300"
+                        : "text-red-300"
+                    }`}
+                  >
+                    {selectionMetrics.saldo >= 0 ? "+" : ""}
+                    {formatCurrency(selectionMetrics.saldo)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status de pendentes */}
+              {selectionMetrics.pendentes > 0 && (
+                <p className="text-center text-[0.65rem] text-gray-600 mt-2">
+                  {selectionMetrics.pendentes} pendente
+                  {selectionMetrics.pendentes !== 1 ? "s" : ""}
+                  {selectionMetrics.jaResolvidos > 0
+                    ? ` · ${selectionMetrics.jaResolvidos} já resolvida${
+                        selectionMetrics.jaResolvidos !== 1 ? "s" : ""
+                      }`
+                    : ""}
                 </p>
               )}
-          </div>
+              {selectionMetrics.pendentes === 0 &&
+                selectionMetrics.jaResolvidos > 0 && (
+                  <p className="text-center text-[0.65rem] text-green-700 mt-2">
+                    Todas já resolvidas ✓
+                  </p>
+                )}
+            </div>
 
-          {/* Feedback de resultado */}
-          {resolveResult && (
-            <div
-              className={`px-4 py-2 text-xs text-center
+            {/* Feedback de resultado */}
+            {resolveResult && (
+              <div
+                className={`px-4 py-2 text-xs text-center
                 ${
                   resolveResult.failed > 0
                     ? "text-yellow-400"
                     : "text-green-400"
                 }`}
-            >
-              {resolveResult.success > 0 &&
-                `✓ ${resolveResult.success} resolvida${
-                  resolveResult.success !== 1 ? "s" : ""
-                }`}
-              {resolveResult.failed > 0 &&
-                ` · ${resolveResult.failed} falharam`}
-            </div>
-          )}
+              >
+                {resolveResult.success > 0 &&
+                  `✓ ${resolveResult.success} resolvida${
+                    resolveResult.success !== 1 ? "s" : ""
+                  }`}
+                {resolveResult.failed > 0 &&
+                  ` · ${resolveResult.failed} falharam`}
+              </div>
+            )}
 
-          {/* Botão resolver */}
-          <div className="px-4 py-3">
-            <button
-              onClick={handleResolveAll}
-              disabled={isResolvingAll || selectionMetrics.pendentes === 0}
-              className={`w-full h-10 rounded-xl flex items-center justify-center gap-2
+            {/* Botão resolver */}
+            <div className="px-4 py-3">
+              <button
+                onClick={handleResolveAll}
+                disabled={isResolvingAll || selectionMetrics.pendentes === 0}
+                className={`w-full h-10 rounded-xl flex items-center justify-center gap-2
                 font-semibold text-sm transition-all cursor-pointer
                 disabled:opacity-40 disabled:cursor-not-allowed
                 ${
@@ -531,27 +537,28 @@ export const TransactionList = ({
                     ? "bg-violet-700 hover:bg-violet-600 text-white"
                     : "bg-gray-800 text-gray-500"
                 }`}
-            >
-              {isResolvingAll ? (
-                <>
-                  <FiLoader className="h-4 w-4 animate-spin" />
-                  Resolvendo {selectionMetrics.pendentes}...
-                </>
-              ) : (
-                <>
-                  <FiCheck className="h-4 w-4" />
-                  Resolver{" "}
-                  {selectionMetrics.pendentes > 0
-                    ? `${selectionMetrics.pendentes} pendente${
-                        selectionMetrics.pendentes !== 1 ? "s" : ""
-                      }`
-                    : "selecionadas"}
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+              >
+                {isResolvingAll ? (
+                  <>
+                    <FiLoader className="h-4 w-4 animate-spin" />
+                    Resolvendo {selectionMetrics.pendentes}...
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="h-4 w-4" />
+                    Resolver{" "}
+                    {selectionMetrics.pendentes > 0
+                      ? `${selectionMetrics.pendentes} pendente${
+                          selectionMetrics.pendentes !== 1 ? "s" : ""
+                        }`
+                      : "selecionadas"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

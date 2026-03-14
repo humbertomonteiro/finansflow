@@ -73,7 +73,7 @@ export function CategoryExpensesChart({
 
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-xl p-4 flex justify-center items-center"
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
