@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { TransactionList } from "@/app/components/shared/TransactionList";
 import { Title } from "@/app/components/shared/Title";
 import { useUser } from "@/app/hooks/useUser";
@@ -25,7 +25,7 @@ type KindFilter = "all" | "simple" | "fixed" | "installment";
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-// ── Helpers de pagamento (mesmos do TransactionList) ───────────
+// ── Helpers de pagamento ───────────────────────────────────────
 function getPaymentIndex(
   tx: ITransaction,
   year: number,
@@ -45,19 +45,61 @@ function isTxPaid(tx: ITransaction, year: number, month: number): boolean {
   return tx.paymentHistory[idx]?.isPaid ?? false;
 }
 
+// ── Retorna a dueDate relevante de uma transação para o mês ────
+function getTxDueDate(tx: ITransaction, year: number, month: number): Date {
+  const idx = getPaymentIndex(tx, year, month);
+  const raw = tx.paymentHistory[idx]?.dueDate ?? tx.dueDate;
+  return new Date(raw);
+}
+
+// ── Data do grupo mais próximo de hoje numa lista de transações ─
+// Estratégia: prefere "hoje" > futuro mais próximo > passado mais recente
+function findNearestDate(
+  transactions: ITransaction[],
+  year: number,
+  month: number
+): string | null {
+  if (!transactions.length) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Coleta todas as datas únicas (normalizadas para meia-noite)
+  const uniqueDates = Array.from(
+    new Set(
+      transactions.map((tx) => {
+        const d = getTxDueDate(tx, year, month);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      })
+    )
+  )
+    .map((ts) => new Date(ts))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  const todayTs = today.getTime();
+
+  // 1. Hoje exato
+  const exact = uniqueDates.find((d) => d.getTime() === todayTs);
+  if (exact) return exact.toISOString().split("T")[0];
+
+  // 2. Futuro mais próximo (próximo dia com transação)
+  const future = uniqueDates.find((d) => d.getTime() > todayTs);
+  if (future) return future.toISOString().split("T")[0];
+
+  // 3. Passado mais recente (último dia do mês que já passou)
+  const past = [...uniqueDates].reverse().find((d) => d.getTime() < todayTs);
+  if (past) return past.toISOString().split("T")[0];
+
+  return null;
+}
+
 // ── Componente ─────────────────────────────────────────────────
 export default function Transactions() {
-  const {
-    transactions,
-    categories,
-    metrics,
-    currentBalance,
-    accumulatedFutureBalance,
-    year,
-    month,
-  } = useUser();
+  const { transactions, categories, metrics, currentBalance, year, month } =
+    useUser();
 
-  // ── Estado dos filtros ──────────────────────────────────────
+  // ── Filtros ─────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -65,37 +107,68 @@ export default function Transactions() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  // ── Filtragem com useMemo (sem useEffect — evita closure stale) ──
+  // ── Auto-scroll ─────────────────────────────────────────────
+  // targetDate guarda qual data-group deve receber scroll.
+  // Só é definido na primeira carga de cada mês — muda de mês reseta.
+  const [targetDate, setTargetDate] = useState<string | null>(null);
+  const scrolledRef = useRef(false); // garante que scroll ocorre só 1x por carga
+
+  // Quando as transações carregam ou o mês muda, calcula a data-alvo
+  useEffect(() => {
+    scrolledRef.current = false;
+    setTargetDate(null);
+    if (transactions && transactions.length > 0) {
+      const nearest = findNearestDate(transactions, year, month);
+      setTargetDate(nearest);
+    }
+  }, [transactions, year, month]);
+
+  // Callback chamado pelo TransactionList quando termina de renderizar
+  // os grupos — nesse momento os data-date-group já existem no DOM
+  const handleListRendered = useMemo(
+    () => () => {
+      if (!targetDate || scrolledRef.current) return;
+      scrolledRef.current = true;
+
+      // Pequeno delay para garantir que o DOM foi pintado
+      requestAnimationFrame(() => {
+        const el = document.querySelector(
+          `[data-date-group="${targetDate}"]`
+        ) as HTMLElement | null;
+
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+          // Compensa o header fixo (mobile ~56px, desktop ~0) e dá um respiro
+          setTimeout(() => {
+            window.scrollBy({ top: -80, behavior: "smooth" });
+          }, 100);
+        }
+      });
+    },
+    [targetDate]
+  );
+
+  // ── Filtragem ────────────────────────────────────────────────
   const filtered = useMemo<ITransaction[]>(() => {
     if (!transactions) return [];
-
     return transactions.filter((tx) => {
-      // Busca por descrição
       if (search.trim()) {
         const q = search.trim().toLowerCase();
         if (!tx.description?.toLowerCase().includes(q)) return false;
       }
-
-      // Tipo: receita / despesa
       if (typeFilter === "deposit" && tx.type !== TransactionTypes.DEPOSIT)
         return false;
       if (typeFilter === "withdraw" && tx.type !== TransactionTypes.WITHDRAW)
         return false;
-
-      // Kind: simples / fixo / parcelado
       if (kindFilter !== "all" && tx.kind !== kindFilter) return false;
-
-      // Categoria
       if (categoryFilter !== "all" && tx.categoryId !== categoryFilter)
         return false;
-
-      // Status: pago / não pago
       if (statusFilter !== "all") {
         const paid = isTxPaid(tx, year, month);
         if (statusFilter === "paid" && !paid) return false;
         if (statusFilter === "unpaid" && paid) return false;
       }
-
       return true;
     });
   }, [
@@ -109,7 +182,7 @@ export default function Transactions() {
     month,
   ]);
 
-  // ── Métricas do resultado filtrado ─────────────────────────
+  // ── Métricas do resultado filtrado ───────────────────────────
   const filteredMetrics = useMemo(() => {
     let revenues = 0,
       expenses = 0,
@@ -133,7 +206,6 @@ export default function Transactions() {
     };
   }, [filtered, year, month]);
 
-  // ── Filtros ativos (para badge de "N filtros ativos") ───────
   const activeFilterCount = [
     statusFilter !== "all",
     typeFilter !== "all",
@@ -149,14 +221,12 @@ export default function Transactions() {
     setCategoryFilter("all");
   };
 
-  // ── Categorias disponíveis (apenas as que aparecem no mês) ──
   const availableCategories = useMemo(() => {
     if (!categories || !transactions) return [];
     const usedIds = new Set(transactions.map((tx) => tx.categoryId));
     return categories.filter((c) => usedIds.has(c.id));
   }, [categories, transactions]);
 
-  // ── UI helpers ──────────────────────────────────────────────
   const chipBase =
     "flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer transition-all whitespace-nowrap select-none";
 
@@ -186,12 +256,12 @@ export default function Transactions() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-5 animate-fade-in b-52">
+    <div className="flex flex-col gap-5 animate-fade-in">
       <Title navigateMonth>Transações</Title>
 
-      {/* ── Cards de contexto ─────────────────────────── */}
+      {/* Cards de contexto */}
       <div
         className="grid grid-cols-2 md:grid-cols-4 rounded-xl overflow-hidden"
         style={{
@@ -205,21 +275,18 @@ export default function Transactions() {
             value: fmt(currentBalance ?? 0),
             icon: <RiMoneyDollarCircleLine className="h-4 w-4" />,
             color: (currentBalance ?? 0) >= 0 ? "var(--green)" : "var(--red)",
-            hidden: false,
           },
           {
             label: "Receitas do mês",
             value: fmt(metrics?.revenues ?? 0),
             icon: <RiArrowUpCircleLine className="h-4 w-4" />,
             color: "var(--green)",
-            hidden: false,
           },
           {
             label: "Despesas do mês",
             value: fmt(metrics?.expenses ?? 0),
             icon: <RiArrowDownCircleLine className="h-4 w-4" />,
             color: "var(--red)",
-            hidden: false,
           },
           {
             label: "Balanço",
@@ -229,7 +296,6 @@ export default function Transactions() {
               (metrics?.futureBalance ?? 0) >= 0
                 ? "var(--green)"
                 : "var(--red)",
-            hidden: false,
           },
         ].map((item, i) => (
           <div
@@ -255,7 +321,7 @@ export default function Transactions() {
         ))}
       </div>
 
-      {/* ── Barra de busca + botão filtros ───────────── */}
+      {/* Barra de busca + filtros */}
       <div className="flex gap-2">
         <div
           className="flex items-center gap-2 flex-1 px-3 rounded-xl h-10"
@@ -289,7 +355,6 @@ export default function Transactions() {
           )}
         </div>
 
-        {/* Botão filtros avançados */}
         <button
           onClick={() => setShowFilters((p) => !p)}
           className="flex items-center gap-1.5 px-3 h-10 rounded-xl text-sm font-medium transition-all cursor-pointer"
@@ -327,7 +392,7 @@ export default function Transactions() {
         </button>
       </div>
 
-      {/* ── Painel de filtros avançados ───────────────── */}
+      {/* Painel filtros avançados */}
       {showFilters && (
         <div
           className="rounded-xl p-4 flex flex-col gap-4 animate-fade-in"
@@ -336,7 +401,6 @@ export default function Transactions() {
             border: "1px solid var(--border-default)",
           }}
         >
-          {/* Status */}
           <div>
             <p
               className="text-[0.65rem] font-semibold uppercase tracking-wider mb-2"
@@ -360,8 +424,6 @@ export default function Transactions() {
               ))}
             </div>
           </div>
-
-          {/* Tipo */}
           <div>
             <p
               className="text-[0.65rem] font-semibold uppercase tracking-wider mb-2"
@@ -385,8 +447,6 @@ export default function Transactions() {
               ))}
             </div>
           </div>
-
-          {/* Recorrência */}
           <div>
             <p
               className="text-[0.65rem] font-semibold uppercase tracking-wider mb-2"
@@ -414,8 +474,6 @@ export default function Transactions() {
               )}
             </div>
           </div>
-
-          {/* Categoria */}
           {availableCategories.length > 0 && (
             <div>
               <p
@@ -443,12 +501,10 @@ export default function Transactions() {
               </div>
             </div>
           )}
-
-          {/* Limpar filtros */}
           {activeFilterCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="self-start text-xs underline underline-offset-2 transition-colors cursor-pointer"
+              className="self-start text-xs underline underline-offset-2 cursor-pointer"
               style={{ color: "var(--text-muted)" }}
             >
               Limpar todos os filtros
@@ -457,7 +513,7 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* ── Chips rápidos de status (visíveis sempre) ─── */}
+      {/* Chips rápidos */}
       <div className="flex gap-1.5 flex-wrap">
         {(["all", "unpaid", "paid"] as StatusFilter[]).map((v) => (
           <Chip
@@ -496,7 +552,7 @@ export default function Transactions() {
         </Chip>
       </div>
 
-      {/* ── Resumo do filtro atual ────────────────────── */}
+      {/* Lista */}
       <div
         className="rounded-xl overflow-hidden"
         style={{
@@ -504,7 +560,6 @@ export default function Transactions() {
           border: "1px solid var(--border-default)",
         }}
       >
-        {/* Header com contagem e métricas do resultado */}
         <div
           className="flex items-center justify-between px-4 py-3"
           style={{ borderBottom: "1px solid var(--border-subtle)" }}
@@ -526,8 +581,6 @@ export default function Transactions() {
               </span>
             )}
           </div>
-
-          {/* Mini métricas do resultado filtrado */}
           {filtered.length > 0 && (
             <div className="hidden md:flex items-center gap-4">
               <span className="money text-xs" style={{ color: "var(--green)" }}>
@@ -561,10 +614,13 @@ export default function Transactions() {
           )}
         </div>
 
-        {/* Lista */}
         <div className="p-4">
           {filtered.length > 0 ? (
-            <TransactionList transactions={filtered} hideSort={false} />
+            <TransactionList
+              transactions={filtered}
+              hideSort={false}
+              onRendered={handleListRendered}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div

@@ -65,10 +65,11 @@ const Card = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <p
-          className="text-xs font-medium uppercase tracking-wider"
-          style={{
-            color: highligth ? "rgba(199,210,254,0.7)" : "var(--text-muted)",
-          }}
+          className={` font-medium uppercase tracking-wider ${
+            highligth
+              ? "rgba(199,210,254,0.7) text-xs"
+              : "text-gray-500 text-sm md:text-xs"
+          }`}
         >
           {title}
         </p>
@@ -98,8 +99,13 @@ const Card = ({
       {/* Valor */}
       <div>
         <p
-          className="money text-2xl font-medium leading-none"
-          style={{ color: highligth ? "#fff" : "var(--text-primary)" }}
+          className={`money leading-none font-medium  ${
+            highligth ? "text-3xl md:text-3xl" : "text-lg md:text-2xl"
+          }`}
+          // style={{
+          //   color: highligth ? "#fff" : "var(--text-primary)",
+          //   fontSize: highligth ? "1.7rem" : "1.25rem",
+          // }}
         >
           {value}
         </p>

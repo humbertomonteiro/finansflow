@@ -26,11 +26,13 @@ type SortDir = "asc" | "desc";
 interface TransactionsListProps {
   transactions: ITransaction[];
   hideSort?: boolean;
+  onRendered?: () => void; // ← novo: chamado após o primeiro render dos grupos
 }
 
 export const TransactionList = ({
   transactions,
   hideSort = false,
+  onRendered, // ← novo
 }: TransactionsListProps) => {
   const { year, month, payTransaction } = useUser();
 
@@ -51,13 +53,6 @@ export const TransactionList = ({
 
   // ── Helpers ──────────────────────────────────────────────────
   const getPaymentIndex = (transaction: ITransaction): number => {
-    // Após a correção do FilteredTransactionsListUsecase, as transações FIXED
-    // chegam aqui com paymentHistory: [paymentDoMês] — um único elemento,
-    // igual ao que INSTALLMENT já fazia. Por isso o índice correto é sempre 0.
-    //
-    // O fallback antigo "return 0 quando idx === -1" era o bug:
-    // devolvia o primeiro payment histórico (isPaid: true do mês já pago)
-    // em vez do payment do mês atual — fazendo tudo aparecer como pago.
     return 0;
   };
 
@@ -111,6 +106,15 @@ export const TransactionList = ({
     }
     return groups;
   }, [sorted]);
+
+  // ── Notifica a página quando os grupos estão renderizados ────
+  // Dispara sempre que `grouped` muda (nova lista ou novo mês).
+  // A página usa isso como sinal para executar o scrollIntoView.
+  useEffect(() => {
+    if (grouped.length > 0) onRendered?.();
+  }, [grouped]); // eslint-disable-line react-hooks/exhaustive-deps
+  // onRendered é intencionalmente omitido das deps: é um callback
+  // estável criado com useMemo na página — incluí-lo causaria loop.
 
   const dateLabel = (date: Date): string => {
     if (isToday(date)) return "Hoje";
@@ -194,10 +198,9 @@ export const TransactionList = ({
   const handleResolveAll = async () => {
     if (selectedIds.size === 0) return;
 
-    // Apenas os que ainda não estão pagos (e que podem ser pagos)
     const toResolve = sorted.filter((tx) => {
       if (!selectedIds.has(tx.id)) return false;
-      if (isPaid(tx)) return false; // já resolvido, pula
+      if (isPaid(tx)) return false;
       const idx = getPaymentIndex(tx);
       if (idx === -1 && tx.kind !== TransactionKind.FIXED) return false;
       return true;
@@ -220,7 +223,6 @@ export const TransactionList = ({
 
     setIsResolvingAll(false);
     setResolveResult({ success, failed });
-    // Limpa seleção após resolver
     setSelectedIds(new Set());
   };
 
@@ -276,7 +278,6 @@ export const TransactionList = ({
     <div className="flex flex-col gap-4">
       {/* ── Toolbar superior ─────────────────────────── */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        {/* Ordenação (oculta em modo seleção) */}
         {!hideSort && !isSelecting && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-gray-600 text-xs mr-1">Ordenar:</span>
@@ -286,7 +287,6 @@ export const TransactionList = ({
           </div>
         )}
 
-        {/* Labels de seleção */}
         {isSelecting && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-violet-400 text-xs font-medium">
@@ -315,7 +315,6 @@ export const TransactionList = ({
           </div>
         )}
 
-        {/* Botão entrar/sair do modo seleção */}
         <button
           onClick={() =>
             isSelecting ? exitSelectionMode() : setIsSelecting(true)
@@ -349,7 +348,6 @@ export const TransactionList = ({
             return acc + (tx.type === TransactionTypes.DEPOSIT ? amt : -amt);
           }, 0);
 
-          // Checkbox de grupo — seleciona/deseleciona o dia inteiro
           const groupIds = group.transactions.map((tx) => tx.id);
           const allGroupSelected =
             groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
@@ -369,11 +367,12 @@ export const TransactionList = ({
           };
 
           return (
-            <div key={key}>
+            // ↓ data-date-group adicionado aqui — é o que a página
+            //   usa para localizar o grupo e fazer scrollIntoView
+            <div key={key} data-date-group={key}>
               {/* Cabeçalho do grupo */}
               <div className="flex items-center justify-between mb-2 px-1">
                 <div className="flex items-center gap-2">
-                  {/* Checkbox do grupo */}
                   {isSelecting && (
                     <button
                       onClick={toggleGroupSelect}
@@ -435,7 +434,6 @@ export const TransactionList = ({
             bg-gray-900 border border-violet-800/60 rounded-2xl shadow-2xl
             shadow-violet-900/30 animate-[fadeIn_0.2s_ease-out]"
           >
-            {/* Resumo financeiro */}
             <div className="px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-gray-500 uppercase tracking-wide">
@@ -485,7 +483,6 @@ export const TransactionList = ({
                 </div>
               </div>
 
-              {/* Status de pendentes */}
               {selectionMetrics.pendentes > 0 && (
                 <p className="text-center text-[0.65rem] text-gray-600 mt-2">
                   {selectionMetrics.pendentes} pendente
@@ -505,11 +502,9 @@ export const TransactionList = ({
                 )}
             </div>
 
-            {/* Feedback de resultado */}
             {resolveResult && (
               <div
-                className={`px-4 py-2 text-xs text-center
-                ${
+                className={`px-4 py-2 text-xs text-center ${
                   resolveResult.failed > 0
                     ? "text-yellow-400"
                     : "text-green-400"
@@ -524,7 +519,6 @@ export const TransactionList = ({
               </div>
             )}
 
-            {/* Botão resolver */}
             <div className="px-4 py-3">
               <button
                 onClick={handleResolveAll}
@@ -540,13 +534,12 @@ export const TransactionList = ({
               >
                 {isResolvingAll ? (
                   <>
-                    <FiLoader className="h-4 w-4 animate-spin" />
-                    Resolvendo {selectionMetrics.pendentes}...
+                    <FiLoader className="h-4 w-4 animate-spin" /> Resolvendo{" "}
+                    {selectionMetrics.pendentes}...
                   </>
                 ) : (
                   <>
-                    <FiCheck className="h-4 w-4" />
-                    Resolver{" "}
+                    <FiCheck className="h-4 w-4" /> Resolver{" "}
                     {selectionMetrics.pendentes > 0
                       ? `${selectionMetrics.pendentes} pendente${
                           selectionMetrics.pendentes !== 1 ? "s" : ""
