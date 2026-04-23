@@ -64,7 +64,7 @@ interface UserContextType {
   year: number;
   setMonth: (month: number) => void;
   setYear: (year: number) => void;
-  payTransaction: (transactionId: string) => Promise<void>;
+  payTransaction: (transactionId: string, paidAccountId?: string) => Promise<void>;
   editTransaction: (
     transactionId: string,
     newTransaction: Partial<ITransaction>
@@ -427,13 +427,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const payTransaction = async (transactionId: string) => {
+  const payTransaction = async (transactionId: string, paidAccountId?: string) => {
     try {
       if (user && currentBalance !== null) {
         const updatedTransaction = await payerTransactionController(
           transactionId,
           year,
-          month
+          month,
+          paidAccountId
         );
 
         if (updatedTransaction) {

@@ -3,4 +3,5 @@ export interface IPaymentHistory {
   dueDate: Date;
   paidAt: Date | null;
   amount: number;
+  paidAccountId?: string;
 }

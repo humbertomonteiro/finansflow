@@ -5,7 +5,8 @@ import { TransactionRepositoryFirestore } from "@/infra/repositories/FirebaseTra
 export const payerTransactionController = async (
   transactionId: string,
   year: number,
-  month: number
+  month: number,
+  paidAccountId?: string
 ) => {
   try {
     console.log(
@@ -22,7 +23,8 @@ export const payerTransactionController = async (
     const updatedTransaction = await payerTransactionUseCase.execute(
       transactionId,
       year,
-      month
+      month,
+      paidAccountId
     );
 
     console.log("PayerTransactionController: Payment executed successfully");

@@ -42,6 +42,8 @@ export const TransactionItemList = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [pickerAccountId, setPickerAccountId] = useState<string>("");
 
   // Swipe state
   const touchStartX = useRef<number | null>(null);
@@ -85,13 +87,31 @@ export const TransactionItemList = ({
     }
   };
 
-  const handlePay = async (e: React.MouseEvent) => {
+  const handlePay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isSelecting) return; // durante seleção, ignora pagar individual
+    if (isSelecting) return;
     if (index === -1 && !isFixed) return;
+    // Se já está pago, desfaz diretamente (sem seletor)
+    if (payment?.isPaid) {
+      setIsPaying(true);
+      payTransaction(transaction.id).finally(() => setIsPaying(false));
+      return;
+    }
+    // Se há mais de uma conta, abre o seletor
+    if (accounts && accounts.length > 1) {
+      setPickerAccountId(transaction.accountId);
+      setShowAccountPicker(true);
+    } else {
+      setIsPaying(true);
+      payTransaction(transaction.id).finally(() => setIsPaying(false));
+    }
+  };
+
+  const handleConfirmPay = async () => {
+    setShowAccountPicker(false);
     setIsPaying(true);
     try {
-      await payTransaction(transaction.id);
+      await payTransaction(transaction.id, pickerAccountId || transaction.accountId);
     } finally {
       setIsPaying(false);
     }
@@ -413,6 +433,51 @@ export const TransactionItemList = ({
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
+      )}
+
+      {showAccountPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
+          onClick={() => setShowAccountPicker(false)}
+        >
+          <div
+            className="w-full max-w-md bg-gray-900 rounded-t-2xl p-5 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-gray-200 font-semibold text-sm">
+              {isDeposit ? "Em qual conta foi recebido?" : "Em qual conta foi pago?"}
+            </p>
+            <div className="flex flex-col gap-2">
+              {accounts?.map((acc) => (
+                <button
+                  key={acc.id}
+                  onClick={() => setPickerAccountId(acc.id)}
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 border transition-all cursor-pointer
+                    ${pickerAccountId === acc.id
+                      ? "border-violet-500 bg-violet-950/50 text-violet-300"
+                      : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
+                    }`}
+                >
+                  <span className="text-sm font-medium">{acc.name}</span>
+                  {acc.id === transaction.accountId && (
+                    <span className="text-[0.65rem] text-gray-500 bg-gray-700 px-2 py-0.5 rounded-full">
+                      cadastrada
+                    </span>
+                  )}
+                  {pickerAccountId === acc.id && (
+                    <FiCheck className="h-4 w-4 text-violet-400" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleConfirmPay}
+              className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold cursor-pointer"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

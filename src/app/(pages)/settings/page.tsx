@@ -14,7 +14,8 @@ import {
   MdCheck,
 } from "react-icons/md";
 import { IoExitOutline } from "react-icons/io5";
-import { FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiAlertCircle, FiLoader, FiActivity } from "react-icons/fi";
+import { BalanceDiagnosticUsecase, AccountDiagnostic } from "@/domain/usecases/account/BalanceDiagnosticUsecase";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,7 +29,7 @@ import { updateAccountController } from "@/controllers/account/UpdateAccountCont
 import { CreateCategoryController } from "@/controllers/category/CreateCategoryController";
 import { removeCategoryController } from "@/controllers/category/RemoveCategoryController";
 
-type ActivePanel = null | "accounts" | "categories" | "balance" | "reset";
+type ActivePanel = null | "accounts" | "categories" | "balance" | "reset" | "diagnostic";
 
 export default function Settings() {
   const {
@@ -37,6 +38,7 @@ export default function Settings() {
     loading,
     accounts,
     categories,
+    allTransactions,
     refreshAccounts,
     refreshCategories,
     updateAccount,
@@ -57,6 +59,9 @@ export default function Settings() {
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categorySuccess, setCategorySuccess] = useState<string | null>(null);
 
+  // --- Diagnóstico de Saldo ---
+  const [diagnosticData, setDiagnosticData] = useState<AccountDiagnostic[] | null>(null);
+
   // --- Ajustar Saldo ---
   const [balanceAccountId, setBalanceAccountId] = useState("");
   const [newBalance, setNewBalance] = useState("");
@@ -64,6 +69,12 @@ export default function Settings() {
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceSuccess, setBalanceSuccess] = useState<string | null>(null);
+
+  const runDiagnostic = () => {
+    if (!accounts || !allTransactions) return;
+    const result = new BalanceDiagnosticUsecase().execute(accounts, allTransactions);
+    setDiagnosticData(result);
+  };
 
   // Preenche o nome atual ao selecionar a conta
   useEffect(() => {
@@ -585,6 +596,83 @@ export default function Settings() {
                 ⚠️ O ajuste de saldo altera diretamente o valor armazenado no
                 banco, independente das transações.
               </p>
+            </div>
+          )}
+        </li>
+
+        {/* ── DIAGNÓSTICO DE SALDO ── */}
+        <li>
+          <button
+            onClick={() => {
+              togglePanel("diagnostic");
+              if (activePanel !== "diagnostic") runDiagnostic();
+            }}
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+          >
+            <FiActivity className="h-5 w-5" />
+            Diagnóstico de Saldo
+          </button>
+
+          {activePanel === "diagnostic" && (
+            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4">
+              <p className="text-gray-400 text-sm">
+                Compara o saldo armazenado de cada conta com o saldo calculado
+                com base em todas as transações pagas. A diferença indica ajustes
+                manuais ou transações não cadastradas.
+              </p>
+
+              {diagnosticData ? (
+                <div className="flex flex-col gap-3">
+                  {diagnosticData.map((d) => {
+                    const fmt = (v: number) =>
+                      v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+                    const isOk = Math.abs(d.difference) < 0.01;
+                    const diffColor = isOk
+                      ? "text-green-400"
+                      : d.difference > 0
+                      ? "text-yellow-400"
+                      : "text-red-400";
+                    return (
+                      <div
+                        key={d.accountId}
+                        className="bg-gray-900 rounded-xl p-4 flex flex-col gap-2"
+                      >
+                        <p className="text-gray-200 font-semibold text-sm">
+                          {d.accountName}
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                          <div>
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Saldo armazenado</p>
+                            <p className="text-gray-300">{fmt(d.storedBalance)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Calculado pelas transações</p>
+                            <p className="text-gray-300">{fmt(d.calculatedBalance)}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Diferença</p>
+                            <p className={`font-semibold ${diffColor}`}>
+                              {isOk
+                                ? "Sem diferença — tudo certo"
+                                : `${d.difference > 0 ? "+" : ""}${fmt(d.difference)} (ajuste manual ou saldo inicial)`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={runDiagnostic}
+                    className="button bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm cursor-pointer"
+                  >
+                    Recalcular
+                  </button>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-2">
+                  Nenhum dado disponível.
+                </p>
+              )}
             </div>
           )}
         </li>

@@ -13,7 +13,8 @@ export class PayerTransactionUseCase {
   async execute(
     transactionId: string,
     year: number,
-    month: number
+    month: number,
+    paidAccountId?: string
   ): Promise<ITransaction> {
     console.log(
       `PayerTransactionUseCase: Processing payment for ID ${transactionId}, ${month}/${year}`
@@ -39,19 +40,24 @@ export class PayerTransactionUseCase {
     if (paymentIndex !== -1) {
       // Alternar status de pagamento
       const wasPaid = transaction.paymentHistory[paymentIndex].isPaid;
-      transaction.paymentHistory[paymentIndex].isPaid = !wasPaid;
-      transaction.paymentHistory[paymentIndex].paidAt = !wasPaid
-        ? new Date()
-        : null;
+      const existingPaidAccountId = transaction.paymentHistory[paymentIndex].paidAccountId;
 
-      // Atualizar saldo da conta
+      transaction.paymentHistory[paymentIndex].isPaid = !wasPaid;
+      transaction.paymentHistory[paymentIndex].paidAt = !wasPaid ? new Date() : null;
+
+      if (!wasPaid) {
+        transaction.paymentHistory[paymentIndex].paidAccountId = paidAccountId;
+      } else {
+        delete transaction.paymentHistory[paymentIndex].paidAccountId;
+      }
+
+      // Conta a usar: ao pagar, usa paidAccountId ou a original; ao desfazer, usa a que foi registrada
+      const accountToAdjust = !wasPaid
+        ? (paidAccountId ?? transaction.accountId)
+        : (existingPaidAccountId ?? transaction.accountId);
+
       const paymentAmount = transaction.paymentHistory[paymentIndex].amount;
-      await this.attBalance(
-        paymentAmount,
-        transaction.type,
-        transaction.accountId,
-        !wasPaid // Invertemos o status para a atualização do saldo
-      );
+      await this.attBalance(paymentAmount, transaction.type, accountToAdjust, !wasPaid);
     } else if (
       transaction.kind === TransactionKind.FIXED ||
       transaction.kind === TransactionKind.INSTALLMENT
@@ -74,13 +80,14 @@ export class PayerTransactionUseCase {
         dueDate,
         paidAt: new Date(),
         amount: paymentAmount,
+        paidAccountId,
       });
 
       // Atualizar saldo da conta
       await this.attBalance(
         paymentAmount,
         transaction.type,
-        transaction.accountId,
+        paidAccountId ?? transaction.accountId,
         true
       );
     } else {
