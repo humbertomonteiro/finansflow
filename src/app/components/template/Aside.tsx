@@ -10,6 +10,7 @@ import { FormAddTransaction } from "../shared/FormAddTransaction";
 import { NotificationPanel } from "../shared/NotificationPanel";
 import { GlobalSearch } from "../shared/GlobalSearch";
 import { TransactionDetails } from "../shared/TransactionDetails";
+import { NavigateMonth } from "../shared/NavigateMonth";
 import { useUser } from "@/app/hooks/useUser";
 
 const navItems = [
@@ -25,7 +26,7 @@ export const Aside = () => {
   const pathname = usePathname();
   const { user, overdueTransactions, nearbyTransactions } = useUser();
 
-  const { BellButton, Panel: NotifPanel, total } = NotificationPanel();
+  const { BellButton, Panel: NotifPanel } = NotificationPanel();
   const {
     SearchButton,
     SearchIconButton,
@@ -55,8 +56,8 @@ export const Aside = () => {
         }}
       >
         <div>
-          {/* Logo + sino */}
-          <div className="flex items-center justify-between px-4 py-5">
+          {/* Logo */}
+          <div className="flex items-center px-4 py-5">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
@@ -74,48 +75,7 @@ export const Aside = () => {
                 FinansFlow
               </span>
             </Link>
-            {BellButton}
           </div>
-
-          {/* Barra de busca desktop */}
-          <div className="px-4 mb-4">{SearchButton}</div>
-
-          {/* Perfil mini */}
-          {user && (
-            <div
-              className="mx-4 mb-4 px-3 py-2.5 rounded-xl flex items-center gap-3"
-              style={{
-                background: "var(--bg-overlay)",
-                border: "1px solid var(--border-subtle)",
-              }}
-            >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                style={{
-                  background: "var(--accent-dim)",
-                  color: "var(--accent-light)",
-                  border: "1px solid var(--border-accent)",
-                }}
-              >
-                {user.name?.[0]?.toUpperCase()}
-                {user.name?.[1]?.toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p
-                  className="text-xs font-medium truncate"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {user.name}
-                </p>
-                <p
-                  className="text-[0.65rem] truncate"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {user.email}
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Nav */}
           <nav className="px-3">
@@ -202,6 +162,57 @@ export const Aside = () => {
         </div>
       </aside>
 
+      {/* ── Desktop Header ───────────────────────────── */}
+      <header
+        className="hidden lg:flex fixed top-0 left-[240px] right-0 h-14 items-center justify-between px-6 z-20"
+        style={{
+          background: "rgba(7,11,20,0.9)",
+          borderBottom: "1px solid var(--border-subtle)",
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <div className="w-72">{SearchButton}</div>
+
+        <div className="flex items-center gap-3">
+          {BellButton}
+          {user && (
+            <div
+              className="flex items-center gap-2.5 px-1.5 py-1 rounded-xl cursor-default"
+              style={{
+                background: "var(--bg-overlay)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+                style={{
+                  background: "var(--accent-dim)",
+                  color: "var(--accent-light)",
+                  border: "1px solid var(--border-accent)",
+                }}
+              >
+                {user.name?.[0]?.toUpperCase()}
+                {user.name?.[1]?.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p
+                  className="text-xs font-medium truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {user.name}
+                </p>
+                <p
+                  className="text-[0.65rem] truncate"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
       {/* ── Mobile Header ───────────────────────────── */}
       <header
         className="lg:hidden fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 z-20"
@@ -229,19 +240,26 @@ export const Aside = () => {
         <div className="flex items-center gap-1">
           {SearchIconButton}
           {BellButton}
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all ml-1"
-            style={{
-              background: "var(--accent)",
-              boxShadow: "0 0 12px var(--accent-glow)",
-            }}
-            aria-label="Nova transação"
-          >
-            <FiPlus className="h-4 w-4 text-white" />
-          </button>
         </div>
       </header>
+
+      {/* ── Mobile FAB ──────────────────────────────── */}
+      <button
+        onClick={() => setShowForm(true)}
+        className="lg:hidden fixed bottom-20 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer"
+        style={{
+          background: "var(--accent)",
+          boxShadow: "0 0 16px var(--accent-glow)",
+        }}
+        aria-label="Nova transação"
+      >
+        <FiPlus className="h-5 w-5 text-white" />
+      </button>
+
+      {/* ── Mobile Month Bubble ─────────────────────── */}
+      <div className="lg:hidden fixed top-[4.25rem] right-4 z-10">
+        <NavigateMonth />
+      </div>
 
       {/* ── Mobile Bottom Nav ────────────────────────── */}
       <nav
