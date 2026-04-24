@@ -144,7 +144,10 @@ export default function Goals() {
 
       {/* Card resumo geral */}
       {Object.keys(goals).length > 0 && (
-        <div className="bg-gray-900 rounded-xl p-4 border border-gray-800 flex flex-col gap-3">
+        <div
+          className="rounded-xl p-4 border border-gray-800 flex flex-col gap-3"
+          style={{ background: "var(--bg-surface)" }}
+        >
           <div className="flex justify-between items-start">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
@@ -180,8 +183,8 @@ export default function Goals() {
                   totalPercent >= 100
                     ? "bg-red-500"
                     : totalPercent >= 80
-                      ? "bg-yellow-500"
-                      : "bg-green-500"
+                    ? "bg-yellow-500"
+                    : "bg-green-500"
                 }`}
                 style={{ width: `${totalPercent}%` }}
               />
@@ -203,7 +206,10 @@ export default function Goals() {
 
       {/* Lista de metas */}
       {Object.keys(goals).length === 0 ? (
-        <div className="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center">
+        <div
+          className="rounded-xl p-8 border border-gray-800 text-center"
+          style={{ background: "var(--bg-surface)" }}
+        >
           <MdOutlineFlagCircle className="h-12 w-12 text-gray-700 mx-auto mb-3" />
           <p className="text-gray-400 text-sm">
             Você ainda não definiu nenhuma meta.
@@ -223,12 +229,13 @@ export default function Goals() {
             return (
               <div
                 key={categoryId}
-                className={`bg-gray-900 rounded-xl p-4 border transition-colors ${
+                style={{ background: "var(--bg-surface)" }}
+                className={`rounded-xl p-4 border transition-colors ${
                   isOver
                     ? "border-red-800"
                     : isWarning
-                      ? "border-yellow-800"
-                      : "border-gray-800"
+                    ? "border-yellow-800"
+                    : "border-gray-800"
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -311,8 +318,8 @@ export default function Goals() {
                         isOver
                           ? "bg-red-500"
                           : isWarning
-                            ? "bg-yellow-500"
-                            : "bg-violet-500"
+                          ? "bg-yellow-500"
+                          : "bg-violet-500"
                       }`}
                       style={{ width: `${percent}%` }}
                     />
@@ -324,8 +331,8 @@ export default function Goals() {
                         isOver
                           ? "text-red-400"
                           : isWarning
-                            ? "text-yellow-400"
-                            : "text-gray-400"
+                          ? "text-yellow-400"
+                          : "text-gray-400"
                       }
                     >
                       {percent.toFixed(1)}% usado
@@ -340,7 +347,10 @@ export default function Goals() {
       )}
 
       {/* Adicionar nova meta */}
-      <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+      <div
+        className="rounded-xl p-4 border border-gray-800"
+        style={{ background: "var(--bg-surface)" }}
+      >
         <h3 className="text-gray-300 font-medium mb-4 flex items-center gap-2">
           <MdAdd className="h-5 w-5 text-violet-400" />
           Adicionar meta de gasto
@@ -390,12 +400,11 @@ export default function Goals() {
           </button>
         </div>
 
-        {categoriesAvailable.length === 0 &&
-          Object.keys(goals).length > 0 && (
-            <p className="text-gray-600 text-xs mt-3 text-center">
-              Todas as categorias já têm uma meta definida.
-            </p>
-          )}
+        {categoriesAvailable.length === 0 && Object.keys(goals).length > 0 && (
+          <p className="text-gray-600 text-xs mt-3 text-center">
+            Todas as categorias já têm uma meta definida.
+          </p>
+        )}
       </div>
 
       <p className="text-gray-700 text-xs text-center pb-4">

@@ -81,14 +81,14 @@ export const Aside = () => {
           </div>
 
           {/* Nav */}
-          <nav className="px-3">
+          <nav className="px-3 mt-4">
             <p
               className="text-[0.6rem] font-semibold uppercase tracking-widest px-3 mb-2"
               style={{ color: "var(--text-disabled)" }}
             >
               Menu
             </p>
-            <ul className="space-y-0.5">
+            <ul className="space-y-4">
               {navItems.map(({ href, icon: Icon, label }) => {
                 const active = pathname === href;
                 const badge = getBadge(href);
@@ -169,7 +169,7 @@ export const Aside = () => {
       <header
         className="hidden lg:flex fixed top-0 left-[240px] right-0 h-14 items-center justify-between px-6 z-20"
         style={{
-          background: "rgba(7,11,20,0.9)",
+          background: "var(--bg-surface)",
           borderBottom: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
@@ -283,14 +283,19 @@ export const Aside = () => {
               key={href}
               href={href}
               className="flex-1 relative flex flex-col items-center gap-1 py-1 rounded-xl transition-all"
-              style={{ color: active ? "var(--accent-light)" : "var(--text-muted)" }}
+              style={{
+                color: active ? "var(--accent-light)" : "var(--text-muted)",
+              }}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
                 {badge > 0 && (
                   <span
                     className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5"
-                    style={{ background: overdueCount > 0 ? "var(--red)" : "var(--yellow)" }}
+                    style={{
+                      background:
+                        overdueCount > 0 ? "var(--red)" : "var(--yellow)",
+                    }}
                   >
                     {badge > 9 ? "9+" : badge}
                   </span>
@@ -325,14 +330,19 @@ export const Aside = () => {
               key={href}
               href={href}
               className="flex-1 relative flex flex-col items-center gap-1 py-1 rounded-xl transition-all"
-              style={{ color: active ? "var(--accent-light)" : "var(--text-muted)" }}
+              style={{
+                color: active ? "var(--accent-light)" : "var(--text-muted)",
+              }}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
                 {badge > 0 && (
                   <span
                     className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5"
-                    style={{ background: overdueCount > 0 ? "var(--red)" : "var(--yellow)" }}
+                    style={{
+                      background:
+                        overdueCount > 0 ? "var(--red)" : "var(--yellow)",
+                    }}
                   >
                     {badge > 9 ? "9+" : badge}
                   </span>

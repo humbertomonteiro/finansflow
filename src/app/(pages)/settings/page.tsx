@@ -15,7 +15,10 @@ import {
 } from "react-icons/md";
 import { IoExitOutline } from "react-icons/io5";
 import { FiAlertCircle, FiLoader, FiActivity } from "react-icons/fi";
-import { BalanceDiagnosticUsecase, AccountDiagnostic } from "@/domain/usecases/account/BalanceDiagnosticUsecase";
+import {
+  BalanceDiagnosticUsecase,
+  AccountDiagnostic,
+} from "@/domain/usecases/account/BalanceDiagnosticUsecase";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -29,7 +32,13 @@ import { updateAccountController } from "@/controllers/account/UpdateAccountCont
 import { CreateCategoryController } from "@/controllers/category/CreateCategoryController";
 import { removeCategoryController } from "@/controllers/category/RemoveCategoryController";
 
-type ActivePanel = null | "accounts" | "categories" | "balance" | "reset" | "diagnostic";
+type ActivePanel =
+  | null
+  | "accounts"
+  | "categories"
+  | "balance"
+  | "reset"
+  | "diagnostic";
 
 export default function Settings() {
   const {
@@ -60,7 +69,9 @@ export default function Settings() {
   const [categorySuccess, setCategorySuccess] = useState<string | null>(null);
 
   // --- Diagnóstico de Saldo ---
-  const [diagnosticData, setDiagnosticData] = useState<AccountDiagnostic[] | null>(null);
+  const [diagnosticData, setDiagnosticData] = useState<
+    AccountDiagnostic[] | null
+  >(null);
 
   // --- Ajustar Saldo ---
   const [balanceAccountId, setBalanceAccountId] = useState("");
@@ -72,7 +83,10 @@ export default function Settings() {
 
   const runDiagnostic = () => {
     if (!accounts || !allTransactions) return;
-    const result = new BalanceDiagnosticUsecase().execute(accounts, allTransactions);
+    const result = new BalanceDiagnosticUsecase().execute(
+      accounts,
+      allTransactions
+    );
     setDiagnosticData(result);
   };
 
@@ -123,7 +137,7 @@ export default function Settings() {
       return;
     }
     const balance = Number(
-      newAccountBalance.replace(",", ".").replace(/[^\d.]/g, ""),
+      newAccountBalance.replace(",", ".").replace(/[^\d.]/g, "")
     );
     if (isNaN(balance) || balance < 0) {
       setAccountError("Informe um saldo inicial válido (mínimo 0).");
@@ -154,7 +168,7 @@ export default function Settings() {
   const handleRemoveAccount = async (account: IAccount) => {
     if (
       !confirm(
-        `Remover a conta "${account.name}"? Esta ação não pode ser desfeita.`,
+        `Remover a conta "${account.name}"? Esta ação não pode ser desfeita.`
       )
     )
       return;
@@ -279,7 +293,10 @@ export default function Settings() {
 
       <BoxUser />
 
-      <ul className="text-gray-400 flex flex-col bg-gray-900 py-2 px-2 rounded-2xl">
+      <ul
+        className="text-gray-400 flex flex-col py-2 px-2 rounded-2xl"
+        style={{ background: "var(--bg-surface)" }}
+      >
         {/* ── CONTAS ── */}
         <li>
           <button
@@ -296,7 +313,10 @@ export default function Settings() {
           </button>
 
           {activePanel === "accounts" && (
-            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4">
+            <div
+              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-4"
+              style={{ background: "var(--bg-surface)" }}
+            >
               {/* Lista de contas */}
               <div className="flex flex-col gap-2">
                 {accounts && accounts.length > 0 ? (
@@ -406,7 +426,10 @@ export default function Settings() {
           </button>
 
           {activePanel === "categories" && (
-            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4">
+            <div
+              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-4"
+              style={{ background: "var(--bg-surface)" }}
+            >
               {/* Categorias padrão */}
               <div>
                 <p className="text-gray-500 text-xs mb-2 uppercase tracking-wider">
@@ -508,7 +531,10 @@ export default function Settings() {
           </button>
 
           {activePanel === "balance" && (
-            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4 flex flex-col gap-3">
+            <div
+              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-3"
+              style={{ background: "var(--bg-surface)" }}
+            >
               <p className="text-gray-400 text-sm">
                 Selecione a conta para editar o nome e/ou corrigir o saldo
                 manualmente.
@@ -614,18 +640,24 @@ export default function Settings() {
           </button>
 
           {activePanel === "diagnostic" && (
-            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4">
+            <div
+              className="rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4"
+              style={{ background: "var(--bg-surface)" }}
+            >
               <p className="text-gray-400 text-sm">
                 Compara o saldo armazenado de cada conta com o saldo calculado
-                com base em todas as transações pagas. A diferença indica ajustes
-                manuais ou transações não cadastradas.
+                com base em todas as transações pagas. A diferença indica
+                ajustes manuais ou transações não cadastradas.
               </p>
 
               {diagnosticData ? (
                 <div className="flex flex-col gap-3">
                   {diagnosticData.map((d) => {
                     const fmt = (v: number) =>
-                      v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+                      v.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      });
                     const isOk = Math.abs(d.difference) < 0.01;
                     const diffColor = isOk
                       ? "text-green-400"
@@ -635,26 +667,39 @@ export default function Settings() {
                     return (
                       <div
                         key={d.accountId}
-                        className="bg-gray-900 rounded-xl p-4 flex flex-col gap-2"
+                        className="rounded-xl p-4 flex flex-col gap-2"
+                        style={{ background: "var(--bg-surface)" }}
                       >
                         <p className="text-gray-200 font-semibold text-sm">
                           {d.accountName}
                         </p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                           <div>
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Saldo armazenado</p>
-                            <p className="text-gray-300">{fmt(d.storedBalance)}</p>
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                              Saldo armazenado
+                            </p>
+                            <p className="text-gray-300">
+                              {fmt(d.storedBalance)}
+                            </p>
                           </div>
                           <div>
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Calculado pelas transações</p>
-                            <p className="text-gray-300">{fmt(d.calculatedBalance)}</p>
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                              Calculado pelas transações
+                            </p>
+                            <p className="text-gray-300">
+                              {fmt(d.calculatedBalance)}
+                            </p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">Diferença</p>
+                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                              Diferença
+                            </p>
                             <p className={`font-semibold ${diffColor}`}>
                               {isOk
                                 ? "Sem diferença — tudo certo"
-                                : `${d.difference > 0 ? "+" : ""}${fmt(d.difference)} (ajuste manual ou saldo inicial)`}
+                                : `${d.difference > 0 ? "+" : ""}${fmt(
+                                    d.difference
+                                  )} (ajuste manual ou saldo inicial)`}
                             </p>
                           </div>
                         </div>

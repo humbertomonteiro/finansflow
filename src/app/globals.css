@@ -5,7 +5,7 @@
 :root {
   /* Backgrounds */
   --bg-base: #070b14;
-  --bg-surface: #0d1220;
+  --bg-surface: rgba(7, 11, 20, 0.9);
   --bg-elevated: #121827;
   --bg-overlay: #1a2236;
   --bg-hover: #1e293b;
@@ -48,10 +48,10 @@
   --radius-full: 9999px;
 
   /* Shadow */
-  --shadow-card:
-    0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-elevated:
-    0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
   --shadow-accent: 0 0 24px rgba(99, 102, 241, 0.2);
 }
 
@@ -81,8 +81,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       ellipse 80% 50% at 20% -10%,
       rgba(99, 102, 241, 0.07) 0%,
       transparent 60%
@@ -136,9 +135,7 @@ body::before {
   height: 44px;
   color: var(--text-primary);
   outline: none;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input::placeholder {
