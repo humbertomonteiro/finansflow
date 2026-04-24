@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { useUser } from "@/app/hooks/useUser";
@@ -10,14 +11,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
-import {
-  FiCheck,
-  FiX,
-  FiTrash,
-  FiChevronDown,
-  FiChevronUp,
-  FiClock,
-} from "react-icons/fi";
+import { FiCheck, FiX, FiTrash, FiClock } from "react-icons/fi";
 import { MdRepeat } from "react-icons/md";
 
 interface TransactionItemListProps {
@@ -111,7 +105,10 @@ export const TransactionItemList = ({
     setShowAccountPicker(false);
     setIsPaying(true);
     try {
-      await payTransaction(transaction.id, pickerAccountId || transaction.accountId);
+      await payTransaction(
+        transaction.id,
+        pickerAccountId || transaction.accountId
+      );
     } finally {
       setIsPaying(false);
     }
@@ -159,11 +156,15 @@ export const TransactionItemList = ({
           transaction.id,
           isFixed || isInstallment
             ? (
-                await import("@/domain/enums/transaction/TransactionRemovalScope")
+                await import(
+                  "@/domain/enums/transaction/TransactionRemovalScope"
+                )
               ).TransactionRemovalScope.CURRENT_MONTH
             : (
-                await import("@/domain/enums/transaction/TransactionRemovalScope")
-              ).TransactionRemovalScope.ALL,
+                await import(
+                  "@/domain/enums/transaction/TransactionRemovalScope"
+                )
+              ).TransactionRemovalScope.ALL
         );
       }
     }
@@ -177,12 +178,12 @@ export const TransactionItemList = ({
   const borderColor = isSelected
     ? "border-violet-500"
     : isOverdue
-      ? "border-red-800"
-      : payment?.isPaid
-        ? "border-green-900/40"
-        : isNearby
-          ? "border-yellow-800/60"
-          : "border-gray-800";
+    ? "border-red-800"
+    : payment?.isPaid
+    ? "border-green-900/40"
+    : isNearby
+    ? "border-yellow-800/60"
+    : "border-gray-800";
 
   const bgColor = isSelected ? "bg-violet-950/40" : "bg-gray-900";
 
@@ -194,7 +195,11 @@ export const TransactionItemList = ({
           <div className="absolute inset-0 flex items-stretch pointer-events-none">
             <div
               className={`flex-1 flex items-center justify-start px-5 transition-opacity
-              ${swipeAction === "pay" ? "bg-green-800 opacity-100" : "bg-green-900/30 opacity-0"}`}
+              ${
+                swipeAction === "pay"
+                  ? "bg-green-800 opacity-100"
+                  : "bg-green-900/30 opacity-0"
+              }`}
             >
               <FiCheck className="h-6 w-6 text-green-300" />
               <span className="ml-2 text-green-300 text-sm font-semibold">
@@ -203,7 +208,11 @@ export const TransactionItemList = ({
             </div>
             <div
               className={`flex-1 flex items-center justify-end px-5 transition-opacity
-              ${swipeAction === "delete" ? "bg-red-800 opacity-100" : "bg-red-900/30 opacity-0"}`}
+              ${
+                swipeAction === "delete"
+                  ? "bg-red-800 opacity-100"
+                  : "bg-red-900/30 opacity-0"
+              }`}
             >
               <span className="mr-2 text-red-300 text-sm font-semibold">
                 Remover
@@ -300,7 +309,9 @@ export const TransactionItemList = ({
             {/* Valor */}
             <div className="shrink-0 text-right">
               <p
-                className={`text-sm font-semibold ${isDeposit ? "text-green-400" : "text-red-400"}`}
+                className={`text-sm font-semibold ${
+                  isDeposit ? "text-green-400" : "text-red-400"
+                }`}
               >
                 {isDeposit ? "+" : "-"}
                 {formatCurrency(displayAmount)}
@@ -310,7 +321,7 @@ export const TransactionItemList = ({
                   total{" "}
                   {formatCurrency(
                     displayAmount *
-                      (transaction.recurrence.installmentsCount ?? 1),
+                      (transaction.recurrence.installmentsCount ?? 1)
                   )}
                 </p>
               )}
@@ -340,17 +351,6 @@ export const TransactionItemList = ({
                   <FiX className="h-4 w-4" />
                 )}
               </button>
-            )}
-
-            {/* Chevron expand — oculto em modo seleção */}
-            {!isSelecting && (
-              <div className="shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
-                {isExpanded ? (
-                  <FiChevronUp className="h-4 w-4" />
-                ) : (
-                  <FiChevronDown className="h-4 w-4" />
-                )}
-              </div>
             )}
           </div>
 
@@ -396,8 +396,8 @@ export const TransactionItemList = ({
                     {isFixed
                       ? "Recorrente"
                       : isInstallment
-                        ? "Parcelado"
-                        : "Simples"}
+                      ? "Parcelado"
+                      : "Simples"}
                   </p>
                 </div>
                 {isInstallment && transaction.recurrence.installmentsCount && (
@@ -435,50 +435,96 @@ export const TransactionItemList = ({
         />
       )}
 
-      {showAccountPicker && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
-          onClick={() => setShowAccountPicker(false)}
-        >
+      {showAccountPicker &&
+        createPortal(
           <div
-            className="w-full max-w-md bg-gray-900 rounded-t-2xl p-5 flex flex-col gap-4"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{
+              background: "rgba(7,11,20,0.85)",
+              backdropFilter: "blur(6px)",
+            }}
+            onClick={() => setShowAccountPicker(false)}
           >
-            <p className="text-gray-200 font-semibold text-sm">
-              {isDeposit ? "Em qual conta foi recebido?" : "Em qual conta foi pago?"}
-            </p>
-            <div className="flex flex-col gap-2">
-              {accounts?.map((acc) => (
-                <button
-                  key={acc.id}
-                  onClick={() => setPickerAccountId(acc.id)}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3 border transition-all cursor-pointer
-                    ${pickerAccountId === acc.id
-                      ? "border-violet-500 bg-violet-950/50 text-violet-300"
-                      : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
-                    }`}
-                >
-                  <span className="text-sm font-medium">{acc.name}</span>
-                  {acc.id === transaction.accountId && (
-                    <span className="text-[0.65rem] text-gray-500 bg-gray-700 px-2 py-0.5 rounded-full">
-                      cadastrada
-                    </span>
-                  )}
-                  {pickerAccountId === acc.id && (
-                    <FiCheck className="h-4 w-4 text-violet-400" />
-                  )}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleConfirmPay}
-              className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold cursor-pointer"
+            <div
+              className="w-full max-w-sm flex flex-col rounded-2xl animate-fade-in-scale overflow-hidden"
+              style={{
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-strong)",
+                boxShadow: "0 0 60px rgba(0,0,0,0.6)",
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      )}
+              <div
+                className="px-5 py-4 shrink-0"
+                style={{ borderBottom: "1px solid var(--border-subtle)" }}
+              >
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {isDeposit
+                    ? "Em qual conta foi recebido?"
+                    : "Em qual conta foi pago?"}
+                </p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-2">
+                {accounts?.map((acc) => (
+                  <button
+                    key={acc.id}
+                    onClick={() => setPickerAccountId(acc.id)}
+                    className="flex items-center justify-between rounded-xl px-4 py-3 transition-all cursor-pointer"
+                    style={{
+                      background:
+                        pickerAccountId === acc.id
+                          ? "var(--accent-dim)"
+                          : "var(--bg-overlay)",
+                      border: `1px solid ${
+                        pickerAccountId === acc.id
+                          ? "var(--border-accent)"
+                          : "var(--border-subtle)"
+                      }`,
+                      color:
+                        pickerAccountId === acc.id
+                          ? "var(--accent-light)"
+                          : "var(--text-secondary)",
+                    }}
+                  >
+                    <span className="text-sm font-medium">{acc.name}</span>
+                    <div className="flex items-center gap-2">
+                      {acc.id === transaction.accountId && (
+                        <span
+                          className="text-[0.65rem] px-2 py-0.5 rounded-full"
+                          style={{
+                            background: "var(--bg-elevated)",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          cadastrada
+                        </span>
+                      )}
+                      {pickerAccountId === acc.id && (
+                        <FiCheck
+                          className="h-4 w-4"
+                          style={{ color: "var(--accent-light)" }}
+                        />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="px-5 pb-5">
+                <button
+                  onClick={handleConfirmPay}
+                  className="button button-primary w-full"
+                >
+                  <FiCheck className="h-4 w-4" />
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };

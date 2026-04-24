@@ -257,12 +257,11 @@ export function GlobalSearch() {
   const SearchButton = (
     <button
       onClick={() => setOpen(true)}
-      className="relative flex items-center gap-2 px-3 h-9 rounded-xl text-sm transition-all cursor-pointer group"
+      className="flex items-center gap-2 px-3 h-9 rounded-xl text-sm transition-all cursor-pointer w-full"
       style={{
         background: "var(--bg-overlay)",
         border: "1px solid var(--border-subtle)",
         color: "var(--text-muted)",
-        minWidth: "120px",
       }}
       onMouseEnter={(e) =>
         (e.currentTarget.style.borderColor = "var(--border-strong)")

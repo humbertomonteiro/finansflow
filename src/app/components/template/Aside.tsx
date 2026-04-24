@@ -180,7 +180,7 @@ export const Aside = () => {
           {BellButton}
           {user && (
             <div
-              className="flex items-center gap-2.5 px-1.5 py-1 rounded-xl cursor-default"
+              className="flex items-center gap-2 pl-1 pr-1.5 py-[0.75px] rounded-xl cursor-default"
               style={{
                 background: "var(--bg-overlay)",
                 border: "1px solid var(--border-subtle)",
