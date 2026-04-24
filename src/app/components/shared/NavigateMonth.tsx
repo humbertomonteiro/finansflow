@@ -40,7 +40,7 @@ export const NavigateMonth = () => {
     <div
       className="flex items-center gap-1 rounded-xl p-1"
       style={{
-        background: "var(--bg-elevated)",
+        background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
       }}
     >
