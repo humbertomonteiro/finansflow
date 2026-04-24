@@ -112,7 +112,7 @@ export default function Dashboard() {
       />
 
       {/* ── Gráfico de linha ──────────────────────── */}
-      {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
+      {/* {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
         <div
           className="rounded-xl p-4 h-[320px]"
           style={{
@@ -128,7 +128,7 @@ export default function Dashboard() {
           </p>
           <LineChart data={monthlyMetrics} />
         </div>
-      )}
+      )} */}
 
       {/* ── Listas de atenção ─────────────────────── */}
       {((nearbyTransactions?.length ?? 0) > 0 ||

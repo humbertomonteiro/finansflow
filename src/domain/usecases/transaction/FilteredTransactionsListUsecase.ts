@@ -11,23 +11,22 @@ export class FilteredTransactionsListUsecase {
     month?: number
   ): Promise<ITransaction[]> {
     try {
-      // Validate year and month if provided
       if (year && month) {
         if (month < 1 || month > 12) throw new Error("Invalid month");
         if (year < 2000) throw new Error("Invalid year");
 
-        // Early return for future overdue transactions
         if (filter === "overdue") {
-          const filterDate = new Date(Date.UTC(year, month - 1, 1));
+          const filterDate = new Date(year, month - 1, 1);
           if (filterDate > new Date()) return [];
         }
 
-        const transactions = this.getTransactionsForMonth(
-          allTransactions,
-          year,
-          month
-        );
+        const transactions = this.getTransactionsForMonth(allTransactions, year, month);
         return this.applyFilter(transactions, filter);
+      }
+
+      // Para overdue sem mês selecionado, expande corretamente todas as ocorrências passadas
+      if (filter === "overdue") {
+        return this.applyFilter(this.getTransactionsUpToToday(allTransactions), filter);
       }
 
       return this.applyFilter(allTransactions, filter);
@@ -186,6 +185,9 @@ export class FilteredTransactionsListUsecase {
     return result;
   }
 
+  // Após getTransactionsForMonth ou getTransactionsUpToToday, paymentHistory
+  // tem sempre um único entry por transação — usa isPaid direto sem comparar datas,
+  // evitando falsos negativos causados por diferença de fuso UTC vs local.
   private applyFilter(
     transactions: ITransaction[],
     filter: "all" | "paid" | "unpaid" | "nearby" | "overdue"
@@ -195,18 +197,11 @@ export class FilteredTransactionsListUsecase {
     return transactions
       .filter((transaction) => {
         const dueDate = new Date(transaction.dueDate);
-        const isPaid = transaction.paymentHistory.some(
-          (payment) =>
-            payment.dueDate.getFullYear() === dueDate.getFullYear() &&
-            payment.dueDate.getMonth() === dueDate.getMonth() &&
-            payment.dueDate.getDate() === dueDate.getDate() &&
-            payment.isPaid
-        );
+        const isPaid = transaction.paymentHistory[0]?.isPaid ?? false;
 
         const isNearby =
-          Math.abs(dueDate.getTime() - today.getTime()) <=
-            this.nearbyDaysThreshold &&
           dueDate >= today &&
+          dueDate.getTime() - today.getTime() <= this.nearbyDaysThreshold &&
           !isPaid;
 
         switch (filter) {
@@ -223,5 +218,65 @@ export class FilteredTransactionsListUsecase {
         }
       })
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  }
+
+  // Expande FIXED e INSTALLMENT para todas as ocorrências até hoje,
+  // respeitando exclusões e datas de fim. Usado pelo filtro overdue.
+  private getTransactionsUpToToday(transactions: ITransaction[]): ITransaction[] {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const result: ITransaction[] = [];
+
+    for (const transaction of transactions) {
+      if (transaction.kind === TransactionKind.SIMPLE) {
+        result.push(transaction);
+      } else if (transaction.kind === TransactionKind.INSTALLMENT) {
+        const excludedInstallments = transaction.recurrence?.excludedInstallments || [];
+        transaction.paymentHistory.forEach((payment, index) => {
+          if (excludedInstallments.includes(index + 1)) return;
+          const paymentDate = new Date(payment.dueDate);
+          if (paymentDate <= today) {
+            result.push({ ...transaction, dueDate: paymentDate, paymentHistory: [payment] });
+          }
+        });
+      } else if (transaction.kind === TransactionKind.FIXED) {
+        const startDate = new Date(transaction.dueDate);
+        let y = startDate.getFullYear();
+        let m = startDate.getMonth() + 1;
+        const day = startDate.getDate();
+        const excludedFixeds = transaction.recurrence?.excludedFixeds || [];
+        const endDate = transaction.recurrence?.endDate
+          ? new Date(transaction.recurrence.endDate)
+          : null;
+
+        while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+          const isExcluded = excludedFixeds.some(
+            (ef: { year: number; month: number }) => ef.year === y && ef.month === m
+          );
+          const occurrenceDate = new Date(y, m - 1, day);
+          const isBeforeEndDate = !endDate || occurrenceDate <= endDate;
+
+          if (!isExcluded && isBeforeEndDate) {
+            const paymentForMonth = transaction.paymentHistory.find((p) => {
+              const d = new Date(p.dueDate);
+              return d.getFullYear() === y && d.getMonth() + 1 === m;
+            });
+            const effectivePayment = paymentForMonth ?? {
+              isPaid: false,
+              dueDate: occurrenceDate,
+              paidAt: null,
+              amount: transaction.amount,
+            };
+            result.push({ ...transaction, dueDate: occurrenceDate, paymentHistory: [effectivePayment] });
+          }
+
+          m++;
+          if (m > 12) { m = 1; y++; }
+        }
+      }
+    }
+
+    return result;
   }
 }

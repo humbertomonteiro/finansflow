@@ -258,7 +258,7 @@ export default function Transactions() {
 
   // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-5 animate-fade-in">
+    <div className="flex flex-col gap-5 animate-fade-in pb-48">
       <Title navigateMonth>Transações</Title>
 
       {/* Cards de contexto */}
