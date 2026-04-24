@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAmountInput } from "@/app/hooks/useAmountInput";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -8,6 +8,8 @@ import { useUser } from "@/app/hooks/useUser";
 import { IAccount } from "@/domain/interfaces/account/IAccount";
 import { AnnualMetrics } from "@/domain/usecases/transaction/AnnualMetricsUsecase";
 import { CategoryExpensesSummary } from "@/domain/usecases/transaction/CalculateCategoryExpensesUsecase";
+import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
+import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import {
   FiX,
   FiEdit2,
@@ -147,7 +149,7 @@ export function DashboardCardModal({ type, onClose }: DashboardCardModalProps) {
           {type === "revenues" && <RevenuesModal onClose={onClose} />}
           {type === "expenses" && <ExpensesModal />}
           {type === "monthly" && <MonthlyModal />}
-          {type === "projection" && <ProjectionModal />}
+          {type === "projection" && <ProjectionModal onClose={onClose} />}
         </div>
       </div>
     </div>
@@ -751,126 +753,362 @@ function MonthlyModal() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// 5. PROJEÇÃO ACUMULADA — mini histórico de balanços
+// 5. PROJEÇÃO ANUAL — balanço projetado jan-dez + simulador
 // ══════════════════════════════════════════════════════════════
-function ProjectionModal() {
-  const { monthlyMetrics, accumulatedFutureBalance } = useUser();
+function ProjectionModal({ onClose }: { onClose: () => void }) {
+  const {
+    allTransactions,
+    transactions,
+    currentBalance,
+    accumulatedFutureBalance,
+    year,
+    month,
+  } = useUser();
+  const router = useRouter();
 
-  // Calcula balanço mensal e acumulado de cada mês
-  const monthData = (() => {
-    if (!monthlyMetrics) return [];
-    return monthlyMetrics.labels.map((label, i) => {
-      const bal =
-        (monthlyMetrics.revenues[i] ?? 0) - (monthlyMetrics.expenses[i] ?? 0);
-      return { label, bal };
-    });
-  })().slice(-6); // últimos 6 meses
+  const [investPct, setInvestPct] = useState(100);
+  const [annualRate, setAnnualRate] = useState(12);
 
-  const maxAbs = Math.max(...monthData.map((m) => Math.abs(m.bal)), 1);
+  const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+  // Net (receitas − despesas) de TODAS as transações para cada mês
+  const monthlyNets = useMemo(() => {
+    if (!allTransactions) return new Array(12).fill(0) as number[];
+    const nets = new Array(12).fill(0) as number[];
+    for (const t of allTransactions) {
+      const sign = t.type === TransactionTypes.DEPOSIT ? 1 : -1;
+      if (t.kind === TransactionKind.SIMPLE) {
+        const d = new Date(t.dueDate);
+        if (d.getFullYear() === year) nets[d.getMonth()] += sign * t.amount;
+      } else if (t.kind === TransactionKind.INSTALLMENT) {
+        const excl = t.recurrence?.excludedInstallments ?? [];
+        const end = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
+        t.paymentHistory.forEach((p, idx) => {
+          if (excl.includes(idx + 1)) return;
+          const d = new Date(p.dueDate);
+          if (d.getFullYear() !== year) return;
+          if (end && d > end) return;
+          nets[d.getMonth()] += sign * p.amount;
+        });
+      } else if (t.kind === TransactionKind.FIXED) {
+        const start = new Date(t.dueDate);
+        const end = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
+        const excl = (t.recurrence?.excludedFixeds ?? []) as Array<{ year: number; month: number }>;
+        for (let m = 1; m <= 12; m++) {
+          const occ = new Date(year, m - 1, start.getDate());
+          if (occ < start) continue;
+          if (end && occ > end) continue;
+          if (excl.some((ef) => ef.year === year && ef.month === m)) continue;
+          const pay = t.paymentHistory.find((p) => {
+            const d = new Date(p.dueDate);
+            return d.getFullYear() === year && d.getMonth() + 1 === m;
+          });
+          nets[m - 1] += sign * (pay?.amount ?? t.amount);
+        }
+      }
+    }
+    return nets;
+  }, [allTransactions, year]);
+
+  // Saldo no início do mês atual (remove pagamentos já feitos neste mês)
+  const anchor = useMemo(() => {
+    const paid = (transactions ?? []).reduce((sum, t) => {
+      if (!(t.paymentHistory[0]?.isPaid ?? false)) return sum;
+      return sum + (t.type === TransactionTypes.DEPOSIT ? t.amount : -t.amount);
+    }, 0);
+    return currentBalance - paid;
+  }, [transactions, currentBalance]);
+
+  // Projeção base (sem investimento)
+  const projectedBalances = useMemo(() => {
+    const r = new Array(12).fill(0) as number[];
+    r[month - 1] = anchor + monthlyNets[month - 1];
+    for (let i = month; i < 12; i++) r[i] = r[i - 1] + monthlyNets[i];
+    for (let i = month - 2; i >= 0; i--) r[i] = r[i + 1] - monthlyNets[i + 1];
+    return r;
+  }, [anchor, monthlyNets, month]);
+
+  // Projeção com juros compostos
+  const investedBalances = useMemo(() => {
+    if (investPct <= 0 || annualRate <= 0) return projectedBalances;
+    const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+    const r = [...projectedBalances];
+    let free = anchor;
+    let invested = 0;
+    for (let i = month - 1; i < 12; i++) {
+      invested *= 1 + monthlyRate;
+      const delta = monthlyNets[i];
+      if (delta > 0) {
+        const toInvest = delta * (investPct / 100);
+        free += delta - toInvest;
+        invested += toInvest;
+      } else {
+        free += delta;
+        if (free < 0) {
+          invested += free; // resgata o que falta
+          free = 0;
+          if (invested < 0) invested = 0;
+        }
+      }
+      r[i] = free + invested;
+    }
+    return r;
+  }, [anchor, monthlyNets, month, projectedBalances, investPct, annualRate]);
+
+  const hasInvestment = investPct > 0 && annualRate > 0;
+  const labelSeries = hasInvestment ? investedBalances : projectedBalances;
+
+  const decBal = projectedBalances[11];
+  const decInvested = investedBalances[11];
+  const gain = decInvested - decBal;
+
+  // ── SVG ──────────────────────────────────────────────────────
+  const W = 340, H = 158;
+  const pL = 4, pR = 4, pT = 22, pB = 20;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+
+  const allVals = [...projectedBalances, ...investedBalances];
+  const minVal = Math.min(...allVals, 0);
+  const maxVal = Math.max(...allVals, 0);
+  const range = maxVal - minVal || 1;
+
+  const gx = (i: number) => pL + (i / 11) * cW;
+  const gy = (v: number) => pT + cH - ((v - minVal) / range) * cH;
+
+  const basePts = projectedBalances.map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`).join(" ");
+  const invPts  = investedBalances.map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`).join(" ");
+  const area    = `${gx(0).toFixed(1)},${H - pB} ${basePts} ${gx(11).toFixed(1)},${H - pB}`;
+
+  const fmtShort = (v: number) => {
+    const abs = Math.abs(v), s = v < 0 ? "-" : "";
+    if (abs >= 1_000_000) return `${s}${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000)     return `${s}${(abs / 1_000).toFixed(1)}k`;
+    return `${s}${abs.toFixed(0)}`;
+  };
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
-      {/* Total acumulado */}
+      {/* Acumulado total */}
       <div
         className="flex items-center justify-between p-4 rounded-xl"
-        style={{
-          background: "rgba(14,165,233,0.08)",
-          border: "1px solid rgba(14,165,233,0.2)",
-        }}
+        style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)" }}
       >
         <div>
-          <p
-            className="text-xs mb-1"
-            style={{ color: "rgba(186,230,253,0.6)" }}
-          >
+          <p className="text-xs mb-1" style={{ color: "rgba(186,230,253,0.6)" }}>
             Acumulado total
           </p>
-          <p
-            className="money text-2xl font-semibold"
-            style={{ color: "#38bdf8" }}
-          >
+          <p className="money text-2xl font-semibold" style={{ color: "#38bdf8" }}>
             {fmt(accumulatedFutureBalance)}
           </p>
         </div>
-        <TbTrendingUp
-          className="h-8 w-8"
-          style={{ color: "rgba(56,189,248,0.4)" }}
-        />
+        <TbTrendingUp className="h-8 w-8" style={{ color: "rgba(56,189,248,0.4)" }} />
       </div>
 
-      {/* Mini gráfico de barras */}
-      {monthData.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <p
-            className="text-xs uppercase tracking-wider mb-2"
-            style={{ color: "var(--text-muted)" }}
-          >
-            Balanço por mês
-          </p>
-          <div className="flex items-end gap-1.5" style={{ height: "100px" }}>
-            {monthData.map(({ label, bal }, i) => {
-              const isLast = i === monthData.length - 1;
-              const heightPct = (Math.abs(bal) / maxAbs) * 100;
-              const isPos = bal >= 0;
-              return (
-                <div
-                  key={label}
-                  className="flex flex-col items-center gap-1 flex-1"
-                >
-                  <div
-                    className="w-full rounded-t-sm transition-all duration-500"
-                    style={{
-                      height: `${Math.max(4, heightPct)}px`,
-                      background: isPos ? "var(--green)" : "var(--red)",
-                      opacity: isLast ? 1 : 0.5,
-                    }}
-                    title={`${label}: ${fmt(bal)}`}
-                  />
-                  <span
-                    className="text-[10px] text-center leading-none"
-                    style={{
-                      color: isLast
-                        ? "var(--text-secondary)"
-                        : "var(--text-muted)",
-                    }}
-                  >
-                    {label.slice(0, 3)}
-                  </span>
-                </div>
-              );
-            })}
+      {/* Gráfico Jan–Dez com rótulos de valor */}
+      <div>
+        <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+          Balanço projetado {year}
+        </p>
+        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+          <defs>
+            <linearGradient id="proj-grad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.14" />
+              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {minVal < 0 && maxVal > 0 && (
+            <line x1={pL} y1={gy(0)} x2={pL + cW} y2={gy(0)}
+              stroke="rgba(255,255,255,0.08)" strokeDasharray="3,3" strokeWidth="1" />
+          )}
+
+          <polygon points={area} fill="url(#proj-grad2)" />
+
+          {month > 1 && (
+            <rect x={pL} y={pT} width={gx(month - 1) - pL} height={cH}
+              fill="rgba(7,11,20,0.28)" />
+          )}
+
+          <line x1={gx(month - 1)} y1={pT} x2={gx(month - 1)} y2={H - pB}
+            stroke="rgba(99,102,241,0.45)" strokeDasharray="3,2" strokeWidth="1" />
+
+          {/* Linha base (tracejada e mais fraca quando há investimento) */}
+          <polyline points={basePts} fill="none"
+            stroke={hasInvestment ? "rgba(56,189,248,0.35)" : "#38bdf8"}
+            strokeWidth={hasInvestment ? 1.5 : 2}
+            strokeDasharray={hasInvestment ? "5,2" : undefined}
+            strokeLinejoin="round" strokeLinecap="round" />
+
+          {/* Linha investida */}
+          {hasInvestment && (
+            <polyline points={invPts} fill="none"
+              stroke="var(--green)" strokeWidth="2"
+              strokeLinejoin="round" strokeLinecap="round" />
+          )}
+
+          {/* Rótulos de valor em cada ponto */}
+          {labelSeries.map((v, i) => (
+            <text key={i}
+              x={gx(i)} y={Math.max(8, gy(v) - 5)}
+              textAnchor="middle" fontSize="7.5"
+              fontWeight={i === month - 1 || i === 11 ? "700" : "400"}
+              fill={v >= 0
+                ? (i === month - 1 || i === 11 ? "#94a3b8" : "#4b5563")
+                : "var(--red)"}
+            >
+              {fmtShort(v)}
+            </text>
+          ))}
+
+          {/* Ponto do mês atual */}
+          <circle cx={gx(month - 1)} cy={gy(labelSeries[month - 1])}
+            r="3.5" fill="#6366f1" stroke="white" strokeWidth="1.5" />
+
+          {/* Ponto de dezembro */}
+          <circle cx={gx(11)} cy={gy(labelSeries[11])}
+            r="3.5"
+            fill={labelSeries[11] >= 0 ? (hasInvestment ? "var(--green)" : "#38bdf8") : "var(--red)"}
+            stroke="white" strokeWidth="1.5" />
+
+          {/* Rótulos dos meses */}
+          {MONTHS.map((label, i) => (
+            <text key={i} x={gx(i)} y={H - 4}
+              textAnchor="middle" fontSize="8.5"
+              fill={i === month - 1 ? "#c7d2fe" : i === 11 ? "#94a3b8" : "#374151"}
+            >
+              {label}
+            </text>
+          ))}
+        </svg>
+
+        {/* Legenda das linhas */}
+        <div className="flex items-center gap-4 mt-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ background: "#6366f1" }} />
+            Mês atual
+          </div>
+          {hasInvestment ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="4,2"/></svg>
+                Sem investir
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="var(--green)" strokeWidth="2"/></svg>
+                Investindo
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="#38bdf8" strokeWidth="2"/></svg>
+              Projeção
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Simulador de rendimento */}
+      <div
+        className="flex flex-col gap-3 p-3 rounded-xl"
+        style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+          Simulador de rendimento
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+              % do saldo positivo
+            </p>
+            <div className="relative">
+              <input
+                type="number" min="0" max="100"
+                value={investPct}
+                onChange={(e) =>
+                  setInvestPct(Math.min(100, Math.max(0, Number(e.target.value))))
+                }
+                className="input text-sm w-full pr-7"
+              />
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                style={{ color: "var(--text-muted)" }}
+              >%</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+              Taxa anual
+            </p>
+            <div className="relative">
+              <input
+                type="number" min="0" max="100" step="0.1"
+                value={annualRate}
+                onChange={(e) =>
+                  setAnnualRate(Math.min(100, Math.max(0, Number(e.target.value))))
+                }
+                className="input text-sm w-full pr-14"
+              />
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                style={{ color: "var(--text-muted)" }}
+              >% a.a.</span>
+            </div>
           </div>
         </div>
-      ) : (
-        <p
-          className="text-sm text-center py-4"
-          style={{ color: "var(--text-muted)" }}
-        >
-          Registre transações em mais de um mês para ver o histórico.
-        </p>
-      )}
 
-      {/* Legenda */}
-      <div
-        className="flex items-center gap-4 text-xs"
-        style={{ color: "var(--text-muted)" }}
-      >
-        <div className="flex items-center gap-1.5">
-          <div
-            className="w-2.5 h-2.5 rounded-sm"
-            style={{ background: "var(--green)" }}
-          />
-          Superávit
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="w-2.5 h-2.5 rounded-sm"
-            style={{ background: "var(--red)" }}
-          />
-          Déficit
-        </div>
-        <span className="ml-auto">Últimos 6 meses</span>
+        {/* Comparativo (só aparece quando há simulação ativa) */}
+        {hasInvestment && (
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div
+              className="p-2.5 rounded-lg flex flex-col gap-0.5"
+              style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
+            >
+              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>Sem investir</p>
+              <p className="money text-xs font-semibold"
+                style={{ color: decBal >= 0 ? "var(--text-primary)" : "var(--red)" }}>
+                {fmt(decBal)}
+              </p>
+            </div>
+            <div
+              className="p-2.5 rounded-lg flex flex-col gap-0.5"
+              style={{ background: "var(--bg-elevated)", border: "1px solid rgba(34,197,94,0.2)" }}
+            >
+              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+                Investindo {investPct}%
+              </p>
+              <p className="money text-xs font-semibold" style={{ color: "var(--green)" }}>
+                {fmt(decInvested)}
+              </p>
+            </div>
+            <div
+              className="p-2.5 rounded-lg flex flex-col gap-0.5"
+              style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}
+            >
+              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>Rendimento</p>
+              <p className="money text-xs font-semibold"
+                style={{ color: gain >= 0 ? "var(--green)" : "var(--red)" }}>
+                {gain >= 0 ? "+" : ""}{fmt(gain)}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Saber mais → /performance */}
+      <button
+        onClick={() => { router.push("/performance"); onClose(); }}
+        className="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all cursor-pointer"
+        style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
+      >
+        <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          Ver análise completa em Performance
+        </span>
+        <FiArrowRight className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+      </button>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Title } from "@/app/components/shared/Title";
 import { CategoryExpensesSummary } from "@/app/components/shared/CategoryExpensesSummary";
 import { CategoryExpensesChart } from "@/app/components/shared/CategoryExpensesChart";
 import { LineChart } from "@/app/components/shared/LineChart";
+import { AnnualProjectionSection } from "@/app/components/shared/AnnualProjectionSection";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -293,6 +294,9 @@ export default function Performance() {
           <LineChart data={monthlyMetrics} />
         </div>
       )}
+
+      {/* Projeção anual & simulador de rendimento */}
+      <AnnualProjectionSection />
     </div>
   );
 }

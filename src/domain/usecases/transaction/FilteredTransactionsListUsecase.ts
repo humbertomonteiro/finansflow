@@ -2,7 +2,7 @@ import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
 export class FilteredTransactionsListUsecase {
-  private readonly nearbyDaysThreshold = 10 * 24 * 60 * 60 * 1000; // 10 days in milliseconds
+  private readonly nearbyDaysThreshold = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
 
   async execute(
     allTransactions: ITransaction[],
@@ -20,13 +20,20 @@ export class FilteredTransactionsListUsecase {
           if (filterDate > new Date()) return [];
         }
 
-        const transactions = this.getTransactionsForMonth(allTransactions, year, month);
+        const transactions = this.getTransactionsForMonth(
+          allTransactions,
+          year,
+          month
+        );
         return this.applyFilter(transactions, filter);
       }
 
       // Para overdue sem mês selecionado, expande corretamente todas as ocorrências passadas
       if (filter === "overdue") {
-        return this.applyFilter(this.getTransactionsUpToToday(allTransactions), filter);
+        return this.applyFilter(
+          this.getTransactionsUpToToday(allTransactions),
+          filter
+        );
       }
 
       return this.applyFilter(allTransactions, filter);
@@ -222,7 +229,9 @@ export class FilteredTransactionsListUsecase {
 
   // Expande FIXED e INSTALLMENT para todas as ocorrências até hoje,
   // respeitando exclusões e datas de fim. Usado pelo filtro overdue.
-  private getTransactionsUpToToday(transactions: ITransaction[]): ITransaction[] {
+  private getTransactionsUpToToday(
+    transactions: ITransaction[]
+  ): ITransaction[] {
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;
@@ -232,12 +241,17 @@ export class FilteredTransactionsListUsecase {
       if (transaction.kind === TransactionKind.SIMPLE) {
         result.push(transaction);
       } else if (transaction.kind === TransactionKind.INSTALLMENT) {
-        const excludedInstallments = transaction.recurrence?.excludedInstallments || [];
+        const excludedInstallments =
+          transaction.recurrence?.excludedInstallments || [];
         transaction.paymentHistory.forEach((payment, index) => {
           if (excludedInstallments.includes(index + 1)) return;
           const paymentDate = new Date(payment.dueDate);
           if (paymentDate <= today) {
-            result.push({ ...transaction, dueDate: paymentDate, paymentHistory: [payment] });
+            result.push({
+              ...transaction,
+              dueDate: paymentDate,
+              paymentHistory: [payment],
+            });
           }
         });
       } else if (transaction.kind === TransactionKind.FIXED) {
@@ -252,7 +266,8 @@ export class FilteredTransactionsListUsecase {
 
         while (y < currentYear || (y === currentYear && m <= currentMonth)) {
           const isExcluded = excludedFixeds.some(
-            (ef: { year: number; month: number }) => ef.year === y && ef.month === m
+            (ef: { year: number; month: number }) =>
+              ef.year === y && ef.month === m
           );
           const occurrenceDate = new Date(y, m - 1, day);
           const isBeforeEndDate = !endDate || occurrenceDate <= endDate;
@@ -268,11 +283,18 @@ export class FilteredTransactionsListUsecase {
               paidAt: null,
               amount: transaction.amount,
             };
-            result.push({ ...transaction, dueDate: occurrenceDate, paymentHistory: [effectivePayment] });
+            result.push({
+              ...transaction,
+              dueDate: occurrenceDate,
+              paymentHistory: [effectivePayment],
+            });
           }
 
           m++;
-          if (m > 12) { m = 1; y++; }
+          if (m > 12) {
+            m = 1;
+            y++;
+          }
         }
       }
     }

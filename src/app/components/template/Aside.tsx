@@ -21,6 +21,9 @@ const navItems = [
   { href: "/settings", icon: IoSettingsOutline, label: "Configurações" },
 ];
 
+// Mobile nav omits settings (aparece no header como avatar do usuário)
+const mobileNavItems = navItems.filter((item) => item.href !== "/settings");
+
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
   const pathname = usePathname();
@@ -240,21 +243,22 @@ export const Aside = () => {
         <div className="flex items-center gap-1">
           {SearchIconButton}
           {BellButton}
+          {user && (
+            <Link
+              href="/settings"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ml-0.5"
+              style={{
+                background: "var(--accent-dim)",
+                color: "var(--accent-light)",
+                border: "1px solid var(--border-accent)",
+              }}
+            >
+              {user.name?.[0]?.toUpperCase()}
+              {user.name?.[1]?.toUpperCase()}
+            </Link>
+          )}
         </div>
       </header>
-
-      {/* ── Mobile FAB ──────────────────────────────── */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="lg:hidden fixed bottom-20 right-4 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer"
-        style={{
-          background: "var(--accent)",
-          boxShadow: "0 0 16px var(--accent-glow)",
-        }}
-        aria-label="Nova transação"
-      >
-        <FiPlus className="h-5 w-5 text-white" />
-      </button>
 
       {/* ── Mobile Month Bubble ─────────────────────── */}
       <div className="lg:hidden fixed top-[4.25rem] right-4 z-10">
@@ -263,34 +267,72 @@ export const Aside = () => {
 
       {/* ── Mobile Bottom Nav ────────────────────────── */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-20 px-2"
+        className="lg:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center z-20"
         style={{
           background: "rgba(13,18,32,0.95)",
           borderTop: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
       >
-        {navItems.map(({ href, icon: Icon, label }) => {
+        {/* Primeiros 2 itens */}
+        {mobileNavItems.slice(0, 2).map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
           const badge = getBadge(href);
           return (
             <Link
               key={href}
               href={href}
-              className="relative flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
-              style={{
-                color: active ? "var(--accent-light)" : "var(--text-muted)",
-              }}
+              className="flex-1 relative flex flex-col items-center gap-1 py-1 rounded-xl transition-all"
+              style={{ color: active ? "var(--accent-light)" : "var(--text-muted)" }}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
                 {badge > 0 && (
                   <span
                     className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5"
-                    style={{
-                      background:
-                        overdueCount > 0 ? "var(--red)" : "var(--yellow)",
-                    }}
+                    style={{ background: overdueCount > 0 ? "var(--red)" : "var(--yellow)" }}
+                  >
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
+              </div>
+              <span className="text-[0.6rem] font-medium">{label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Botão central — Nova Transação */}
+        <div className="flex-1 flex justify-center items-center">
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            style={{
+              background: "var(--accent)",
+              boxShadow: "0 0 16px var(--accent-glow)",
+            }}
+            aria-label="Nova transação"
+          >
+            <FiPlus className="h-5 w-5 text-white" />
+          </button>
+        </div>
+
+        {/* Últimos 2 itens */}
+        {mobileNavItems.slice(2).map(({ href, icon: Icon, label }) => {
+          const active = pathname === href;
+          const badge = getBadge(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className="flex-1 relative flex flex-col items-center gap-1 py-1 rounded-xl transition-all"
+              style={{ color: active ? "var(--accent-light)" : "var(--text-muted)" }}
+            >
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {badge > 0 && (
+                  <span
+                    className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5"
+                    style={{ background: overdueCount > 0 ? "var(--red)" : "var(--yellow)" }}
                   >
                     {badge > 9 ? "9+" : badge}
                   </span>
