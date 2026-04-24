@@ -47,6 +47,8 @@ export class CalculateCategoryExpensesUsecase {
       }
     );
 
+    expenses.sort((a, b) => b.amount - a.amount);
+
     return {
       expenses,
       totalExpenses,

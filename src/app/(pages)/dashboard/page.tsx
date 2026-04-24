@@ -6,6 +6,7 @@ import Card from "@/app/components/shared/Card";
 import { Title } from "@/app/components/shared/Title";
 import { TransactionList } from "@/app/components/shared/TransactionList";
 import { LineChart } from "@/app/components/shared/LineChart";
+import { CategoryExpensesSummary } from "@/app/components/shared/CategoryExpensesSummary";
 import {
   DashboardCardModal,
   DashboardModalType,
@@ -30,6 +31,7 @@ export default function Dashboard() {
     nearbyTransactions,
     overdueTransactions,
     monthlyMetrics,
+    dataCategoryExpenses,
   } = useUser();
 
   // Qual modal está aberto (null = nenhum)
@@ -38,7 +40,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in pb-52">
+    <div className="flex flex-col gap-6 animate-fade-in">
       <Title navigateMonth>Dashboard</Title>
 
       {/* ── Cards de métricas ─────────────────────── */}
@@ -110,25 +112,6 @@ export default function Dashboard() {
         type={activeModal}
         onClose={() => setActiveModal(null)}
       />
-
-      {/* ── Gráfico de linha ──────────────────────── */}
-      {/* {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
-        <div
-          className="rounded-xl p-4 h-[320px]"
-          style={{
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-          }}
-        >
-          <p
-            className="text-xs font-semibold uppercase tracking-wider mb-4"
-            style={{ color: "var(--text-muted)" }}
-          >
-            Histórico mensal
-          </p>
-          <LineChart data={monthlyMetrics} />
-        </div>
-      )} */}
 
       {/* ── Listas de atenção ─────────────────────── */}
       {((nearbyTransactions?.length ?? 0) > 0 ||
@@ -206,6 +189,20 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {/* ── Gastos por categoria ─────────────────────── */}
+      {dataCategoryExpenses && dataCategoryExpenses.expenses.length > 0 && (
+        <div>
+          <p
+            className="text-sm font-semibold mb-3"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Gastos por categoria
+          </p>
+          <CategoryExpensesSummary
+            dataCategoryExpenses={dataCategoryExpenses}
+          />
         </div>
       )}
     </div>
