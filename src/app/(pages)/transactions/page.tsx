@@ -9,7 +9,7 @@ import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
 import { CiSearch } from "react-icons/ci";
-import { FiX, FiFilter, FiChevronDown } from "react-icons/fi";
+import { FiX, FiFilter, FiChevronDown, FiCalendar } from "react-icons/fi";
 import {
   RiArrowUpCircleLine,
   RiArrowDownCircleLine,
@@ -105,7 +105,16 @@ export default function Transactions() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Hoje no formato YYYY-MM-DD (local)
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+  const isToday = dateFrom === todayStr && dateTo === todayStr;
 
   // ── Auto-scroll ─────────────────────────────────────────────
   // targetDate guarda qual data-group deve receber scroll.
@@ -169,6 +178,22 @@ export default function Transactions() {
         if (statusFilter === "paid" && !paid) return false;
         if (statusFilter === "unpaid" && paid) return false;
       }
+      if (dateFrom || dateTo) {
+        const txDate = getTxDueDate(tx, year, month);
+        const txLocal = new Date(
+          txDate.getFullYear(),
+          txDate.getMonth(),
+          txDate.getDate()
+        );
+        if (dateFrom) {
+          const [fy, fm, fd] = dateFrom.split("-").map(Number);
+          if (txLocal < new Date(fy, fm - 1, fd)) return false;
+        }
+        if (dateTo) {
+          const [ty, tm, td] = dateTo.split("-").map(Number);
+          if (txLocal > new Date(ty, tm - 1, td)) return false;
+        }
+      }
       return true;
     });
   }, [
@@ -178,6 +203,8 @@ export default function Transactions() {
     typeFilter,
     kindFilter,
     categoryFilter,
+    dateFrom,
+    dateTo,
     year,
     month,
   ]);
@@ -211,6 +238,7 @@ export default function Transactions() {
     typeFilter !== "all",
     kindFilter !== "all",
     categoryFilter !== "all",
+    !!(dateFrom || dateTo),
   ].filter(Boolean).length;
 
   const clearAllFilters = () => {
@@ -219,6 +247,8 @@ export default function Transactions() {
     setTypeFilter("all");
     setKindFilter("all");
     setCategoryFilter("all");
+    setDateFrom("");
+    setDateTo("");
   };
 
   const availableCategories = useMemo(() => {
@@ -501,6 +531,103 @@ export default function Transactions() {
               </div>
             </div>
           )}
+          {/* Data */}
+          <div>
+            <p
+              className="text-[0.65rem] font-semibold uppercase tracking-wider mb-2"
+              style={{ color: "var(--text-muted)" }}
+            >
+              Data
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  De
+                </span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="text-xs px-2 py-1 rounded-lg outline-none cursor-pointer"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-subtle)",
+                    color: dateFrom ? "var(--text-primary)" : "var(--text-muted)",
+                    colorScheme: "dark",
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Até
+                </span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="text-xs px-2 py-1 rounded-lg outline-none cursor-pointer"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-subtle)",
+                    color: dateTo ? "var(--text-primary)" : "var(--text-muted)",
+                    colorScheme: "dark",
+                  }}
+                />
+              </div>
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  className="flex items-center gap-1 text-xs cursor-pointer"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <FiX className="h-3 w-3" /> limpar data
+                </button>
+              )}
+            </div>
+            {/* Atalho: Hoje */}
+            <div className="flex gap-1.5 mt-2">
+              {[
+                { label: "Hoje", from: todayStr, to: todayStr },
+                {
+                  label: "Esta semana",
+                  from: (() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - d.getDay());
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  })(),
+                  to: todayStr,
+                },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={() => {
+                    const active = dateFrom === preset.from && dateTo === preset.to;
+                    setDateFrom(active ? "" : preset.from);
+                    setDateTo(active ? "" : preset.to);
+                  }}
+                  className="text-[0.65rem] font-medium px-2 py-0.5 rounded-full cursor-pointer transition-all"
+                  style={{
+                    background:
+                      dateFrom === preset.from && dateTo === preset.to
+                        ? "var(--accent-dim)"
+                        : "var(--bg-overlay)",
+                    color:
+                      dateFrom === preset.from && dateTo === preset.to
+                        ? "var(--accent-light)"
+                        : "var(--text-muted)",
+                    border:
+                      dateFrom === preset.from && dateTo === preset.to
+                        ? "1px solid var(--border-accent)"
+                        : "1px solid var(--border-subtle)",
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {activeFilterCount > 0 && (
             <button
               onClick={clearAllFilters}
@@ -549,6 +676,21 @@ export default function Transactions() {
           }
         >
           ↓ Despesas
+        </Chip>
+        <Chip
+          active={isToday}
+          onClick={() => {
+            if (isToday) {
+              setDateFrom("");
+              setDateTo("");
+            } else {
+              setDateFrom(todayStr);
+              setDateTo(todayStr);
+            }
+          }}
+        >
+          <FiCalendar className="h-3 w-3" />
+          Hoje
         </Chip>
       </div>
 

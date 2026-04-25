@@ -64,7 +64,7 @@ interface UserContextType {
   year: number;
   setMonth: (month: number) => void;
   setYear: (year: number) => void;
-  payTransaction: (transactionId: string, paidAccountId?: string) => Promise<void>;
+  payTransaction: (transactionId: string, paidAccountId?: string, overrideYear?: number, overrideMonth?: number) => Promise<void>;
   editTransaction: (
     transactionId: string,
     newTransaction: Partial<ITransaction>
@@ -427,13 +427,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const payTransaction = async (transactionId: string, paidAccountId?: string) => {
+  const payTransaction = async (transactionId: string, paidAccountId?: string, overrideYear?: number, overrideMonth?: number) => {
+    const effectiveYear = overrideYear ?? year;
+    const effectiveMonth = overrideMonth ?? month;
     try {
       if (user && currentBalance !== null) {
         const updatedTransaction = await payerTransactionController(
           transactionId,
-          year,
-          month,
+          effectiveYear,
+          effectiveMonth,
           paidAccountId
         );
 
@@ -442,8 +444,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
           const paymentRecord = updatedTransaction.paymentHistory.find(
             (payment) =>
-              payment.dueDate.getFullYear() === year &&
-              payment.dueDate.getMonth() + 1 === month
+              payment.dueDate.getFullYear() === effectiveYear &&
+              payment.dueDate.getMonth() + 1 === effectiveMonth
           );
 
           if (paymentRecord) {

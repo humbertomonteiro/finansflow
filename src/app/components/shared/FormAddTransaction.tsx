@@ -8,6 +8,7 @@ import { IRecurrence } from "@/domain/interfaces/transaction/IRecurrence";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
+import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { FiX, FiCheck, FiAlertCircle, FiLoader } from "react-icons/fi";
 
 interface FormErrors {
@@ -19,7 +20,7 @@ interface FormErrors {
 }
 
 export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
-  const { categories, accounts, addTransaction, payTransaction } = useUser();
+  const { categories, accounts, addTransaction, updateTransaction } = useUser();
 
   const [showInstallment, setShowInstallment] = useState(true);
   const [type, setType] = useState<TransactionTypes>(TransactionTypes.DEPOSIT);
@@ -133,16 +134,16 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         // Se o usuário marcou "já pago/recebido", dispara o pagamento
         // do mês de vencimento da transação recém-criada
         if (markAsPaid) {
-          const txYear = new Date(year, month - 1, day).getFullYear();
-          const txMonth = new Date(year, month - 1, day).getMonth() + 1;
           try {
-            // payTransaction do contexto usa year/month atual —
-            // mas como acabamos de criar com dueDate no mês certo,
-            // o PayerTransactionUseCase vai encontrar o payment correto
-            await payTransaction(createdTransaction.id);
-          } catch {
-            // Não bloqueia o sucesso da criação se o pagamento falhar
-            console.warn("Não foi possível marcar como pago automaticamente");
+            const paidTx = await payerTransactionController(
+              createdTransaction.id,
+              year,
+              month,
+              accountId
+            );
+            if (paidTx) updateTransaction(paidTx);
+          } catch (err) {
+            console.warn("Não foi possível marcar como pago:", err);
           }
         }
       }
