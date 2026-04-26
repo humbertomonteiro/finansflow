@@ -72,6 +72,7 @@ export interface EditPayload {
   categoryId?: string;
   accountId?: string;
   amount?: number;
+  dueDate?: Date;
 }
 
 // ── UseCase ───────────────────────────────────────────────────────────────────
@@ -239,6 +240,7 @@ export class EditTransactionUseCase {
     payload: EditPayload
   ): Promise<Transaction> {
     const newAmount = payload.amount ?? tx.amount;
+    const newDueDate = payload.dueDate;
 
     // Recalcula o valor unitário para cada tipo
     const unitAmount = this.calculateUnitAmount(tx, newAmount);
@@ -247,6 +249,10 @@ export class EditTransactionUseCase {
     const updatedPaymentHistory: IPaymentHistory[] = tx.paymentHistory.map(
       (p) => {
         if (p.isPaid) return p; // fato imutável
+        // SIMPLE: atualiza também a dueDate do único payment
+        if (tx.kind === TransactionKind.SIMPLE && newDueDate) {
+          return { ...p, amount: unitAmount, dueDate: newDueDate };
+        }
         return { ...p, amount: unitAmount };
       }
     );
@@ -257,6 +263,10 @@ export class EditTransactionUseCase {
       categoryId: payload.categoryId ?? tx.categoryId,
       accountId: payload.accountId ?? tx.accountId,
       paymentHistory: updatedPaymentHistory,
+      // SIMPLE e FIXED: atualiza a dueDate base. INSTALLMENT: não toca.
+      ...(newDueDate && tx.kind !== TransactionKind.INSTALLMENT
+        ? { dueDate: newDueDate }
+        : {}),
     });
 
     return this.transactionRepository.update(tx.id, updated);

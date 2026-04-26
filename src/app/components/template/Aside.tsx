@@ -246,7 +246,7 @@ export const Aside = () => {
           {user && (
             <Link
               href="/settings"
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ml-0.5"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ml-2.5"
               style={{
                 background: "var(--accent-dim)",
                 color: "var(--accent-light)",

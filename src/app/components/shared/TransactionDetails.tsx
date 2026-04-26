@@ -24,6 +24,7 @@ import { MdRepeat } from "react-icons/md";
 import {
   editTransactionController,
   EditScope,
+  EditPayload,
 } from "@/controllers/transaction/EditTransactionController";
 
 // ── Tipos ───────────────────────────────────────────────────────
@@ -239,6 +240,7 @@ function ScopeChoiceScreen({
 interface EditFormScreenProps {
   editScope: EditScope;
   isInstallment: boolean;
+  isFixed: boolean;
   editedDesc: string;
   setEditedDesc: (v: string) => void;
   editedAmount: string;
@@ -246,6 +248,8 @@ interface EditFormScreenProps {
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   editedCategory: string;
   setEditedCategory: (v: string) => void;
+  editedDate: string;
+  setEditedDate: (v: string) => void;
   categories: ICategory[] | null;
   installmentsCount?: number;
   year: number;
@@ -255,18 +259,22 @@ interface EditFormScreenProps {
 function EditFormScreen({
   editScope,
   isInstallment,
+  isFixed,
   editedDesc,
   setEditedDesc,
   editedAmount,
   onAmountChange,
   editedCategory,
   setEditedCategory,
+  editedDate,
+  setEditedDate,
   categories,
   installmentsCount,
   year,
   month,
 }: EditFormScreenProps) {
   const showAmountField = editScope !== EditScope.SINGLE;
+  const showDateField = editScope === EditScope.ALL && !isInstallment;
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
@@ -323,6 +331,29 @@ function EditFormScreen({
           ))}
         </select>
       </div>
+
+      {showDateField && (
+        <div className="flex flex-col gap-1.5">
+          <label
+            className="text-[0.65rem] font-semibold uppercase tracking-wider"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Data de vencimento
+          </label>
+          <input
+            type="date"
+            value={editedDate}
+            onChange={(e) => setEditedDate(e.target.value)}
+            className="input"
+            style={{ colorScheme: "dark" }}
+          />
+          {isFixed && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Altera o dia de vencimento de todas as ocorrências futuras
+            </p>
+          )}
+        </div>
+      )}
 
       {showAmountField && (
         <div className="flex flex-col gap-1.5">
@@ -390,6 +421,7 @@ export const TransactionDetails = ({
   const [editedAmount, setEditedAmount] = useState(0);
   const amountInput = useAmountInput();
   const [editedCategory, setEditedCategory] = useState("");
+  const [editedDate, setEditedDate] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -403,6 +435,10 @@ export const TransactionDetails = ({
       setEditedCategory(transaction.categoryId);
       setEditScope(EditScope.SINGLE);
       amountInput.reset(transaction.amount);
+      const d = new Date(transaction.dueDate);
+      setEditedDate(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+      );
     }
   }, [transaction?.id]);
 
@@ -439,13 +475,17 @@ export const TransactionDetails = ({
     if (!transaction) return;
     setIsSaving(true);
     try {
-      const payload = {
+      const payload: EditPayload = {
         description: editedDesc,
         categoryId: editedCategory,
-        ...(editScope !== EditScope.SINGLE && {
-          amount: amountInput.parseAmount(),
-        }),
       };
+      if (editScope !== EditScope.SINGLE) {
+        payload.amount = amountInput.parseAmount();
+      }
+      if (editScope === EditScope.ALL && !isInstallment && editedDate) {
+        const [y, m, d] = editedDate.split("-").map(Number);
+        payload.dueDate = new Date(y, m - 1, d);
+      }
       const updated = await editTransactionController(
         transaction.id,
         payload,
@@ -673,6 +713,7 @@ export const TransactionDetails = ({
           <EditFormScreen
             editScope={editScope}
             isInstallment={isInstallment}
+            isFixed={isFixed}
             editedDesc={editedDesc}
             setEditedDesc={setEditedDesc}
             editedAmount={amountInput.raw}
@@ -680,6 +721,8 @@ export const TransactionDetails = ({
             onAmountChange={amountInput.handleChange}
             editedCategory={editedCategory}
             setEditedCategory={setEditedCategory}
+            editedDate={editedDate}
+            setEditedDate={setEditedDate}
             categories={categories}
             installmentsCount={transaction.recurrence.installmentsCount}
             year={year}

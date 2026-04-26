@@ -18,3 +18,4 @@ export const editTransactionController = async (
 };
 
 export { EditScope };
+export type { EditPayload };
