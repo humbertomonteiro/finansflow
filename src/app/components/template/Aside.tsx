@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiHome, FiList, FiPlus, FiTarget, FiArrowRight, FiX } from "react-icons/fi";
+import {
+  FiHome,
+  FiList,
+  FiPlus,
+  FiTarget,
+} from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
 import { useState } from "react";
 import { FormAddTransaction } from "../shared/FormAddTransaction";
-import { FormAddTransfer } from "../shared/FormAddTransfer";
 import { NotificationPanel } from "../shared/NotificationPanel";
 import { GlobalSearch } from "../shared/GlobalSearch";
 import { TransactionDetails } from "../shared/TransactionDetails";
@@ -27,8 +31,6 @@ const mobileNavItems = navItems.filter((item) => item.href !== "/settings");
 
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
-  const [showTransferForm, setShowTransferForm] = useState(false);
-  const [showFabMenu, setShowFabMenu] = useState(false);
   const pathname = usePathname();
   const { user, overdueTransactions, nearbyTransactions } = useUser();
 
@@ -142,7 +144,7 @@ export const Aside = () => {
               })}
             </ul>
 
-            <div className="mt-4 flex flex-col gap-2">
+            <div className="mt-4">
               <button
                 onClick={() => setShowForm(true)}
                 className="button button-primary w-full"
@@ -150,19 +152,6 @@ export const Aside = () => {
               >
                 <FiPlus className="h-4 w-4" />
                 Nova Transação
-              </button>
-              <button
-                onClick={() => setShowTransferForm(true)}
-                className="button w-full text-sm font-medium"
-                style={{
-                  borderRadius: "var(--radius-md)",
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-subtle)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <FiArrowRight className="h-4 w-4" />
-                Transferência
               </button>
             </div>
           </nav>
@@ -322,60 +311,18 @@ export const Aside = () => {
           );
         })}
 
-        {/* Botão central — speed-dial */}
-        <div className="flex-1 flex justify-center items-center relative">
-          {/* Opções do speed-dial */}
-          {showFabMenu && (
-            <>
-              {/* Overlay para fechar */}
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowFabMenu(false)}
-              />
-              <div className="absolute bottom-14 flex flex-col items-center gap-2 z-20">
-                <button
-                  onClick={() => { setShowFabMenu(false); setShowTransferForm(true); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap"
-                  style={{
-                    background: "var(--bg-surface)",
-                    border: "1px solid var(--border-accent)",
-                    color: "var(--accent-light)",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  <FiArrowRight className="h-3.5 w-3.5" /> Transferência
-                </button>
-                <button
-                  onClick={() => { setShowFabMenu(false); setShowForm(true); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap"
-                  style={{
-                    background: "var(--bg-surface)",
-                    border: "1px solid var(--border-subtle)",
-                    color: "var(--text-primary)",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  <FiPlus className="h-3.5 w-3.5" /> Nova Transação
-                </button>
-              </div>
-            </>
-          )}
+        {/* Botão central FAB */}
+        <div className="flex-1 flex justify-center items-center">
           <button
-            onClick={() => setShowFabMenu((p) => !p)}
-            className="w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer z-20"
+            onClick={() => setShowForm(true)}
+            className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer"
             style={{
               background: "var(--accent)",
               boxShadow: "0 0 16px var(--accent-glow)",
-              transform: showFabMenu ? "rotate(45deg)" : "rotate(0deg)",
-              transition: "transform 0.2s ease",
             }}
-            aria-label="Ações"
+            aria-label="Nova Transação"
           >
-            {showFabMenu ? (
-              <FiX className="h-5 w-5 text-white" />
-            ) : (
-              <FiPlus className="h-5 w-5 text-white" />
-            )}
+            <FiPlus className="h-5 w-5 text-white" />
           </button>
         </div>
 
@@ -426,7 +373,6 @@ export const Aside = () => {
       )}
 
       {showForm && <FormAddTransaction onClose={() => setShowForm(false)} />}
-      {showTransferForm && <FormAddTransfer onClose={() => setShowTransferForm(false)} />}
     </>
   );
 };

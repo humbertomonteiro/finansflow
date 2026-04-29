@@ -229,7 +229,12 @@ export class Transaction implements ITransaction {
   }
 
   toJSON(): ITransaction {
-    return { ...this };
+    const obj = { ...this } as Record<string, unknown>;
+    // Firestore não aceita campos com valor undefined — remove-os antes de serializar
+    Object.keys(obj).forEach((k) => {
+      if (obj[k] === undefined) delete obj[k];
+    });
+    return obj as unknown as ITransaction;
   }
 
   // Métodos utilitários para manipulação de datas

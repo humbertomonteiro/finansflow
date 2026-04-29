@@ -21,7 +21,7 @@ export class TransactionRepositoryFirestore
   async save(transaction: Transaction): Promise<Transaction> {
     const docRef = doc(db, this.collection, transaction.id);
     await setDoc(docRef, {
-      ...transaction,
+      ...transaction.toJSON(),
       dueDate: Timestamp.fromDate(transaction.dueDate),
       paymentHistory: (transaction.paymentHistory || []).map((payment) => ({
         ...payment,

@@ -570,7 +570,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<string> => {
     setLoading(true);
     try {
-      const { message, balanceUpdate, removeCurrentMonth } =
+      const { message, balanceUpdate, removeCurrentMonth, needsAccountRefresh } =
         await RemoveTransactionController(transactionId, scope, year, month);
 
       setAllTransactions((prevTransactions) => {
@@ -641,7 +641,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         return prevTransactions;
       });
 
-      setCurrentBalance(balanceUpdate);
+      if (needsAccountRefresh) {
+        await fetchAccounts();
+      } else {
+        setCurrentBalance(balanceUpdate);
+      }
       return message;
     } catch (error) {
       console.error("Failed to remove transaction:", error);

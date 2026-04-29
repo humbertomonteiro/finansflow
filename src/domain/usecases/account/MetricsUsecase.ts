@@ -70,14 +70,21 @@ export class MetricsUsecase {
     for (const transaction of transactions) {
       if (transaction.type === TransactionTypes.TRANSFER) continue;
       const paymentHistory = transaction.paymentHistory;
+
+      // paymentHistory[0].amount é sempre o valor mais preciso:
+      // - pago: preserva o valor real registrado (mesmo que transaction.amount
+      //         tenha sido editado depois)
+      // - pendente: sincronizado com transaction.amount pelo EditTransactionUseCase
+      const amount = paymentHistory[0]?.amount ?? transaction.amount;
+
       if (transaction.type === TransactionTypes.DEPOSIT) {
-        metrics.revenues += transaction.amount;
+        metrics.revenues += amount;
         const valuesPaid = paymentHistory
           .filter((payment) => payment.isPaid)
           .reduce((acc, payment) => acc + payment.amount, 0);
         metrics.revenuesPaid += valuesPaid;
       } else if (transaction.type === TransactionTypes.WITHDRAW) {
-        metrics.expenses += transaction.amount;
+        metrics.expenses += amount;
         const valuesPaid = paymentHistory
           .filter((payment) => payment.isPaid)
           .reduce((acc, payment) => acc + payment.amount, 0);

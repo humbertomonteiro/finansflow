@@ -11,6 +11,7 @@ export interface BalanceUpdate {
   message: string;
   balanceUpdate: number;
   removeCurrentMonth?: RemoveCurrentMonth;
+  needsAccountRefresh?: boolean;
 }
 
 interface RemoveCurrentMonth {
@@ -50,6 +51,11 @@ export class RemoveTransactionUsecase {
     }
 
     const account = Account.fromData(accountData);
+
+    // Transferências precisam reverter ambas as contas
+    if (transaction.type === TransactionTypes.TRANSFER) {
+      return this.removeTransfer(transaction, account);
+    }
 
     let message = "";
     let updatedAccount: Account = account;
@@ -95,6 +101,46 @@ export class RemoveTransactionUsecase {
       message,
       balanceUpdate: updatedAccount.balance,
       removeCurrentMonth: removedObject,
+    };
+  }
+
+  private async removeTransfer(
+    transaction: Transaction,
+    sourceAccount: Account
+  ): Promise<BalanceUpdate> {
+    const paidTotal = transaction.paymentHistory
+      .filter((p) => p.isPaid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    let updatedSource = sourceAccount;
+
+    if (paidTotal > 0) {
+      // Reverte o débito na conta de origem
+      updatedSource = updatedSource.update({ balance: updatedSource.balance + paidTotal });
+
+      // Reverte o crédito na conta de destino
+      if (transaction.targetAccountId) {
+        const targetData = await this.accountRepository.findById(transaction.targetAccountId);
+        if (targetData) {
+          const targetAccount = Account.fromData(targetData);
+          const updatedTarget = targetAccount.update({ balance: targetAccount.balance - paidTotal });
+          await this.accountRepository.update(targetAccount.id, updatedTarget);
+        }
+      }
+    }
+
+    // Remove o ID da lista da conta de origem
+    updatedSource = updatedSource.update({
+      transactionsIds: updatedSource.transactionsIds.filter((id) => id !== transaction.id),
+    });
+
+    await this.transactionRepository.delete(transaction.id);
+    await this.accountRepository.update(sourceAccount.id, updatedSource);
+
+    return {
+      message: `Transfer ${transaction.id} removed successfully.`,
+      balanceUpdate: updatedSource.balance,
+      needsAccountRefresh: true,
     };
   }
 

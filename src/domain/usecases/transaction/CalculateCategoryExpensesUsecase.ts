@@ -24,7 +24,8 @@ export class CalculateCategoryExpensesUsecase {
       .filter((transaction) => transaction.type === TransactionTypes.WITHDRAW)
       .reduce((acc, transaction) => {
         const categoryId = transaction.categoryId || "uncategorized";
-        acc[categoryId] = (acc[categoryId] || 0) + transaction.amount;
+        const amount = transaction.paymentHistory[0]?.amount ?? transaction.amount;
+        acc[categoryId] = (acc[categoryId] || 0) + amount;
         return acc;
       }, {} as Record<string, number>);
 

@@ -8,8 +8,9 @@ import { IRecurrence } from "@/domain/interfaces/transaction/IRecurrence";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
+import { createTransferController } from "@/controllers/transaction/CreateTransferController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
-import { FiX, FiCheck, FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiX, FiCheck, FiAlertCircle, FiLoader, FiArrowRight } from "react-icons/fi";
 
 interface FormErrors {
   description?: string;
@@ -17,10 +18,12 @@ interface FormErrors {
   dueDate?: string;
   categoryId?: string;
   accountId?: string;
+  fromAccountId?: string;
+  toAccountId?: string;
 }
 
 export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
-  const { categories, accounts, addTransaction, updateTransaction } = useUser();
+  const { categories, accounts, addTransaction, updateTransaction, refreshAccounts } = useUser();
 
   const [showInstallment, setShowInstallment] = useState(true);
   const [type, setType] = useState<TransactionTypes>(TransactionTypes.DEPOSIT);
@@ -28,50 +31,26 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Toggle "já pago/recebido"
   const [markAsPaid, setMarkAsPaid] = useState(false);
 
-  // Hook de valor — aceita vírgula e ponto
   const amountInput = useAmountInput();
 
-  const toggleInstallmentVisibility = () => setShowInstallment((prev) => !prev);
+  const isDeposit = type === TransactionTypes.DEPOSIT;
+  const isTransfer = type === TransactionTypes.TRANSFER;
 
-  const handleTypeChange = (selectedType: TransactionTypes) => {
-    setType(selectedType);
+  const handleTypeChange = (selected: TransactionTypes) => {
+    setType(selected);
     setErrors({});
+    setMarkAsPaid(false);
   };
 
-  const validateForm = (data: {
-    description: string;
-    amount: number;
-    dueDate: string;
-    categoryId: string;
-    accountId: string;
-  }): FormErrors => {
-    const newErrors: FormErrors = {};
-    if (!data.description.trim())
-      newErrors.description = "Descrição é obrigatória";
-    else if (data.description.trim().length < 3)
-      newErrors.description = "Descrição deve ter ao menos 3 caracteres";
-    if (!data.amount || isNaN(data.amount) || data.amount <= 0)
-      newErrors.amount = "Informe um valor válido maior que zero";
-    if (!data.dueDate) newErrors.dueDate = "Data de vencimento é obrigatória";
-    if (!data.categoryId) newErrors.categoryId = "Selecione uma categoria";
-    if (!data.accountId) newErrors.accountId = "Selecione uma conta";
-    return newErrors;
-  };
-
-  const getTransactionKindAndRecurrence = (
+  const getKindAndRecurrence = (
     isFixed: boolean,
     installments: number
   ): { kind: TransactionKind; recurrence: IRecurrence } => {
     if (isFixed) return { kind: TransactionKind.FIXED, recurrence: {} };
-    if (!isFixed && showInstallment && installments > 1)
-      return {
-        kind: TransactionKind.INSTALLMENT,
-        recurrence: { installmentsCount: installments },
-      };
+    if (showInstallment && installments > 1)
+      return { kind: TransactionKind.INSTALLMENT, recurrence: { installmentsCount: installments } };
     return { kind: TransactionKind.SIMPLE, recurrence: {} };
   };
 
@@ -81,34 +60,84 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     setSuccessMessage(null);
 
     const formData = new FormData(e.currentTarget);
-    const description = String(formData.get("description") || "").trim();
-    const amount = amountInput.parseAmount(); // usa o hook
+    const amount = amountInput.parseAmount();
     const dueDate = String(formData.get("dueDate") || "");
+
+    // ── Transferência ────────────────────────────────────────────────
+    if (isTransfer) {
+      const fromAccountId = String(formData.get("fromAccountId") || "");
+      const toAccountId = String(formData.get("toAccountId") || "");
+      const description = String(formData.get("description") || "").trim();
+
+      const newErrors: FormErrors = {};
+      if (!amount || isNaN(amount) || amount <= 0)
+        newErrors.amount = "Informe um valor válido maior que zero";
+      if (!fromAccountId) newErrors.fromAccountId = "Selecione a conta de origem";
+      if (!toAccountId) newErrors.toAccountId = "Selecione a conta de destino";
+      if (fromAccountId && toAccountId && fromAccountId === toAccountId)
+        newErrors.toAccountId = "Conta de destino deve ser diferente da origem";
+      if (!dueDate) newErrors.dueDate = "Data é obrigatória";
+
+      if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+      setErrors({});
+      setIsLoading(true);
+
+      const dueDateString = new Date(dueDate).toISOString().split("T")[0];
+      const [y, m, d] = dueDateString.split("-").map(Number);
+      const dueDateObj = new Date(y, m - 1, d);
+
+      try {
+        const transfer = await createTransferController({
+          amount,
+          fromAccountId,
+          toAccountId,
+          dueDate: dueDateObj,
+          description: description || "Transferência",
+        });
+
+        if (transfer) {
+          addTransaction(transfer);
+          if (markAsPaid) {
+            try {
+              const paidTx = await payerTransactionController(transfer.id, y, m, fromAccountId);
+              if (paidTx) { updateTransaction(paidTx); await refreshAccounts(); }
+            } catch (err) {
+              console.warn("Não foi possível confirmar a transferência:", err);
+            }
+          }
+        }
+
+        setSuccessMessage(markAsPaid ? "Transferência registrada e confirmada!" : "Transferência registrada!");
+        setTimeout(() => onClose(), 1000);
+      } catch (err) {
+        console.error(err);
+        setErrorMessage("Ocorreu um erro ao registrar a transferência.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // ── Receita / Despesa ────────────────────────────────────────────
+    const description = String(formData.get("description") || "").trim();
     const categoryId = String(formData.get("categoryId") || "");
     const accountId = String(formData.get("accountId") || "");
     const isFixed = formData.get("fixed") === "on";
     const installments = Number(formData.get("installments") || 1);
 
-    const validationErrors = validateForm({
-      description,
-      amount,
-      dueDate,
-      categoryId,
-      accountId,
-    });
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
+    const newErrors: FormErrors = {};
+    if (!description.trim()) newErrors.description = "Descrição é obrigatória";
+    else if (description.trim().length < 3) newErrors.description = "Descrição deve ter ao menos 3 caracteres";
+    if (!amount || isNaN(amount) || amount <= 0) newErrors.amount = "Informe um valor válido maior que zero";
+    if (!dueDate) newErrors.dueDate = "Data de vencimento é obrigatória";
+    if (!categoryId) newErrors.categoryId = "Selecione uma categoria";
+    if (!accountId) newErrors.accountId = "Selecione uma conta";
 
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
     setIsLoading(true);
 
-    const { kind, recurrence } = getTransactionKindAndRecurrence(
-      isFixed,
-      installments
-    );
-
+    const { kind, recurrence } = getKindAndRecurrence(isFixed, installments);
     const dueDateString = new Date(dueDate).toISOString().split("T")[0];
     const [year, month, day] = dueDateString.split("-").map(Number);
 
@@ -124,23 +153,13 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     };
 
     try {
-      const createdTransaction = await createTransactionController(
-        newTransaction
-      );
+      const created = await createTransactionController(newTransaction);
 
-      if (createdTransaction) {
-        addTransaction(createdTransaction);
-
-        // Se o usuário marcou "já pago/recebido", dispara o pagamento
-        // do mês de vencimento da transação recém-criada
+      if (created) {
+        addTransaction(created);
         if (markAsPaid) {
           try {
-            const paidTx = await payerTransactionController(
-              createdTransaction.id,
-              year,
-              month,
-              accountId
-            );
+            const paidTx = await payerTransactionController(created.id, year, month, accountId);
             if (paidTx) updateTransaction(paidTx);
           } catch (err) {
             console.warn("Não foi possível marcar como pago:", err);
@@ -148,41 +167,37 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         }
       }
 
-      const label = type === TransactionTypes.DEPOSIT ? "Receita" : "Despesa";
+      const label = isDeposit ? "Receita" : "Despesa";
       setSuccessMessage(
         markAsPaid
-          ? `${label} adicionada e marcada como ${
-              type === TransactionTypes.DEPOSIT ? "recebida" : "paga"
-            }!`
+          ? `${label} adicionada e marcada como ${isDeposit ? "recebida" : "paga"}!`
           : `${label} adicionada com sucesso!`
       );
-
       setTimeout(() => onClose(), 1000);
     } catch (error) {
       console.error(error);
-      setErrorMessage(
-        "Ocorreu um erro ao adicionar a transação. Tente novamente."
-      );
+      setErrorMessage("Ocorreu um erro ao adicionar a transação. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isDeposit = type === TransactionTypes.DEPOSIT;
-  const activeColor = isDeposit ? "bg-green-400" : "bg-red-400";
+  const activeColor = isDeposit
+    ? "bg-green-400 text-gray-900"
+    : isTransfer
+    ? "bg-violet-500 text-white"
+    : "bg-red-400 text-gray-900";
 
   return (
     <div
-      className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px] 
-          mx-auto bg-gray-900 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 
-          md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px] 
-          md:h-auto md:rounded-none md:shadow-none`}
+      className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px]
+        mx-auto bg-gray-900 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30
+        md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px]
+        md:h-auto md:rounded-none md:shadow-none`}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-2 mb-4">
-        <h2 className="text-2xl font-bold text-center text-gray-100">
-          Adicionar Transação
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-100">Adicionar Transação</h2>
         <button
           className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-violet-800 transition-all"
           onClick={onClose}
@@ -204,67 +219,39 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         </div>
       )}
 
-      {/* Tipo Receita/Despesa */}
-      <div className="flex items-center justify-around gap-4 mb-2 px-2">
-        {Object.values(TransactionTypes).map((transactionType) => (
+      {/* Seletor de tipo — 3 botões */}
+      <div className="flex items-center gap-2 mb-2 px-2">
+        {[
+          { t: TransactionTypes.DEPOSIT, label: "Receita", active: "bg-green-400 text-gray-900" },
+          { t: TransactionTypes.WITHDRAW, label: "Despesa", active: "bg-red-400 text-gray-900" },
+          { t: TransactionTypes.TRANSFER, label: "Transferência", active: "bg-violet-500 text-white" },
+        ].map(({ t, label, active }) => (
           <button
-            key={transactionType}
+            key={t}
             type="button"
             disabled={isLoading}
-            className={`button w-full font-semibold transition-all ${
-              type === transactionType
-                ? transactionType === TransactionTypes.DEPOSIT
-                  ? "bg-green-400 text-gray-900"
-                  : "bg-red-400 text-gray-900"
-                : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+            className={`button flex-1 font-semibold transition-all text-sm ${
+              type === t ? active : "bg-gray-700 text-gray-400 hover:bg-gray-600"
             }`}
-            onClick={() => handleTypeChange(transactionType)}
+            onClick={() => handleTypeChange(t)}
           >
-            {transactionType === TransactionTypes.DEPOSIT
-              ? "Receita"
-              : "Despesa"}
+            {label}
           </button>
         ))}
       </div>
 
-      <form
-        className="flex flex-col gap-4 overflow-x-hidden px-2 w-full"
-        onSubmit={handleSubmit}
-        noValidate
-      >
-        {/* Descrição */}
-        <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Descrição <span className="text-red-400">*</span>
-          </p>
-          <input
-            className={`input ${
-              errors.description ? "border-red-500 focus:border-red-400" : ""
-            }`}
-            type="text"
-            placeholder="Ex: Salário, Mercado, Netflix..."
-            name="description"
-            disabled={isLoading}
-          />
-          {errors.description && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
-              <FiAlertCircle className="h-3 w-3" /> {errors.description}
-            </p>
-          )}
-        </label>
+      <form className="flex flex-col gap-4 overflow-x-hidden px-2 w-full" onSubmit={handleSubmit} noValidate>
 
-        {/* Valor — usa raw string do hook, aceita vírgula e ponto */}
+        {/* ── Campos comuns: Valor e Data ── */}
         <label>
           <p className="text-gray-500 text-xs ml-1 mb-1">
             Valor <span className="text-red-400">*</span>
           </p>
           <input
-            className={`input money ${
-              errors.amount ? "border-red-500 focus:border-red-400" : ""
-            }`}
+            className={`input money ${errors.amount ? "border-red-500 focus:border-red-400" : ""}`}
             type="text"
             inputMode="decimal"
-            placeholder="Ex: 1.500,00 ou 1500.00"
+            placeholder="Ex: 1.500,00"
             value={amountInput.raw}
             onChange={amountInput.handleChange}
             disabled={isLoading}
@@ -276,158 +263,247 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           )}
         </label>
 
-        {/* Data de vencimento */}
-        <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Data de vencimento <span className="text-red-400">*</span>
-          </p>
-          <input
-            className={`input max-w-[100%] ${
-              errors.dueDate ? "border-red-500" : ""
-            }`}
-            type="date"
-            name="dueDate"
-            disabled={isLoading}
-          />
-          {errors.dueDate && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
-              <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
-            </p>
-          )}
-        </label>
+        {/* ── Campos exclusivos: Receita/Despesa ── */}
+        {!isTransfer && (
+          <>
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Descrição <span className="text-red-400">*</span>
+              </p>
+              <input
+                className={`input ${errors.description ? "border-red-500 focus:border-red-400" : ""}`}
+                type="text"
+                placeholder="Ex: Salário, Mercado, Netflix..."
+                name="description"
+                disabled={isLoading}
+              />
+              {errors.description && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.description}
+                </p>
+              )}
+            </label>
 
-        {/* Categoria */}
-        <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Categoria <span className="text-red-400">*</span>
-          </p>
-          <select
-            className={`input ${errors.categoryId ? "border-red-500" : ""}`}
-            name="categoryId"
-            disabled={isLoading}
-          >
-            <option value="">Selecione uma categoria</option>
-            {categories?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          {errors.categoryId && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
-              <FiAlertCircle className="h-3 w-3" /> {errors.categoryId}
-            </p>
-          )}
-        </label>
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Data de vencimento <span className="text-red-400">*</span>
+              </p>
+              <input
+                className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
+                type="date"
+                name="dueDate"
+                disabled={isLoading}
+                style={{ colorScheme: "dark" }}
+              />
+              {errors.dueDate && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
+                </p>
+              )}
+            </label>
 
-        {/* Conta */}
-        <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Conta <span className="text-red-400">*</span>
-          </p>
-          <select
-            className={`input ${errors.accountId ? "border-red-500" : ""}`}
-            name="accountId"
-            disabled={isLoading}
-          >
-            <option value="">Selecione uma conta</option>
-            {accounts?.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))}
-          </select>
-          {errors.accountId && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
-              <FiAlertCircle className="h-3 w-3" /> {errors.accountId}
-            </p>
-          )}
-        </label>
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Categoria <span className="text-red-400">*</span>
+              </p>
+              <select
+                className={`input ${errors.categoryId ? "border-red-500" : ""}`}
+                name="categoryId"
+                disabled={isLoading}
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              {errors.categoryId && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.categoryId}
+                </p>
+              )}
+            </label>
 
-        {/* Parcelas */}
-        {showInstallment && (
-          <label>
-            <p className="text-gray-500 text-xs ml-1 mb-1">
-              Número de parcelas
-            </p>
-            <select className="input" name="installments" disabled={isLoading}>
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  {num === 1 ? "À vista" : `${num}x`}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Conta <span className="text-red-400">*</span>
+              </p>
+              <select
+                className={`input ${errors.accountId ? "border-red-500" : ""}`}
+                name="accountId"
+                disabled={isLoading}
+              >
+                <option value="">Selecione uma conta</option>
+                {accounts?.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              {errors.accountId && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.accountId}
+                </p>
+              )}
+            </label>
+
+            {showInstallment && (
+              <label>
+                <p className="text-gray-500 text-xs ml-1 mb-1">Número de parcelas</p>
+                <select className="input" name="installments" disabled={isLoading}>
+                  {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>{n === 1 ? "À vista" : `${n}x`}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">Transação recorrente/fixa?</p>
+              <div className="flex items-center gap-2 ml-2">
+                <input
+                  type="checkbox"
+                  name="fixed"
+                  id="fixed"
+                  disabled={isLoading}
+                  onChange={() => setShowInstallment((p) => !p)}
+                />
+                <label htmlFor="fixed" className="text-gray-400 text-sm cursor-pointer">
+                  Sim, é uma transação fixa mensal
+                </label>
+              </div>
+            </label>
+          </>
         )}
 
-        {/* Transação fixa */}
-        <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Transação recorrente/fixa?
-          </p>
-          <div className="flex items-center gap-2 mb-2 ml-2">
-            <input
-              type="checkbox"
-              name="fixed"
-              id="fixed"
-              disabled={isLoading}
-              onChange={toggleInstallmentVisibility}
-            />
-            <label
-              htmlFor="fixed"
-              className="text-gray-400 text-sm cursor-pointer"
-            >
-              Sim, é uma transação fixa mensal
+        {/* ── Campos exclusivos: Transferência ── */}
+        {isTransfer && (
+          <>
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                De (conta de origem) <span className="text-red-400">*</span>
+              </p>
+              <select
+                className={`input ${errors.fromAccountId ? "border-red-500" : ""}`}
+                name="fromAccountId"
+                disabled={isLoading}
+              >
+                <option value="">Selecione a conta de origem</option>
+                {accounts?.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              {errors.fromAccountId && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.fromAccountId}
+                </p>
+              )}
             </label>
-          </div>
-        </label>
 
-        {/* ── Toggle "já pago/recebido" ─────────────────────────────────── */}
-        {/* Por que está aqui: o usuário frequentemente está registrando algo
-            que já aconteceu (ex: salário que já caiu, conta que já pagou).
-            Sem esse toggle, ele precisa criar, encontrar na lista, e marcar —
-            3 passos viram 1. Só aparece como opção, nunca obrigatório. */}
+            {/* Seta visual */}
+            <div className="flex items-center gap-2 -my-1">
+              <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
+              <div
+                className="flex items-center justify-center w-7 h-7 rounded-full shrink-0"
+                style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+              >
+                <FiArrowRight className="h-3.5 w-3.5" style={{ color: "var(--accent-light)" }} />
+              </div>
+              <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
+            </div>
+
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Para (conta de destino) <span className="text-red-400">*</span>
+              </p>
+              <select
+                className={`input ${errors.toAccountId ? "border-red-500" : ""}`}
+                name="toAccountId"
+                disabled={isLoading}
+              >
+                <option value="">Selecione a conta de destino</option>
+                {accounts?.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              {errors.toAccountId && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.toAccountId}
+                </p>
+              )}
+            </label>
+
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">
+                Data <span className="text-red-400">*</span>
+              </p>
+              <input
+                className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
+                type="date"
+                name="dueDate"
+                disabled={isLoading}
+                style={{ colorScheme: "dark" }}
+              />
+              {errors.dueDate && (
+                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                  <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
+                </p>
+              )}
+            </label>
+
+            <label>
+              <p className="text-gray-500 text-xs ml-1 mb-1">Descrição (opcional)</p>
+              <input
+                className="input"
+                type="text"
+                placeholder="Ex: Reserva de emergência, Poupança..."
+                name="description"
+                disabled={isLoading}
+              />
+            </label>
+          </>
+        )}
+
+        {/* Toggle já pago/recebido/transferido */}
         <div
           className="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-all"
           style={{
             background: markAsPaid
               ? isDeposit
                 ? "rgba(34,197,94,0.1)"
+                : isTransfer
+                ? "rgba(139,92,246,0.1)"
                 : "rgba(239,68,68,0.1)"
               : "rgba(255,255,255,0.04)",
             border: markAsPaid
               ? isDeposit
                 ? "1px solid rgba(34,197,94,0.3)"
+                : isTransfer
+                ? "1px solid rgba(139,92,246,0.3)"
                 : "1px solid rgba(239,68,68,0.3)"
               : "1px solid var(--border-subtle, rgba(255,255,255,0.08))",
           }}
           onClick={() => !isLoading && setMarkAsPaid((p) => !p)}
         >
           <div className="flex flex-col gap-0.5">
-            <p
-              className="text-sm font-medium"
-              style={{ color: "var(--text-primary, #f0f4ff)" }}
-            >
-              {isDeposit ? "Já recebi este valor" : "Já paguei esta conta"}
+            <p className="text-sm font-medium" style={{ color: "var(--text-primary, #f0f4ff)" }}>
+              {isDeposit ? "Já recebi este valor" : isTransfer ? "Já foi transferido" : "Já paguei esta conta"}
             </p>
-            <p
-              className="text-xs"
-              style={{ color: "var(--text-muted, #475569)" }}
-            >
+            <p className="text-xs" style={{ color: "var(--text-muted, #475569)" }}>
               {markAsPaid
-                ? isDeposit
+                ? isTransfer
+                  ? "Saldos das contas serão atualizados agora"
+                  : isDeposit
                   ? "Será marcada como recebida ao salvar"
                   : "Será marcada como paga ao salvar"
                 : "Marcar como pendente por ora"}
             </p>
           </div>
-          {/* Toggle visual */}
           <div
             className="w-10 h-5 rounded-full relative transition-all duration-200 shrink-0"
             style={{
               background: markAsPaid
                 ? isDeposit
                   ? "var(--green, #22c55e)"
+                  : isTransfer
+                  ? "var(--accent, #7c3aed)"
                   : "var(--red, #ef4444)"
                 : "rgba(255,255,255,0.12)",
             }}
@@ -439,20 +515,21 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           </div>
         </div>
 
-        {/* Submit */}
         <button
-          className={`button min-h-[45px] font-semibold text-gray-900 ${activeColor} disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={`button min-h-[45px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${activeColor}`}
           type="submit"
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
               <FiLoader className="h-4 w-4 animate-spin" />
-              {markAsPaid ? "Salvando e marcando..." : "Salvando..."}
+              {markAsPaid
+                ? isTransfer ? "Registrando e confirmando..." : "Salvando e marcando..."
+                : "Salvando..."}
             </span>
-          ) : (
-            `Adicionar ${isDeposit ? "Receita" : "Despesa"}`
-          )}
+          ) : isDeposit ? "Adicionar Receita"
+            : isTransfer ? "Registrar Transferência"
+            : "Adicionar Despesa"}
         </button>
       </form>
     </div>

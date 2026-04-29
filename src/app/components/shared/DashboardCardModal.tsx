@@ -780,7 +780,10 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
       const sign = t.type === TransactionTypes.DEPOSIT ? 1 : -1;
       if (t.kind === TransactionKind.SIMPLE) {
         const d = new Date(t.dueDate);
-        if (d.getFullYear() === year) nets[d.getMonth()] += sign * t.amount;
+        if (d.getFullYear() === year) {
+          const amount = t.paymentHistory[0]?.amount ?? t.amount;
+          nets[d.getMonth()] += sign * amount;
+        }
       } else if (t.kind === TransactionKind.INSTALLMENT) {
         const excl = t.recurrence?.excludedInstallments ?? [];
         const end = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
