@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks/useUser";
 import { Title } from "@/app/components/shared/Title";
-import { ICategory } from "@/domain/interfaces/category/ICategory";
 import {
   MdAdd,
   MdDelete,
@@ -13,214 +13,346 @@ import {
   MdClose,
   MdOutlineFlagCircle,
 } from "react-icons/md";
-import { FiAlertTriangle } from "react-icons/fi";
+import { FiAlertTriangle, FiX } from "react-icons/fi";
 
-interface GoalEntry {
-  categoryId: string;
-  limit: number; // limite de gasto mensal em R$
+// ── Modal de adicionar meta ─────────────────────────────────────
+function AddGoalModal({
+  categoriesAvailable,
+  onClose,
+  onSave,
+}: {
+  categoriesAvailable: { id: string; name: string }[];
+  onClose: () => void;
+  onSave: (categoryId: string, limit: number) => Promise<void>;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [categoryId, setCategoryId] = useState("");
+  const [limitStr, setLimitStr] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!categoryId) { setError("Selecione uma categoria."); return; }
+    const limit = Number(limitStr.replace(",", ".").replace(/[^\d.]/g, ""));
+    if (!limit || limit <= 0) { setError("Informe um limite válido maior que zero."); return; }
+    setSaving(true);
+    try {
+      await onSave(categoryId, limit);
+      onClose();
+    } catch (err: any) {
+      setError(err?.message ?? "Erro ao salvar meta.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(7,11,20,0.85)", backdropFilter: "blur(6px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-sm flex flex-col rounded-2xl animate-fade-in-scale overflow-hidden"
+        style={{
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-strong)",
+          boxShadow: "0 0 60px rgba(0,0,0,0.6)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+            >
+              <MdAdd className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
+            </div>
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              Nova meta de gasto
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-5 py-4 flex flex-col gap-4">
+          <div>
+            <p className="text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
+              Categoria
+            </p>
+            <select
+              className="input"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              autoFocus
+            >
+              <option value="">Selecione uma categoria</option>
+              {categoriesAvailable.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
+              Limite mensal (R$)
+            </p>
+            <input
+              className="input"
+              type="text"
+              placeholder="Ex: 500,00"
+              value={limitStr}
+              onChange={(e) => setLimitStr(e.target.value)}
+            />
+          </div>
+
+          {error && (
+            <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--red)" }}>
+              <FiAlertTriangle className="h-3 w-3 shrink-0" /> {error}
+            </p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="button flex-1"
+              style={{
+                background: "var(--bg-overlay)",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="button button-primary flex-1"
+              disabled={saving}
+            >
+              {saving ? "Salvando..." : "Definir Meta"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
+  );
 }
 
-type GoalsMap = Record<string, number>; // categoryId -> limit
-
-const STORAGE_KEY = "finansflow-goals";
-
-const loadGoals = (): GoalsMap => {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-};
-
-const saveGoals = (goals: GoalsMap) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
-};
-
+// ── Página ──────────────────────────────────────────────────────
 export default function Goals() {
-  const { user, loading, categories, dataCategoryExpenses, month, year } =
-    useUser();
+  const {
+    user,
+    loading,
+    categories,
+    dataCategoryExpenses,
+    goals,
+    addGoal,
+    updateGoal,
+    deleteGoal,
+  } = useUser();
   const router = useRouter();
 
-  const [goals, setGoals] = useState<GoalsMap>({});
+  const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [newCategoryId, setNewCategoryId] = useState("");
-  const [newLimit, setNewLimit] = useState("");
-  const [addError, setAddError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
   }, [user, loading, router]);
 
-  useEffect(() => {
-    setGoals(loadGoals());
-  }, []);
+  const goalsMap = useMemo(() => {
+    const map: Record<string, { id: string; limit: number }> = {};
+    for (const g of goals ?? []) {
+      map[g.categoryId] = { id: g.id, limit: g.monthlyLimit };
+    }
+    return map;
+  }, [goals]);
 
-  const categoriesWithGoal = Object.keys(goals);
+  const categoriesWithGoal = Object.keys(goalsMap);
   const categoriesAvailable =
     categories?.filter((c) => !categoriesWithGoal.includes(c.id)) ?? [];
 
-  const getSpent = (categoryId: string): number => {
-    if (!dataCategoryExpenses) return 0;
-    const entry = dataCategoryExpenses.expenses.find(
-      (e) => e.categoryId === categoryId
-    );
-    return entry?.amount ?? 0;
-  };
+  const getSpent = (categoryId: string): number =>
+    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)?.amount ?? 0;
 
-  const getCategoryName = (categoryId: string): string => {
-    return categories?.find((c) => c.id === categoryId)?.name ?? "Categoria";
-  };
+  const getCategoryName = (categoryId: string): string =>
+    categories?.find((c) => c.id === categoryId)?.name ?? "Categoria";
 
-  const handleAddGoal = () => {
-    setAddError(null);
-    if (!newCategoryId) {
-      setAddError("Selecione uma categoria.");
-      return;
-    }
-    const limit = Number(newLimit.replace(",", ".").replace(/[^\d.]/g, ""));
-    if (!limit || limit <= 0) {
-      setAddError("Informe um limite válido maior que zero.");
-      return;
-    }
-    const updated = { ...goals, [newCategoryId]: limit };
-    setGoals(updated);
-    saveGoals(updated);
-    setNewCategoryId("");
-    setNewLimit("");
-  };
-
-  const handleDeleteGoal = (categoryId: string) => {
-    const updated = { ...goals };
-    delete updated[categoryId];
-    setGoals(updated);
-    saveGoals(updated);
-  };
-
-  const handleStartEdit = (categoryId: string) => {
-    setEditingId(categoryId);
-    setEditValue(String(goals[categoryId]));
-  };
-
-  const handleSaveEdit = (categoryId: string) => {
+  const handleSaveEdit = async (categoryId: string) => {
     const limit = Number(editValue.replace(",", ".").replace(/[^\d.]/g, ""));
     if (!limit || limit <= 0) return;
-    const updated = { ...goals, [categoryId]: limit };
-    setGoals(updated);
-    saveGoals(updated);
-    setEditingId(null);
-    setEditValue("");
+    const goalId = goalsMap[categoryId]?.id;
+    if (!goalId) return;
+    setSaving(true);
+    try {
+      await updateGoal(goalId, limit);
+      setEditingId(null);
+      setEditValue("");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const formatCurrency = (v: number) =>
+  const fmt = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  // Resumo geral
-  const totalLimit = Object.values(goals).reduce((a, b) => a + b, 0);
-  const totalSpent = Object.keys(goals).reduce(
-    (acc, id) => acc + getSpent(id),
-    0
-  );
-  const totalPercent =
-    totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
-  const overBudgetCount = Object.keys(goals).filter(
-    (id) => getSpent(id) > goals[id]
-  ).length;
+  const totalLimit = Object.values(goalsMap).reduce((a, b) => a + b.limit, 0);
+  const totalSpent = Object.keys(goalsMap).reduce((acc, id) => acc + getSpent(id), 0);
+  const totalPercent = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
+  const overBudgetCount = Object.keys(goalsMap).filter((id) => getSpent(id) > goalsMap[id].limit).length;
+  const hasGoals = Object.keys(goalsMap).length > 0;
 
-  if (loading) return <p className="text-gray-400 p-6">Carregando...</p>;
+  if (loading || goals === null) return <p className="p-6" style={{ color: "var(--text-muted)" }}>Carregando...</p>;
   if (!user) return null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Title navigateMonth={true}>Metas</Title>
+    <div className="flex flex-col gap-6 animate-fade-in pb-48">
+      {/* Header com botão */}
+      <div className="flex items-center justify-between">
+        <Title navigateMonth={false}>Metas</Title>
+        {categoriesAvailable.length > 0 && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="button button-primary flex items-center gap-1.5"
+          >
+            <MdAdd className="h-4 w-4" />
+            Nova meta
+          </button>
+        )}
+      </div>
 
-      <p className="text-gray-400 text-sm px-1">
-        Defina limites mensais de gastos por categoria e acompanhe se está
-        dentro do orçamento.
+      <p className="text-sm -mt-2" style={{ color: "var(--text-muted)" }}>
+        Defina limites mensais de gastos por categoria e acompanhe se está dentro do orçamento.
       </p>
 
       {/* Card resumo geral */}
-      {Object.keys(goals).length > 0 && (
+      {hasGoals && (
         <div
-          className="rounded-xl p-4 border border-gray-800 flex flex-col gap-3"
-          style={{ background: "var(--bg-surface)" }}
+          className="rounded-xl p-4 flex flex-col gap-3"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+          }}
         >
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
-                Orçamento total definido
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+                Orçamento total
               </p>
-              <p className="text-2xl font-bold text-gray-100">
-                {formatCurrency(totalLimit)}
+              <p className="money text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+                {fmt(totalLimit)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
                 Gasto até agora
               </p>
               <p
-                className={`text-2xl font-bold ${
-                  totalSpent > totalLimit ? "text-red-400" : "text-green-400"
-                }`}
+                className="money text-2xl font-bold"
+                style={{ color: totalSpent > totalLimit ? "var(--red)" : "var(--green)" }}
               >
-                {formatCurrency(totalSpent)}
+                {fmt(totalSpent)}
               </p>
             </div>
           </div>
 
-          {/* Barra de progresso geral */}
           <div>
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className="flex justify-between text-xs mb-1" style={{ color: "var(--text-disabled)" }}>
               <span>Progresso</span>
               <span>{totalPercent.toFixed(1)}%</span>
             </div>
-            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-overlay)" }}>
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  totalPercent >= 100
-                    ? "bg-red-500"
-                    : totalPercent >= 80
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
-                }`}
-                style={{ width: `${totalPercent}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${totalPercent}%`,
+                  background:
+                    totalPercent >= 100 ? "var(--red)" : totalPercent >= 80 ? "var(--yellow)" : "var(--green)",
+                }}
               />
             </div>
           </div>
 
           {overBudgetCount > 0 && (
-            <div className="flex items-center gap-2 text-red-400 text-xs">
+            <div className="flex items-center gap-2 text-xs" style={{ color: "var(--red)" }}>
               <FiAlertTriangle className="h-3 w-3 shrink-0" />
               {overBudgetCount}{" "}
-              {overBudgetCount === 1
-                ? "categoria ultrapassou"
-                : "categorias ultrapassaram"}{" "}
-              o limite este mês.
+              {overBudgetCount === 1 ? "categoria ultrapassou" : "categorias ultrapassaram"} o limite este mês.
             </div>
           )}
         </div>
       )}
 
-      {/* Lista de metas */}
-      {Object.keys(goals).length === 0 ? (
+      {/* Empty state */}
+      {!hasGoals && (
         <div
-          className="rounded-xl p-8 border border-gray-800 text-center"
-          style={{ background: "var(--bg-surface)" }}
+          className="rounded-xl p-12 text-center flex flex-col items-center gap-4"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+          }}
         >
-          <MdOutlineFlagCircle className="h-12 w-12 text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">
-            Você ainda não definiu nenhuma meta.
-          </p>
-          <p className="text-gray-600 text-xs mt-1">
-            Adicione uma meta abaixo para começar a controlar seus gastos.
-          </p>
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "var(--bg-overlay)" }}
+          >
+            <MdOutlineFlagCircle className="h-8 w-8" style={{ color: "var(--text-disabled)" }} />
+          </div>
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              Nenhuma meta definida
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
+              Adicione metas para controlar seus gastos por categoria.
+            </p>
+          </div>
+          {categoriesAvailable.length > 0 && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="button button-primary flex items-center gap-1.5 mt-1"
+            >
+              <MdAdd className="h-4 w-4" />
+              Criar primeira meta
+            </button>
+          )}
         </div>
-      ) : (
+      )}
+
+      {/* Lista de metas */}
+      {hasGoals && (
         <div className="flex flex-col gap-3">
-          {Object.entries(goals).map(([categoryId, limit]) => {
+          {Object.entries(goalsMap).map(([categoryId, { id: goalId, limit }]) => {
             const spent = getSpent(categoryId);
             const percent = Math.min((spent / limit) * 100, 100);
             const isOver = spent > limit;
@@ -229,41 +361,50 @@ export default function Goals() {
             return (
               <div
                 key={categoryId}
-                style={{ background: "var(--bg-surface)" }}
-                className={`rounded-xl p-4 border transition-colors ${
-                  isOver
-                    ? "border-red-800"
-                    : isWarning
-                    ? "border-yellow-800"
-                    : "border-gray-800"
-                }`}
+                className="rounded-xl p-4 transition-colors"
+                style={{
+                  background: "var(--bg-surface)",
+                  border: `1px solid ${isOver ? "var(--red-dim)" : isWarning ? "var(--yellow-dim)" : "var(--border-default)"}`,
+                }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-200 font-medium truncate">
+                      <p className="font-medium truncate" style={{ color: "var(--text-primary)" }}>
                         {getCategoryName(categoryId)}
                       </p>
                       {isOver && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/60 text-red-400 shrink-0">
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                          style={{ background: "var(--red-dim)", color: "var(--red)" }}
+                        >
                           Excedeu
                         </span>
                       )}
                       {isWarning && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900/60 text-yellow-400 shrink-0">
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                          style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
+                        >
                           Atenção
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-500 text-xs mt-0.5">
-                      {formatCurrency(spent)} de{" "}
+
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {fmt(spent)} de{" "}
                       {editingId === categoryId ? (
                         <span className="inline-flex items-center gap-1">
                           <input
                             type="text"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="w-24 bg-gray-700 border border-gray-600 rounded px-2 py-0.5 text-gray-200 text-xs"
+                            className="w-24 rounded px-2 py-0.5 text-xs"
+                            style={{
+                              background: "var(--bg-elevated)",
+                              border: "1px solid var(--border-subtle)",
+                              color: "var(--text-primary)",
+                            }}
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSaveEdit(categoryId);
@@ -272,23 +413,27 @@ export default function Goals() {
                           />
                           <button
                             onClick={() => handleSaveEdit(categoryId)}
-                            className="text-green-400 hover:text-green-300 cursor-pointer"
+                            className="cursor-pointer"
+                            style={{ color: "var(--green)" }}
+                            disabled={saving}
                           >
                             <MdCheck className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-gray-500 hover:text-gray-300 cursor-pointer"
+                            className="cursor-pointer"
+                            style={{ color: "var(--text-muted)" }}
                           >
                             <MdClose className="h-4 w-4" />
                           </button>
                         </span>
                       ) : (
                         <button
-                          onClick={() => handleStartEdit(categoryId)}
-                          className="underline hover:text-gray-300 cursor-pointer"
+                          onClick={() => { setEditingId(categoryId); setEditValue(String(limit)); }}
+                          className="underline cursor-pointer"
+                          style={{ color: "var(--text-secondary)" }}
                         >
-                          {formatCurrency(limit)}
+                          {fmt(limit)}
                         </button>
                       )}
                     </p>
@@ -296,14 +441,16 @@ export default function Goals() {
 
                   <div className="flex items-center gap-1 ml-2">
                     <button
-                      onClick={() => handleStartEdit(categoryId)}
-                      className="h-8 w-8 rounded-full hover:bg-blue-900/50 flex items-center justify-center text-blue-400 cursor-pointer"
+                      onClick={() => { setEditingId(categoryId); setEditValue(String(limit)); }}
+                      className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                      style={{ color: "var(--accent-light)" }}
                     >
                       <MdEdit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteGoal(categoryId)}
-                      className="h-8 w-8 rounded-full hover:bg-red-900/50 flex items-center justify-center text-red-400 cursor-pointer"
+                      onClick={() => deleteGoal(goalId)}
+                      className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                      style={{ color: "var(--red)" }}
                     >
                       <MdDelete className="h-4 w-4" />
                     </button>
@@ -312,29 +459,21 @@ export default function Goals() {
 
                 {/* Barra de progresso */}
                 <div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-overlay)" }}>
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isOver
-                          ? "bg-red-500"
-                          : isWarning
-                          ? "bg-yellow-500"
-                          : "bg-violet-500"
-                      }`}
-                      style={{ width: `${percent}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${percent}%`,
+                        background: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)",
+                      }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-600 mt-1">
+                  <div
+                    className="flex justify-between text-xs mt-1"
+                    style={{ color: "var(--text-disabled)" }}
+                  >
                     <span>0%</span>
-                    <span
-                      className={
-                        isOver
-                          ? "text-red-400"
-                          : isWarning
-                          ? "text-yellow-400"
-                          : "text-gray-400"
-                      }
-                    >
+                    <span style={{ color: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--text-muted)" }}>
                       {percent.toFixed(1)}% usado
                     </span>
                     <span>100%</span>
@@ -343,73 +482,33 @@ export default function Goals() {
               </div>
             );
           })}
+
+          {/* Botão de adicionar mais metas (ao final da lista) */}
+          {categoriesAvailable.length > 0 && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all cursor-pointer"
+              style={{
+                background: "transparent",
+                border: "1px dashed var(--border-subtle)",
+                color: "var(--text-muted)",
+              }}
+            >
+              <MdAdd className="h-4 w-4" />
+              Adicionar outra meta
+            </button>
+          )}
         </div>
       )}
 
-      {/* Adicionar nova meta */}
-      <div
-        className="rounded-xl p-4 border border-gray-800"
-        style={{ background: "var(--bg-surface)" }}
-      >
-        <h3 className="text-gray-300 font-medium mb-4 flex items-center gap-2">
-          <MdAdd className="h-5 w-5 text-violet-400" />
-          Adicionar meta de gasto
-        </h3>
-
-        <div className="flex flex-col gap-3">
-          <div>
-            <p className="text-gray-500 text-xs mb-1">Categoria</p>
-            <select
-              className="input"
-              value={newCategoryId}
-              onChange={(e) => setNewCategoryId(e.target.value)}
-            >
-              <option value="">Selecione uma categoria</option>
-              {categoriesAvailable.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <p className="text-gray-500 text-xs mb-1">Limite mensal (R$)</p>
-            <input
-              className="input"
-              type="text"
-              placeholder="Ex: 500,00"
-              value={newLimit}
-              onChange={(e) => setNewLimit(e.target.value)}
-            />
-          </div>
-
-          {addError && (
-            <p className="text-red-400 text-xs flex items-center gap-1">
-              <FiAlertTriangle className="h-3 w-3" /> {addError}
-            </p>
-          )}
-
-          <button
-            onClick={handleAddGoal}
-            className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold"
-          >
-            <span className="flex items-center gap-2">
-              <MdAdd /> Definir Meta
-            </span>
-          </button>
-        </div>
-
-        {categoriesAvailable.length === 0 && Object.keys(goals).length > 0 && (
-          <p className="text-gray-600 text-xs mt-3 text-center">
-            Todas as categorias já têm uma meta definida.
-          </p>
-        )}
-      </div>
-
-      <p className="text-gray-700 text-xs text-center pb-4">
-        As metas são salvas localmente no seu dispositivo.
-      </p>
+      {/* Modal */}
+      {showModal && (
+        <AddGoalModal
+          categoriesAvailable={categoriesAvailable}
+          onClose={() => setShowModal(false)}
+          onSave={addGoal}
+        />
+      )}
     </div>
   );
 }

@@ -43,7 +43,7 @@ export default function Performance() {
 
   const highestCategory = dataCategoryExpenses?.expenses.reduce(
     (max, e) => (e.percentage > max.percentage ? e : max),
-    { categoryName: "", amount: 0, percentage: 0, categoryId: "" },
+    { categoryName: "", amount: 0, percentage: 0, categoryId: "" }
   );
 
   return (
@@ -213,68 +213,8 @@ export default function Performance() {
         </div>
       )}
 
-      {/* Regra 50-30-20 */}
-      <div
-        className="p-5 rounded-xl"
-        style={{
-          background: "var(--bg-surface)",
-          border: "1px solid var(--border-default)",
-        }}
-      >
-        <p
-          className="text-xs font-semibold uppercase tracking-wider mb-4"
-          style={{ color: "var(--text-muted)" }}
-        >
-          Dicas — Regra 50-30-20
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            {
-              pct: "50%",
-              label: "Necessidades",
-              desc: "Moradia, alimentação, transporte e saúde.",
-              color: "var(--accent)",
-            },
-            {
-              pct: "30%",
-              label: "Desejos",
-              desc: "Lazer, assinaturas, compras e restaurantes.",
-              color: "var(--yellow)",
-            },
-            {
-              pct: "20%",
-              label: "Poupança",
-              desc: "Investimentos, reserva de emergência e metas.",
-              color: "var(--green)",
-            },
-          ].map(({ pct, label, desc, color }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-2 p-4 rounded-xl"
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border-subtle)",
-              }}
-            >
-              <p className="money text-2xl font-medium" style={{ color }}>
-                {pct}
-              </p>
-              <p
-                className="text-sm font-medium"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {label}
-              </p>
-              <p
-                className="text-xs leading-5"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Projeção anual & simulador de rendimento */}
+      <AnnualProjectionSection />
 
       {/* Gráfico histórico */}
       {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
@@ -294,9 +234,6 @@ export default function Performance() {
           <LineChart data={monthlyMetrics} />
         </div>
       )}
-
-      {/* Projeção anual & simulador de rendimento */}
-      <AnnualProjectionSection />
     </div>
   );
 }

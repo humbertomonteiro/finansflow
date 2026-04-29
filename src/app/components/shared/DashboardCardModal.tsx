@@ -17,6 +17,8 @@ import {
   FiArrowRight,
   FiTrendingUp,
   FiTrendingDown,
+  FiTarget,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import {
   RiMoneyDollarCircleLine,
@@ -27,6 +29,7 @@ import { TbScale, TbTrendingUp } from "react-icons/tb";
 
 // ── Tipo de modal ───────────────────────────────────────────────
 export type DashboardModalType =
+  | "goals" // Metas → progresso por categoria
   | "balance" // Saldo atual → lista de contas com edição
   | "revenues" // Receitas → progresso pago/pendente + lista
   | "expenses" // Despesas → top categorias
@@ -68,6 +71,11 @@ export function DashboardCardModal({ type, onClose }: DashboardCardModalProps) {
     DashboardModalType,
     { label: string; icon: React.ReactNode; color: string }
   > = {
+    goals: {
+      label: "Metas do mês",
+      icon: <FiTarget className="h-4 w-4" />,
+      color: "#f97316",
+    },
     balance: {
       label: "Saldo atual",
       icon: <RiMoneyDollarCircleLine className="h-4 w-4" />,
@@ -145,6 +153,7 @@ export function DashboardCardModal({ type, onClose }: DashboardCardModalProps) {
 
         {/* Conteúdo — scrollável */}
         <div className="overflow-y-auto flex-1">
+          {type === "goals" && <GoalsModal onClose={onClose} />}
           {type === "balance" && <BalanceModal onClose={onClose} />}
           {type === "revenues" && <RevenuesModal onClose={onClose} />}
           {type === "expenses" && <ExpensesModal />}
@@ -1120,6 +1129,200 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
         </span>
         <FiArrowRight className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
       </button>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 6. METAS — progresso por categoria + link para /goals
+// ══════════════════════════════════════════════════════════════
+function GoalsModal({ onClose }: { onClose: () => void }) {
+  const { goals, categories, dataCategoryExpenses } = useUser();
+  const router = useRouter();
+
+  const goalsMap = useMemo(() => {
+    const map: Record<string, { id: string; limit: number }> = {};
+    for (const g of goals ?? []) {
+      map[g.categoryId] = { id: g.id, limit: g.monthlyLimit };
+    }
+    return map;
+  }, [goals]);
+
+  const getSpent = (categoryId: string) =>
+    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)?.amount ?? 0;
+
+  const getCategoryName = (categoryId: string) =>
+    categories?.find((c) => c.id === categoryId)?.name ?? "Categoria";
+
+  const fmt = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const entries = Object.entries(goalsMap).map(([categoryId, { limit }]) => {
+    const spent = getSpent(categoryId);
+    const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
+    const isOver = spent > limit;
+    const isWarning = !isOver && percent >= 80;
+    return { categoryId, limit, spent, percent, isOver, isWarning };
+  }).sort((a, b) => b.percent - a.percent);
+
+  const totalLimit = entries.reduce((s, e) => s + e.limit, 0);
+  const totalSpent = entries.reduce((s, e) => s + e.spent, 0);
+  const totalPercent = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
+  const overCount = entries.filter((e) => e.isOver).length;
+  const warnCount = entries.filter((e) => e.isWarning).length;
+
+  const totalColor =
+    totalPercent >= 100 ? "var(--red)" : totalPercent >= 80 ? "var(--yellow)" : "var(--green)";
+
+  return (
+    <div className="px-5 py-4 flex flex-col gap-4">
+      {goals === null || goals.length === 0 ? (
+        /* ── Empty state ── */
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: "var(--bg-overlay)" }}
+          >
+            <FiTarget className="h-7 w-7" style={{ color: "var(--text-disabled)" }} />
+          </div>
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              Nenhuma meta definida
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
+              Defina limites de gastos por categoria para acompanhar seu orçamento.
+            </p>
+          </div>
+          <button
+            onClick={() => { router.push("/goals"); onClose(); }}
+            className="button button-primary flex items-center gap-1.5 mt-1"
+          >
+            Criar primeira meta
+            <FiArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* ── Resumo geral ── */}
+          <div
+            className="p-4 rounded-xl flex flex-col gap-3"
+            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Gasto total</p>
+                <p className="money text-xl font-semibold mt-0.5" style={{ color: totalColor }}>
+                  {fmt(totalSpent)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Orçamento</p>
+                <p className="money text-xl font-semibold mt-0.5" style={{ color: "var(--text-primary)" }}>
+                  {fmt(totalLimit)}
+                </p>
+              </div>
+            </div>
+            <div>
+              <div
+                className="h-2 rounded-full overflow-hidden"
+                style={{ background: "var(--bg-elevated)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${totalPercent}%`, background: totalColor }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1 text-xs" style={{ color: "var(--text-disabled)" }}>
+                <span>{totalPercent.toFixed(1)}% do orçamento usado</span>
+                {(overCount > 0 || warnCount > 0) && (
+                  <span className="flex items-center gap-1" style={{ color: overCount > 0 ? "var(--red)" : "var(--yellow)" }}>
+                    <FiAlertTriangle className="h-3 w-3" />
+                    {overCount > 0
+                      ? `${overCount} excedeu`
+                      : `${warnCount} em atenção`}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Lista de metas ── */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+              Por categoria
+            </p>
+            {entries.map(({ categoryId, limit, spent, percent, isOver, isWarning }) => (
+              <div
+                key={categoryId}
+                className="py-2.5"
+                style={{ borderBottom: "1px solid var(--border-subtle)" }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="text-sm truncate"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {getCategoryName(categoryId)}
+                    </span>
+                    {isOver && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: "var(--red-dim)", color: "var(--red)" }}
+                      >
+                        Excedeu
+                      </span>
+                    )}
+                    {isWarning && (
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
+                      >
+                        Atenção
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="money text-xs" style={{ color: isOver ? "var(--red)" : "var(--text-muted)" }}>
+                      {fmt(spent)}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--text-disabled)" }}>/</span>
+                    <span className="money text-xs" style={{ color: "var(--text-muted)" }}>
+                      {fmt(limit)}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className="h-1.5 rounded-full overflow-hidden"
+                  style={{ background: "var(--bg-elevated)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${percent}%`,
+                      background: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Link → /goals ── */}
+          <button
+            onClick={() => { router.push("/goals"); onClose(); }}
+            className="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all cursor-pointer"
+            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
+          >
+            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Gerenciar metas
+            </span>
+            <FiArrowRight className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+          </button>
+        </>
+      )}
     </div>
   );
 }

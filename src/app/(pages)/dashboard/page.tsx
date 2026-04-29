@@ -5,7 +5,6 @@ import { useUser } from "@/app/hooks/useUser";
 import Card from "@/app/components/shared/Card";
 import { Title } from "@/app/components/shared/Title";
 import { TransactionList } from "@/app/components/shared/TransactionList";
-import { LineChart } from "@/app/components/shared/LineChart";
 import { CategoryExpensesSummary } from "@/app/components/shared/CategoryExpensesSummary";
 import {
   DashboardCardModal,
@@ -17,7 +16,7 @@ import {
   RiArrowDownCircleLine,
 } from "react-icons/ri";
 import { TbScale, TbTrendingUp } from "react-icons/tb";
-import { FiAlertCircle, FiClock } from "react-icons/fi";
+import { FiAlertCircle, FiClock, FiTarget } from "react-icons/fi";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -30,9 +29,44 @@ export default function Dashboard() {
     loading,
     nearbyTransactions,
     overdueTransactions,
-    monthlyMetrics,
     dataCategoryExpenses,
+    goals,
   } = useUser();
+
+  // ── Métricas de metas ──────────────────────────────────────────
+  const goalsEntries = (goals ?? []).map((g) => {
+    const spent =
+      dataCategoryExpenses?.expenses.find((e) => e.categoryId === g.categoryId)?.amount ?? 0;
+    return { ...g, spent };
+  });
+  const goalsTotal = goalsEntries.reduce((s, g) => s + g.monthlyLimit, 0);
+  const goalsSpent = goalsEntries.reduce((s, g) => s + g.spent, 0);
+  const goalsTotalPct = goalsTotal > 0 ? Math.min((goalsSpent / goalsTotal) * 100, 100) : 0;
+  const goalsOver = goalsEntries.filter((g) => g.spent > g.monthlyLimit).length;
+  const goalsWarn = goalsEntries.filter((g) => !g.spent || (g.spent / g.monthlyLimit) >= 0.8).filter(
+    (g) => g.spent <= g.monthlyLimit
+  ).length;
+  const hasGoals = goalsEntries.length > 0;
+
+  const goalsStatusColor = goalsOver > 0
+    ? "var(--red)"
+    : goalsWarn > 0
+    ? "var(--yellow)"
+    : hasGoals
+    ? "var(--green)"
+    : "var(--text-muted)";
+
+  const goalsValueText = !hasGoals
+    ? "Sem metas"
+    : goalsOver > 0
+    ? `${goalsOver} excedeu`
+    : goalsWarn > 0
+    ? `${goalsWarn} em atenção`
+    : `${goalsEntries.length}/${goalsEntries.length} ok`;
+
+  const goalsInfoText = hasGoals
+    ? `${goalsTotalPct.toFixed(0)}% do orçamento usado`
+    : "Defina limites por categoria";
 
   // Qual modal está aberto (null = nenhum)
   const [activeModal, setActiveModal] = useState<DashboardModalType | null>(
@@ -46,8 +80,8 @@ export default function Dashboard() {
       {/* ── Cards de métricas ─────────────────────── */}
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="skeleton h-28 rounded-xl" />
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className={`skeleton h-28 rounded-xl${i === 0 ? " col-span-2 lg:col-span-1" : ""}`} />
           ))}
         </div>
       ) : metrics ? (
@@ -104,6 +138,70 @@ export default function Dashboard() {
             info="Saldo atual + tudo pendente"
             onClick={() => setActiveModal("projection")}
           />
+
+          {/* Metas → modal com progresso por categoria */}
+          <div
+            onClick={() => setActiveModal("goals")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setActiveModal("goals")}
+            className="relative flex flex-col gap-3 rounded-xl p-4 overflow-hidden transition-all duration-200 group cursor-pointer col-span-2 lg:col-span-1"
+            style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-default)",
+              boxShadow: "var(--shadow-card)",
+            }}
+          >
+            {/* Hover overlay */}
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"
+              style={{ background: "rgba(255,255,255,0.03)" }}
+            />
+
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <p className="text-gray-500 text-sm md:text-xs font-medium uppercase tracking-wider">
+                Metas
+              </p>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  ver detalhes
+                </span>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-600" style={{ opacity: 0.9 }}>
+                  <FiTarget className="h-5 w-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Valor */}
+            <div>
+              <p
+                className="text-lg md:text-2xl font-medium leading-none"
+                style={{ color: goalsStatusColor }}
+              >
+                {goalsValueText}
+              </p>
+              <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+                {goalsInfoText}
+              </p>
+            </div>
+
+            {/* Mini barra de progresso */}
+            {hasGoals && (
+              <div
+                className="h-1.5 rounded-full overflow-hidden mt-auto"
+                style={{ background: "var(--bg-overlay)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${goalsTotalPct}%`, background: goalsStatusColor }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 

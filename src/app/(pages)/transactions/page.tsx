@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { TransactionList } from "@/app/components/shared/TransactionList";
 import { Title } from "@/app/components/shared/Title";
 import { useUser } from "@/app/hooks/useUser";
@@ -52,48 +52,6 @@ function getTxDueDate(tx: ITransaction, year: number, month: number): Date {
   return new Date(raw);
 }
 
-// ── Data do grupo mais próximo de hoje numa lista de transações ─
-// Estratégia: prefere "hoje" > futuro mais próximo > passado mais recente
-function findNearestDate(
-  transactions: ITransaction[],
-  year: number,
-  month: number
-): string | null {
-  if (!transactions.length) return null;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Coleta todas as datas únicas (normalizadas para meia-noite)
-  const uniqueDates = Array.from(
-    new Set(
-      transactions.map((tx) => {
-        const d = getTxDueDate(tx, year, month);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime();
-      })
-    )
-  )
-    .map((ts) => new Date(ts))
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  const todayTs = today.getTime();
-
-  // 1. Hoje exato
-  const exact = uniqueDates.find((d) => d.getTime() === todayTs);
-  if (exact) return exact.toISOString().split("T")[0];
-
-  // 2. Futuro mais próximo (próximo dia com transação)
-  const future = uniqueDates.find((d) => d.getTime() > todayTs);
-  if (future) return future.toISOString().split("T")[0];
-
-  // 3. Passado mais recente (último dia do mês que já passou)
-  const past = [...uniqueDates].reverse().find((d) => d.getTime() < todayTs);
-  if (past) return past.toISOString().split("T")[0];
-
-  return null;
-}
-
 // ── Componente ─────────────────────────────────────────────────
 export default function Transactions() {
   const { transactions, categories, metrics, currentBalance, year, month } =
@@ -114,49 +72,6 @@ export default function Transactions() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
-
-  // ── Auto-scroll ─────────────────────────────────────────────
-  // targetDate guarda qual data-group deve receber scroll.
-  // Só é definido na primeira carga de cada mês — muda de mês reseta.
-  const [targetDate, setTargetDate] = useState<string | null>(null);
-  const scrolledRef = useRef(false); // garante que scroll ocorre só 1x por carga
-  const dateChipInputRef = useRef<HTMLInputElement>(null);
-
-  // Quando as transações carregam ou o mês muda, calcula a data-alvo
-  useEffect(() => {
-    scrolledRef.current = false;
-    setTargetDate(null);
-    if (transactions && transactions.length > 0) {
-      const nearest = findNearestDate(transactions, year, month);
-      setTargetDate(nearest);
-    }
-  }, [transactions, year, month]);
-
-  // Callback chamado pelo TransactionList quando termina de renderizar
-  // os grupos — nesse momento os data-date-group já existem no DOM
-  const handleListRendered = useMemo(
-    () => () => {
-      if (!targetDate || scrolledRef.current) return;
-      scrolledRef.current = true;
-
-      // Pequeno delay para garantir que o DOM foi pintado
-      requestAnimationFrame(() => {
-        const el = document.querySelector(
-          `[data-date-group="${targetDate}"]`
-        ) as HTMLElement | null;
-
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-          // Compensa o header fixo (mobile ~56px, desktop ~0) e dá um respiro
-          setTimeout(() => {
-            window.scrollBy({ top: -80, behavior: "smooth" });
-          }, 100);
-        }
-      });
-    },
-    [targetDate]
-  );
 
   // ── Filtragem ────────────────────────────────────────────────
   const filtered = useMemo<ITransaction[]>(() => {
@@ -677,7 +592,7 @@ export default function Transactions() {
         >
           ↓ Despesas
         </Chip>
-        {/* Chip de dia — showPicker() abre o calendário nativo */}
+        {/* Chip de dia — input transparente cobre o chip inteiro; ícone/texto têm pointer-events-none */}
         {(() => {
           const exactDate = dateFrom && dateFrom === dateTo ? dateFrom : "";
           const active = !!exactDate;
@@ -689,7 +604,7 @@ export default function Transactions() {
             : "Dia";
           return (
             <div
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full select-none"
+              className="relative flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full select-none"
               style={{
                 background: active ? "var(--accent-dim)" : "var(--bg-elevated)",
                 color: active ? "var(--accent-light)" : "var(--text-secondary)",
@@ -698,14 +613,14 @@ export default function Transactions() {
                   : "1px solid var(--border-subtle)",
                 cursor: "pointer",
               }}
-              onClick={() => dateChipInputRef.current?.showPicker?.()}
             >
-              <FiCalendar className="h-3 w-3 shrink-0" />
-              <span className="whitespace-nowrap">{label}</span>
+              {/* pointer-events-none: cliques passam direto ao input abaixo */}
+              <FiCalendar className="h-3 w-3 shrink-0 pointer-events-none" />
+              <span className="whitespace-nowrap pointer-events-none">{label}</span>
               {active && (
                 <button
-                  className="cursor-pointer leading-none ml-0.5"
-                  style={{ color: "var(--accent-light)" }}
+                  className="cursor-pointer leading-none ml-0.5 relative"
+                  style={{ color: "var(--accent-light)", zIndex: 1 }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setDateFrom("");
@@ -715,29 +630,30 @@ export default function Transactions() {
                   <FiX className="h-3 w-3" />
                 </button>
               )}
+              {/* Cobre o chip inteiro — clique/toque abre o picker nativo */}
+              <input
+                type="date"
+                value={exactDate}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setDateTo(e.target.value);
+                }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: 0,
+                  cursor: "pointer",
+                  colorScheme: "dark",
+                }}
+              />
             </div>
           );
         })()}
-        {/* Input oculto fora de qualquer overflow-hidden — necessário para showPicker() funcionar */}
-        <input
-          ref={dateChipInputRef}
-          type="date"
-          value={dateFrom && dateFrom === dateTo ? dateFrom : ""}
-          onChange={(e) => {
-            setDateFrom(e.target.value);
-            setDateTo(e.target.value);
-          }}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: 0,
-            height: 0,
-            opacity: 0,
-            pointerEvents: "none",
-            colorScheme: "dark",
-          }}
-        />
       </div>
 
       {/* Lista */}
@@ -807,7 +723,6 @@ export default function Transactions() {
             <TransactionList
               transactions={filtered}
               hideSort={false}
-              onRendered={handleListRendered}
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-16 gap-3">

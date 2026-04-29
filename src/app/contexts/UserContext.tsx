@@ -6,6 +6,7 @@ import { IUser } from "@/domain/interfaces/user/IUser";
 import { IAccount } from "@/domain/interfaces/account/IAccount";
 import { ICategory } from "@/domain/interfaces/category/ICategory";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
+import { IGoal } from "@/domain/interfaces/goal/IGoal";
 
 import { auth } from "@/infra/services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -22,6 +23,10 @@ import { RemoveTransactionController } from "@/controllers/transaction/RemoveTra
 import { logoutController } from "@/controllers/user/LogoutController";
 import { UpdateUserController } from "@/controllers/user/UpdateUserController";
 import { updateAccountController } from "@/controllers/account/UpdateAccountController";
+import { ListGoalsByUserController } from "@/controllers/goal/ListGoalsByUserController";
+import { CreateGoalController } from "@/controllers/goal/CreateGoalController";
+import { UpdateGoalController } from "@/controllers/goal/UpdateGoalController";
+import { DeleteGoalController } from "@/controllers/goal/DeleteGoalController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
@@ -86,6 +91,10 @@ interface UserContextType {
     accountId: string,
     props: { name?: string; balance?: number }
   ) => Promise<void>;
+  goals: IGoal[] | null;
+  addGoal: (categoryId: string, monthlyLimit: number) => Promise<void>;
+  updateGoal: (goalId: string, monthlyLimit: number) => Promise<void>;
+  deleteGoal: (goalId: string) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -122,6 +131,10 @@ export const UserContext = createContext<UserContextType>({
   refreshAccounts: async () => {},
   refreshCategories: async () => {},
   updateAccount: async () => {},
+  goals: null,
+  addGoal: async () => {},
+  updateGoal: async () => {},
+  deleteGoal: async () => {},
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -158,6 +171,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   );
   const [dataCategoryExpenses, setDataCategoryExpenses] =
     useState<CategoryExpensesSummary | null>(null);
+  const [goals, setGoals] = useState<IGoal[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -194,6 +208,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       fetchAccounts();
       fetchCategories();
+      fetchGoals();
     }
   }, [user]);
 
@@ -386,6 +401,35 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error fetching categories:", error);
       }
     }
+  };
+
+  const fetchGoals = async () => {
+    if (user) {
+      try {
+        const data = await ListGoalsByUserController(user.id);
+        setGoals(data);
+      } catch (error) {
+        console.error("Error fetching goals:", error);
+      }
+    }
+  };
+
+  const addGoal = async (categoryId: string, monthlyLimit: number) => {
+    if (!user) throw new Error("Nenhum usuário logado");
+    const newGoal = await CreateGoalController(user.id, categoryId, monthlyLimit);
+    setGoals((prev) => (prev ? [...prev, newGoal] : [newGoal]));
+  };
+
+  const updateGoal = async (goalId: string, monthlyLimit: number) => {
+    const updated = await UpdateGoalController(goalId, monthlyLimit);
+    setGoals((prev) =>
+      prev ? prev.map((g) => (g.id === goalId ? updated : g)) : [updated]
+    );
+  };
+
+  const deleteGoal = async (goalId: string) => {
+    await DeleteGoalController(goalId);
+    setGoals((prev) => (prev ? prev.filter((g) => g.id !== goalId) : []));
   };
 
   const fetchTransactions = async () => {
@@ -725,6 +769,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         refreshAccounts,
         refreshCategories,
         updateAccount,
+        goals,
+        addGoal,
+        updateGoal,
+        deleteGoal,
       }}
     >
       {children}

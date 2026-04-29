@@ -37,7 +37,7 @@ export function AnnualProjectionSection() {
       const sign = t.type === TransactionTypes.DEPOSIT ? 1 : -1;
       if (t.kind === TransactionKind.SIMPLE) {
         const d = new Date(t.dueDate);
-        if (d.getFullYear() === year) nets[d.getMonth()] += sign * t.amount;
+        if (d.getFullYear() === year) nets[d.getMonth()] += sign * (t.paymentHistory[0]?.amount ?? t.amount);
       } else if (t.kind === TransactionKind.INSTALLMENT) {
         const excl = t.recurrence?.excludedInstallments ?? [];
         const end  = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
@@ -72,7 +72,8 @@ export function AnnualProjectionSection() {
   const anchor = useMemo(() => {
     const paid = (transactions ?? []).reduce((sum, t) => {
       if (!(t.paymentHistory[0]?.isPaid ?? false)) return sum;
-      return sum + (t.type === TransactionTypes.DEPOSIT ? t.amount : -t.amount);
+      const amt = t.paymentHistory[0]?.amount ?? t.amount;
+      return sum + (t.type === TransactionTypes.DEPOSIT ? amt : -amt);
     }, 0);
     return currentBalance - paid;
   }, [transactions, currentBalance]);
