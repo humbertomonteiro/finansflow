@@ -109,18 +109,18 @@ export default function Transactions() {
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Hoje no formato YYYY-MM-DD (local)
+  // Hoje no formato YYYY-MM-DD (local) — usado nos presets do painel avançado
   const todayStr = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
-  const isToday = dateFrom === todayStr && dateTo === todayStr;
 
   // ── Auto-scroll ─────────────────────────────────────────────
   // targetDate guarda qual data-group deve receber scroll.
   // Só é definido na primeira carga de cada mês — muda de mês reseta.
   const [targetDate, setTargetDate] = useState<string | null>(null);
   const scrolledRef = useRef(false); // garante que scroll ocorre só 1x por carga
+  const dateChipInputRef = useRef<HTMLInputElement>(null);
 
   // Quando as transações carregam ou o mês muda, calcula a data-alvo
   useEffect(() => {
@@ -677,21 +677,67 @@ export default function Transactions() {
         >
           ↓ Despesas
         </Chip>
-        <Chip
-          active={isToday}
-          onClick={() => {
-            if (isToday) {
-              setDateFrom("");
-              setDateTo("");
-            } else {
-              setDateFrom(todayStr);
-              setDateTo(todayStr);
-            }
+        {/* Chip de dia — showPicker() abre o calendário nativo */}
+        {(() => {
+          const exactDate = dateFrom && dateFrom === dateTo ? dateFrom : "";
+          const active = !!exactDate;
+          const label = active
+            ? new Date(exactDate + "T00:00:00").toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })
+            : "Dia";
+          return (
+            <div
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full select-none"
+              style={{
+                background: active ? "var(--accent-dim)" : "var(--bg-elevated)",
+                color: active ? "var(--accent-light)" : "var(--text-secondary)",
+                border: active
+                  ? "1px solid var(--border-accent)"
+                  : "1px solid var(--border-subtle)",
+                cursor: "pointer",
+              }}
+              onClick={() => dateChipInputRef.current?.showPicker?.()}
+            >
+              <FiCalendar className="h-3 w-3 shrink-0" />
+              <span className="whitespace-nowrap">{label}</span>
+              {active && (
+                <button
+                  className="cursor-pointer leading-none ml-0.5"
+                  style={{ color: "var(--accent-light)" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                >
+                  <FiX className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          );
+        })()}
+        {/* Input oculto fora de qualquer overflow-hidden — necessário para showPicker() funcionar */}
+        <input
+          ref={dateChipInputRef}
+          type="date"
+          value={dateFrom && dateFrom === dateTo ? dateFrom : ""}
+          onChange={(e) => {
+            setDateFrom(e.target.value);
+            setDateTo(e.target.value);
           }}
-        >
-          <FiCalendar className="h-3 w-3" />
-          Hoje
-        </Chip>
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 0,
+            height: 0,
+            opacity: 0,
+            pointerEvents: "none",
+            colorScheme: "dark",
+          }}
+        />
       </div>
 
       {/* Lista */}

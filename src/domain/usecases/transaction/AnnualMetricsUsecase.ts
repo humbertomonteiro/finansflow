@@ -40,9 +40,9 @@ export class AnnualMetricsUsecase {
       "Dez",
     ];
 
-    // Itera sobre todas as transações para calcular os totais mensais
+    // Itera sobre todas as transações para calcular os totais mensais (exclui transferências)
     for (const transaction of transactions) {
-      // Itera sobre o histórico de pagamentos de cada transação
+      if (transaction.type === TransactionTypes.TRANSFER) continue;
       for (const payment of transaction.paymentHistory) {
         // Verifica se a data do pagamento pertence ao ano especificado
         if (payment.dueDate.getFullYear() === year) {

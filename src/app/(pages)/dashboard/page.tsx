@@ -25,7 +25,7 @@ const fmt = (v: number) =>
 export default function Dashboard() {
   const {
     metrics,
-    accumulatedFutureBalance,
+    projectedBalance,
     currentBalance,
     loading,
     nearbyTransactions,
@@ -95,13 +95,13 @@ export default function Dashboard() {
             onClick={() => setActiveModal("monthly")}
           />
 
-          {/* Projeção → mini histórico */}
+          {/* Projeção → modal de projeção anual */}
           <Card
-            value={fmt(accumulatedFutureBalance)}
-            title="Projeção acumulada"
+            value={fmt(projectedBalance)}
+            title="Saldo projetado"
             icon={<TbTrendingUp className="h-5 w-5 text-white" />}
             color="bg-sky-600"
-            info="Soma histórica de balanços"
+            info="Saldo atual + tudo pendente"
             onClick={() => setActiveModal("projection")}
           />
         </div>

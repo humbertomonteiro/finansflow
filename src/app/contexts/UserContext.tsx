@@ -11,6 +11,7 @@ import { auth } from "@/infra/services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 
 import { TransactionRemovalScope } from "@/domain/enums/transaction/TransactionRemovalScope";
+import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
 import { listAccountByUserController } from "@/controllers/account/ListAccountByUserController";
 import { listCategoryController } from "@/controllers/category/ListCategoryController";
@@ -57,7 +58,7 @@ interface UserContextType {
   setFilterTransactions: (filter: FiltersTransactios) => void;
   metrics: MetricsType | null;
   currentBalance: number;
-  accumulatedFutureBalance: number;
+  projectedBalance: number;
   monthlyMetrics: AnnualMetrics | null;
   dataCategoryExpenses: CategoryExpensesSummary | null;
   month: number;
@@ -104,7 +105,7 @@ export const UserContext = createContext<UserContextType>({
   setFilterTransactions: () => {},
   metrics: null,
   currentBalance: 0,
-  accumulatedFutureBalance: 0,
+  projectedBalance: 0,
   monthlyMetrics: null,
   dataCategoryExpenses: null,
   month: 0,
@@ -151,8 +152,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     useState<FiltersTransactios>("all");
   const [metrics, setMetrics] = useState<MetricsType | null>(null);
   const [currentBalance, setCurrentBalance] = useState(0);
-  const [accumulatedFutureBalance, setAccumulatedFutureBalance] =
-    useState<number>(0);
+  const [projectedBalance, setProjectedBalance] = useState<number>(0);
   const [monthlyMetrics, setMonthlyMetrics] = useState<AnnualMetrics | null>(
     null
   );
@@ -221,12 +221,71 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [allTransactions, year]);
 
+  // Saldo projetado = saldo atual + todos os payments não pagos com vencimento ≤ mês navegado.
+  // Responde à navegação de mês: navegar para o futuro acumula os próximos pendentes.
   useEffect(() => {
-    // FIX: guarda check de SSR para evitar erro no servidor
-    if (typeof window !== "undefined") {
-      updateAccumulatedBalance();
+    if (!allTransactions) {
+      setProjectedBalance(currentBalance);
+      return;
     }
-  }, [month, year]);
+
+    const sign = (t: ITransaction) =>
+      t.type === TransactionTypes.DEPOSIT ? 1 : -1;
+
+    let pending = 0;
+
+    for (const t of allTransactions) {
+      if (t.type === TransactionTypes.TRANSFER) continue;
+
+      if (t.kind === TransactionKind.SIMPLE) {
+        for (const p of t.paymentHistory) {
+          if (p.isPaid) continue;
+          const d = new Date(p.dueDate);
+          if (d.getFullYear() < year || (d.getFullYear() === year && d.getMonth() + 1 <= month)) {
+            pending += sign(t) * p.amount;
+          }
+        }
+      } else if (t.kind === TransactionKind.INSTALLMENT) {
+        const excl = t.recurrence?.excludedInstallments ?? [];
+        t.paymentHistory.forEach((p, idx) => {
+          if (excl.includes(idx + 1)) return;
+          if (p.isPaid) return;
+          const d = new Date(p.dueDate);
+          if (d.getFullYear() < year || (d.getFullYear() === year && d.getMonth() + 1 <= month)) {
+            pending += sign(t) * p.amount;
+          }
+        });
+      } else if (t.kind === TransactionKind.FIXED) {
+        const startDate = new Date(t.dueDate);
+        const endDate = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
+        const excl = (t.recurrence?.excludedFixeds ?? []) as Array<{ year: number; month: number }>;
+
+        let y = startDate.getFullYear();
+        let m = startDate.getMonth() + 1;
+
+        while (y < year || (y === year && m <= month)) {
+          const occ = new Date(y, m - 1, startDate.getDate());
+          if (endDate && occ > endDate) break;
+
+          const isExcluded = excl.some((ef) => ef.year === y && ef.month === m);
+          if (!isExcluded) {
+            const payRecord = t.paymentHistory.find((p) => {
+              const d = new Date(p.dueDate);
+              return d.getFullYear() === y && d.getMonth() + 1 === m;
+            });
+            if (!(payRecord?.isPaid ?? false)) {
+              pending += sign(t) * (payRecord?.amount ?? t.amount);
+            }
+          }
+
+          m++;
+          if (m > 12) { m = 1; y++; }
+        }
+      }
+    }
+
+    setProjectedBalance(currentBalance + pending);
+  }, [allTransactions, currentBalance, year, month]);
 
   const logout = async () => {
     setLoading(true);
@@ -388,13 +447,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         );
         setMetrics(metrics);
 
-        // FIX: guarda check de SSR
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            `futureBalance${year}/${month}`,
-            JSON.stringify({ balance: metrics.futureBalance })
-          );
-        }
       } catch (error) {
         console.error("Error fetching metrics:", error);
       }
@@ -441,6 +493,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (updatedTransaction) {
           updateTransaction(updatedTransaction);
+
+          if (updatedTransaction.type === TransactionTypes.TRANSFER) {
+            // Transferência entre contas próprias: saldo total não muda,
+            // mas os saldos individuais mudam — recarrega do Firestore
+            await fetchAccounts();
+            return;
+          }
 
           const paymentRecord = updatedTransaction.paymentHistory.find(
             (payment) =>
@@ -592,41 +651,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const updateAccumulatedBalance = () => {
-    // FIX: guarda contra execução no servidor (SSR)
-    if (typeof window === "undefined") return;
-
-    let total = 0;
-    const currentYear = year;
-    const currentMonth = month;
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-
-      if (key && key.startsWith("futureBalance")) {
-        const [storedYear, storedMonth] = key
-          .replace("futureBalance", "")
-          .split("/")
-          .map(Number);
-
-        if (
-          storedYear < currentYear ||
-          (storedYear === currentYear && storedMonth <= currentMonth)
-        ) {
-          const item = localStorage.getItem(key);
-          if (item) {
-            try {
-              const { balance } = JSON.parse(item);
-              total += balance;
-            } catch (error) {
-              console.error(`Error parsing ${key}:`, error);
-            }
-          }
-        }
-      }
-    }
-    setAccumulatedFutureBalance(total);
-  };
 
   const addTransaction = async (newTransaction: ITransaction) => {
     setAllTransactions((prevTransactions) => {
@@ -680,7 +704,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setFilterTransactions,
         metrics,
         currentBalance,
-        accumulatedFutureBalance,
+        projectedBalance,
         monthlyMetrics,
         dataCategoryExpenses,
         month,

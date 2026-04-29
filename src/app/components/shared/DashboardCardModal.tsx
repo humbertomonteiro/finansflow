@@ -760,7 +760,7 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
     allTransactions,
     transactions,
     currentBalance,
-    accumulatedFutureBalance,
+    projectedBalance,
     year,
     month,
   } = useUser();
@@ -771,11 +771,12 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
 
   const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
-  // Net (receitas − despesas) de TODAS as transações para cada mês
+  // Net (receitas − despesas) de TODAS as transações para cada mês — exclui transferências
   const monthlyNets = useMemo(() => {
     if (!allTransactions) return new Array(12).fill(0) as number[];
     const nets = new Array(12).fill(0) as number[];
     for (const t of allTransactions) {
+      if (t.type === TransactionTypes.TRANSFER) continue;
       const sign = t.type === TransactionTypes.DEPOSIT ? 1 : -1;
       if (t.kind === TransactionKind.SIMPLE) {
         const d = new Date(t.dueDate);
@@ -810,13 +811,17 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
     return nets;
   }, [allTransactions, year]);
 
-  // Saldo no início do mês atual (remove pagamentos já feitos neste mês)
+  // Saldo no início do mês atual = saldo atual − o que já foi pago neste mês
+  // transactions[] já vem filtrado pro mês corrente, com paymentHistory[0] = payment do mês
   const anchor = useMemo(() => {
-    const paid = (transactions ?? []).reduce((sum, t) => {
-      if (!(t.paymentHistory[0]?.isPaid ?? false)) return sum;
-      return sum + (t.type === TransactionTypes.DEPOSIT ? t.amount : -t.amount);
-    }, 0);
-    return currentBalance - paid;
+    let paidNet = 0;
+    for (const t of transactions ?? []) {
+      if (t.type === TransactionTypes.TRANSFER) continue;
+      const p = t.paymentHistory[0];
+      if (!p?.isPaid) continue;
+      paidNet += t.type === TransactionTypes.DEPOSIT ? p.amount : -p.amount;
+    }
+    return currentBalance - paidNet;
   }, [transactions, currentBalance]);
 
   // Projeção base (sem investimento)
@@ -889,17 +894,20 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
-      {/* Acumulado total */}
+      {/* Saldo projetado */}
       <div
         className="flex items-center justify-between p-4 rounded-xl"
         style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)" }}
       >
         <div>
           <p className="text-xs mb-1" style={{ color: "rgba(186,230,253,0.6)" }}>
-            Acumulado total
+            Saldo projetado
           </p>
           <p className="money text-2xl font-semibold" style={{ color: "#38bdf8" }}>
-            {fmt(accumulatedFutureBalance)}
+            {fmt(projectedBalance)}
+          </p>
+          <p className="text-[0.65rem] mt-1" style={{ color: "rgba(148,163,184,0.6)" }}>
+            Saldo atual + tudo pendente
           </p>
         </div>
         <TbTrendingUp className="h-8 w-8" style={{ color: "rgba(56,189,248,0.4)" }} />

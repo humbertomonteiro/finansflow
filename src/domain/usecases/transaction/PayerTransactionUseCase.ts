@@ -51,13 +51,21 @@ export class PayerTransactionUseCase {
         delete transaction.paymentHistory[paymentIndex].paidAccountId;
       }
 
-      // Conta a usar: ao pagar, usa paidAccountId ou a original; ao desfazer, usa a que foi registrada
-      const accountToAdjust = !wasPaid
-        ? (paidAccountId ?? transaction.accountId)
-        : (existingPaidAccountId ?? transaction.accountId);
-
       const paymentAmount = transaction.paymentHistory[paymentIndex].amount;
-      await this.attBalance(paymentAmount, transaction.type, accountToAdjust, !wasPaid);
+
+      if (transaction.type === TransactionTypes.TRANSFER) {
+        // Transferência: debita da origem e credita no destino
+        await this.attBalance(paymentAmount, TransactionTypes.WITHDRAW, transaction.accountId, !wasPaid);
+        if (transaction.targetAccountId) {
+          await this.attBalance(paymentAmount, TransactionTypes.DEPOSIT, transaction.targetAccountId, !wasPaid);
+        }
+      } else {
+        // Conta a usar: ao pagar, usa paidAccountId ou a original; ao desfazer, usa a que foi registrada
+        const accountToAdjust = !wasPaid
+          ? (paidAccountId ?? transaction.accountId)
+          : (existingPaidAccountId ?? transaction.accountId);
+        await this.attBalance(paymentAmount, transaction.type, accountToAdjust, !wasPaid);
+      }
     } else if (
       transaction.kind === TransactionKind.FIXED ||
       transaction.kind === TransactionKind.INSTALLMENT
@@ -127,8 +135,6 @@ export class PayerTransactionUseCase {
       newBalance = isPaying ? newBalance + amount : newBalance - amount;
     } else if (type === TransactionTypes.WITHDRAW) {
       newBalance = isPaying ? newBalance - amount : newBalance + amount;
-    } else {
-      throw new Error("Invalid transaction type");
     }
 
     const updatedAccount = account.update({

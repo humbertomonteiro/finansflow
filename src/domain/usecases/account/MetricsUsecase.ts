@@ -66,8 +66,9 @@ export class MetricsUsecase {
       expensesPaid: 0,
     };
 
-    // Processar transações
+    // Processar transações (transferências não afetam receitas/despesas)
     for (const transaction of transactions) {
+      if (transaction.type === TransactionTypes.TRANSFER) continue;
       const paymentHistory = transaction.paymentHistory;
       if (transaction.type === TransactionTypes.DEPOSIT) {
         metrics.revenues += transaction.amount;

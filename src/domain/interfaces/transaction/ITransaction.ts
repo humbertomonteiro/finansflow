@@ -11,6 +11,7 @@ export interface ITransaction {
   description?: string;
   categoryId: string;
   accountId: string;
+  targetAccountId?: string;
   kind: TransactionKind;
   recurrence: IRecurrence;
   paymentHistory: IPaymentHistory[];

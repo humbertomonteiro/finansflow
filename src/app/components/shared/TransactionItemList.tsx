@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
+import { FiArrowRight } from "react-icons/fi";
 import { useUser } from "@/app/hooks/useUser";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { TransactionDetails } from "./TransactionDetails";
@@ -50,6 +51,7 @@ export const TransactionItemList = ({
   const payment =
     transaction.paymentHistory[index] ?? transaction.paymentHistory[0];
   const isDeposit = transaction.type === TransactionTypes.DEPOSIT;
+  const isTransfer = transaction.type === TransactionTypes.TRANSFER;
   const isFixed = transaction.kind === TransactionKind.FIXED;
   const isInstallment = transaction.kind === TransactionKind.INSTALLMENT;
   const displayAmount = payment?.amount ?? transaction.amount;
@@ -255,10 +257,17 @@ export const TransactionItemList = ({
               </div>
             ) : (
               <div
-                className={`shrink-0 rounded-full p-2
-                  ${isDeposit ? "bg-green-700/60" : "bg-red-700/60"}`}
+                className={`shrink-0 rounded-full p-2 ${
+                  isTransfer
+                    ? "bg-violet-700/40"
+                    : isDeposit
+                    ? "bg-green-700/60"
+                    : "bg-red-700/60"
+                }`}
               >
-                {isDeposit ? (
+                {isTransfer ? (
+                  <FiArrowRight className="h-4 w-4 text-violet-300" />
+                ) : isDeposit ? (
                   <IoMdArrowUp className="h-4 w-4 text-green-300" />
                 ) : (
                   <IoMdArrowDown className="h-4 w-4 text-red-300" />
@@ -289,9 +298,16 @@ export const TransactionItemList = ({
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className="text-[0.7rem] bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">
-                  {getCategoryName(transaction.categoryId)}
-                </span>
+                {isTransfer ? (
+                  <span className="text-[0.7rem] bg-violet-900/40 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
+                    <FiArrowRight className="h-2.5 w-2.5" />
+                    {getAccountName(transaction.accountId)} → {getAccountName(transaction.targetAccountId ?? "")}
+                  </span>
+                ) : (
+                  <span className="text-[0.7rem] bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">
+                    {getCategoryName(transaction.categoryId)}
+                  </span>
+                )}
                 {isFixed && (
                   <span className="text-[0.7rem] bg-violet-900/50 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
                     <MdRepeat className="h-2.5 w-2.5" /> Fixo
@@ -310,10 +326,14 @@ export const TransactionItemList = ({
             <div className="shrink-0 text-right">
               <p
                 className={`text-sm font-semibold ${
-                  isDeposit ? "text-green-400" : "text-red-400"
+                  isTransfer
+                    ? "text-violet-300"
+                    : isDeposit
+                    ? "text-green-400"
+                    : "text-red-400"
                 }`}
               >
-                {isDeposit ? "+" : "-"}
+                {isTransfer ? "" : isDeposit ? "+" : "-"}
                 {formatCurrency(displayAmount)}
               </p>
               {isInstallment && transaction.recurrence.installmentsCount && (
@@ -380,26 +400,41 @@ export const TransactionItemList = ({
                     </p>
                   </div>
                 )}
-                <div>
-                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
-                    Conta
-                  </p>
-                  <p className="text-gray-300">
-                    {getAccountName(transaction.accountId)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
-                    Tipo
-                  </p>
-                  <p className="text-gray-300">
-                    {isFixed
-                      ? "Recorrente"
-                      : isInstallment
-                      ? "Parcelado"
-                      : "Simples"}
-                  </p>
-                </div>
+                {isTransfer ? (
+                  <div className="col-span-2">
+                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                      Transferência
+                    </p>
+                    <p className="text-gray-300 flex items-center gap-1">
+                      {getAccountName(transaction.accountId)}
+                      <FiArrowRight className="h-3 w-3 text-violet-400 shrink-0" />
+                      {getAccountName(transaction.targetAccountId ?? "")}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                        Conta
+                      </p>
+                      <p className="text-gray-300">
+                        {getAccountName(transaction.accountId)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                        Tipo
+                      </p>
+                      <p className="text-gray-300">
+                        {isFixed
+                          ? "Recorrente"
+                          : isInstallment
+                          ? "Parcelado"
+                          : "Simples"}
+                      </p>
+                    </div>
+                  </>
+                )}
                 {isInstallment && transaction.recurrence.installmentsCount && (
                   <div>
                     <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">

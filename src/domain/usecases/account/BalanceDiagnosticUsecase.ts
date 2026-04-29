@@ -18,13 +18,23 @@ export class BalanceDiagnosticUsecase {
       for (const t of transactions) {
         for (const p of t.paymentHistory) {
           if (!p.isPaid) continue;
-          const effectiveAccountId = p.paidAccountId ?? t.accountId;
-          if (effectiveAccountId !== account.id) continue;
 
-          if (t.type === TransactionTypes.DEPOSIT) {
-            calculated += p.amount;
-          } else if (t.type === TransactionTypes.WITHDRAW) {
-            calculated -= p.amount;
+          if (t.type === TransactionTypes.TRANSFER) {
+            // Transferência: debita da origem, credita no destino
+            if (t.accountId === account.id) {
+              calculated -= p.amount;
+            } else if (t.targetAccountId === account.id) {
+              calculated += p.amount;
+            }
+          } else {
+            const effectiveAccountId = p.paidAccountId ?? t.accountId;
+            if (effectiveAccountId !== account.id) continue;
+
+            if (t.type === TransactionTypes.DEPOSIT) {
+              calculated += p.amount;
+            } else if (t.type === TransactionTypes.WITHDRAW) {
+              calculated -= p.amount;
+            }
           }
         }
       }

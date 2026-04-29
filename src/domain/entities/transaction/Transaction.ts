@@ -19,6 +19,7 @@ export class Transaction implements ITransaction {
   public readonly description?: string;
   public readonly categoryId: string;
   public readonly accountId: string;
+  public readonly targetAccountId?: string;
   public readonly kind: TransactionKind;
   public readonly recurrence: IRecurrence;
   public readonly paymentHistory: IPaymentHistory[];
@@ -31,6 +32,7 @@ export class Transaction implements ITransaction {
     this.description = props.description;
     this.categoryId = props.categoryId;
     this.accountId = props.accountId;
+    this.targetAccountId = props.targetAccountId;
     this.kind = props.kind;
     this.recurrence = props.recurrence;
     this.paymentHistory = props.paymentHistory;
@@ -67,6 +69,7 @@ export class Transaction implements ITransaction {
       description: props.description ?? this.description,
       categoryId: props.categoryId ?? this.categoryId,
       accountId: props.accountId ?? this.accountId,
+      targetAccountId: props.targetAccountId ?? this.targetAccountId,
       kind: props.kind ?? this.kind,
       recurrence: props.recurrence ?? this.recurrence,
       paymentHistory: props.paymentHistory ?? this.paymentHistory,
@@ -86,9 +89,6 @@ export class Transaction implements ITransaction {
     if (props.amount <= 0) throw new InvalidAmountError();
     if (!Object.values(TransactionTypes).includes(props.type))
       throw new InvalidTransactionTypeError();
-
-    // if (!props.recurrence) throw new MissingRecurrenceError();
-
     if (!Object.values(TransactionKind).includes(props.kind))
       throw new InvalidTransactionKindError();
   }
