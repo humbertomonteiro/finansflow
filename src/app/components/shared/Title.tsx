@@ -15,11 +15,7 @@ export const Title = ({
       >
         {children}
       </h2>
-      {navigateMonth && (
-        <div className="hidden lg:block">
-          <NavigateMonth />
-        </div>
-      )}
+      {navigateMonth && <NavigateMonth />}
     </div>
   );
 };

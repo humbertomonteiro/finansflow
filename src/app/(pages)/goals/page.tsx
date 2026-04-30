@@ -238,19 +238,7 @@ export default function Goals() {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-48">
-      {/* Header com botão */}
-      <div className="flex items-center justify-between">
-        <Title navigateMonth={false}>Metas</Title>
-        {categoriesAvailable.length > 0 && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="button button-primary flex items-center gap-1.5"
-          >
-            <MdAdd className="h-4 w-4" />
-            Nova meta
-          </button>
-        )}
-      </div>
+      <Title navigateMonth={true}>Metas</Title>
 
       <p className="text-sm -mt-2" style={{ color: "var(--text-muted)" }}>
         Defina limites mensais de gastos por categoria e acompanhe se está dentro do orçamento.
@@ -352,6 +340,23 @@ export default function Goals() {
       {/* Lista de metas */}
       {hasGoals && (
         <div className="flex flex-col gap-3">
+          {/* Cabeçalho da seção */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              {Object.keys(goalsMap).length} meta{Object.keys(goalsMap).length !== 1 ? "s" : ""} definida{Object.keys(goalsMap).length !== 1 ? "s" : ""}
+            </p>
+            {categoriesAvailable.length > 0 && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="button button-primary flex items-center gap-1.5"
+                style={{ padding: "0.3rem 0.75rem", fontSize: "0.75rem" }}
+              >
+                <MdAdd className="h-3.5 w-3.5" />
+                Nova meta
+              </button>
+            )}
+          </div>
+
           {Object.entries(goalsMap).map(([categoryId, { id: goalId, limit }]) => {
             const spent = getSpent(categoryId);
             const percent = Math.min((spent / limit) * 100, 100);

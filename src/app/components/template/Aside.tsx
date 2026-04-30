@@ -15,7 +15,6 @@ import { FormAddTransaction } from "../shared/FormAddTransaction";
 import { NotificationPanel } from "../shared/NotificationPanel";
 import { GlobalSearch } from "../shared/GlobalSearch";
 import { TransactionDetails } from "../shared/TransactionDetails";
-import { NavigateMonth } from "../shared/NavigateMonth";
 import { useUser } from "@/app/hooks/useUser";
 
 const navItems = [
@@ -264,11 +263,6 @@ export const Aside = () => {
           )}
         </div>
       </header>
-
-      {/* ── Mobile Month Bubble ─────────────────────── */}
-      <div className="lg:hidden fixed top-[4.25rem] right-4 z-10">
-        <NavigateMonth />
-      </div>
 
       {/* ── Mobile Bottom Nav ────────────────────────── */}
       <nav
