@@ -7,6 +7,7 @@ import { IAccount } from "@/domain/interfaces/account/IAccount";
 import { ICategory } from "@/domain/interfaces/category/ICategory";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { IGoal } from "@/domain/interfaces/goal/IGoal";
+import { ICreditCard } from "@/domain/interfaces/creditcard/ICreditCard";
 
 import { auth } from "@/infra/services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -27,6 +28,11 @@ import { ListGoalsByUserController } from "@/controllers/goal/ListGoalsByUserCon
 import { CreateGoalController } from "@/controllers/goal/CreateGoalController";
 import { UpdateGoalController } from "@/controllers/goal/UpdateGoalController";
 import { DeleteGoalController } from "@/controllers/goal/DeleteGoalController";
+import { ListCreditCardsByUserController } from "@/controllers/creditcard/ListCreditCardsByUserController";
+import { CreateCreditCardController } from "@/controllers/creditcard/CreateCreditCardController";
+import { UpdateCreditCardController } from "@/controllers/creditcard/UpdateCreditCardController";
+import { DeleteCreditCardController } from "@/controllers/creditcard/DeleteCreditCardController";
+import { ListTransactionsByCreditCardController } from "@/controllers/creditcard/ListTransactionsByCreditCardController";
 
 import { FilteredTransactionsListUsecase } from "@/domain/usecases/transaction/FilteredTransactionsListUsecase";
 import { MetricsUsecase } from "@/domain/usecases/account/MetricsUsecase";
@@ -95,6 +101,11 @@ interface UserContextType {
   addGoal: (categoryId: string, monthlyLimit: number) => Promise<void>;
   updateGoal: (goalId: string, monthlyLimit: number) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
+  creditCards: ICreditCard[] | null;
+  addCreditCard: (props: { name: string; creditLimit: number; closingDay: number; dueDay: number; color: string }) => Promise<void>;
+  updateCreditCard: (cardId: string, props: Partial<Omit<ICreditCard, "id" | "userId">>) => Promise<void>;
+  deleteCreditCard: (cardId: string) => Promise<void>;
+  refreshCreditCards: () => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -135,6 +146,11 @@ export const UserContext = createContext<UserContextType>({
   addGoal: async () => {},
   updateGoal: async () => {},
   deleteGoal: async () => {},
+  creditCards: null,
+  addCreditCard: async () => {},
+  updateCreditCard: async () => {},
+  deleteCreditCard: async () => {},
+  refreshCreditCards: async () => {},
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -172,6 +188,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [dataCategoryExpenses, setDataCategoryExpenses] =
     useState<CategoryExpensesSummary | null>(null);
   const [goals, setGoals] = useState<IGoal[] | null>(null);
+  const [creditCards, setCreditCards] = useState<ICreditCard[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -209,6 +226,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       fetchAccounts();
       fetchCategories();
       fetchGoals();
+      fetchCreditCards();
     }
   }, [user]);
 
@@ -216,7 +234,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (accounts) {
       fetchAllTransactions();
     }
-  }, [accounts]);
+  }, [accounts, creditCards]);
 
   useEffect(() => {
     if (allTransactions) {
@@ -384,6 +402,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
+        if (creditCards) {
+          for (const card of creditCards) {
+            const cardTxs = await ListTransactionsByCreditCardController(card.id);
+            for (const tx of cardTxs || []) {
+              if (!allTransactionsSet.has(tx.id)) {
+                allTransactionsSet.add(tx.id);
+                newTransactions.push(tx);
+              }
+            }
+          }
+        }
+
         setAllTransactions(newTransactions);
       } catch (error) {
         console.error("Error fetching all transactions:", error);
@@ -412,6 +442,39 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error fetching goals:", error);
       }
     }
+  };
+
+  const fetchCreditCards = async () => {
+    if (user) {
+      try {
+        const data = await ListCreditCardsByUserController(user.id);
+        setCreditCards(data);
+      } catch (error) {
+        console.error("Error fetching credit cards:", error);
+      }
+    }
+  };
+
+  const refreshCreditCards = async () => {
+    await fetchCreditCards();
+  };
+
+  const addCreditCard = async (props: { name: string; creditLimit: number; closingDay: number; dueDay: number; color: string }) => {
+    if (!user) throw new Error("Nenhum usuário logado");
+    const newCard = await CreateCreditCardController(user.id, props);
+    setCreditCards((prev) => (prev ? [...prev, newCard] : [newCard]));
+  };
+
+  const updateCreditCard = async (cardId: string, props: Partial<Omit<ICreditCard, "id" | "userId">>) => {
+    const updated = await UpdateCreditCardController(cardId, props);
+    setCreditCards((prev) =>
+      prev ? prev.map((c) => (c.id === cardId ? updated : c)) : [updated]
+    );
+  };
+
+  const deleteCreditCard = async (cardId: string) => {
+    await DeleteCreditCardController(cardId);
+    setCreditCards((prev) => (prev ? prev.filter((c) => c.id !== cardId) : []));
   };
 
   const addGoal = async (categoryId: string, monthlyLimit: number) => {
@@ -773,6 +836,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         addGoal,
         updateGoal,
         deleteGoal,
+        creditCards,
+        addCreditCard,
+        updateCreditCard,
+        deleteCreditCard,
+        refreshCreditCards,
       }}
     >
       {children}

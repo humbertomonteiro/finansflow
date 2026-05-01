@@ -23,10 +23,12 @@ export const createTransactionController = async (
       transaction
     );
 
-    await addTransactionUseCase.execute(
-      transactionCreated.accountId,
-      transactionCreated
-    );
+    if (!transactionCreated.creditCardId && transactionCreated.accountId) {
+      await addTransactionUseCase.execute(
+        transactionCreated.accountId,
+        transactionCreated
+      );
+    }
 
     return transactionCreated;
   } catch (error) {

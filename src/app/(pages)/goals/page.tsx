@@ -34,11 +34,15 @@ function AddGoalModal({
   useEffect(() => {
     setMounted(true);
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -46,9 +50,15 @@ function AddGoalModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!categoryId) { setError("Selecione uma categoria."); return; }
+    if (!categoryId) {
+      setError("Selecione uma categoria.");
+      return;
+    }
     const limit = Number(limitStr.replace(",", ".").replace(/[^\d.]/g, ""));
-    if (!limit || limit <= 0) { setError("Informe um limite válido maior que zero."); return; }
+    if (!limit || limit <= 0) {
+      setError("Informe um limite válido maior que zero.");
+      return;
+    }
     setSaving(true);
     try {
       await onSave(categoryId, limit);
@@ -66,10 +76,12 @@ function AddGoalModal({
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ background: "rgba(7,11,20,0.85)", backdropFilter: "blur(6px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
-        className="w-full max-w-sm flex flex-col rounded-2xl animate-fade-in-scale overflow-hidden"
+        className="w-full max-w-sm flex flex-col rounded-sm animate-fade-in-scale overflow-hidden"
         style={{
           background: "var(--bg-elevated)",
           border: "1px solid var(--border-strong)",
@@ -85,11 +97,20 @@ function AddGoalModal({
           <div className="flex items-center gap-2">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+              style={{
+                background: "var(--accent-dim)",
+                border: "1px solid var(--border-accent)",
+              }}
             >
-              <MdAdd className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
+              <MdAdd
+                className="h-4 w-4"
+                style={{ color: "var(--accent-light)" }}
+              />
             </div>
-            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Nova meta de gasto
             </p>
           </div>
@@ -105,7 +126,10 @@ function AddGoalModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-5 py-4 flex flex-col gap-4">
           <div>
-            <p className="text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-xs font-medium mb-1.5"
+              style={{ color: "var(--text-muted)" }}
+            >
               Categoria
             </p>
             <select
@@ -116,13 +140,18 @@ function AddGoalModal({
             >
               <option value="">Selecione uma categoria</option>
               {categoriesAvailable.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <p className="text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-xs font-medium mb-1.5"
+              style={{ color: "var(--text-muted)" }}
+            >
               Limite mensal (R$)
             </p>
             <input
@@ -135,7 +164,10 @@ function AddGoalModal({
           </div>
 
           {error && (
-            <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--red)" }}>
+            <p
+              className="text-xs flex items-center gap-1.5"
+              style={{ color: "var(--red)" }}
+            >
               <FiAlertTriangle className="h-3 w-3 shrink-0" /> {error}
             </p>
           )}
@@ -204,7 +236,8 @@ export default function Goals() {
     categories?.filter((c) => !categoriesWithGoal.includes(c.id)) ?? [];
 
   const getSpent = (categoryId: string): number =>
-    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)?.amount ?? 0;
+    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)
+      ?.amount ?? 0;
 
   const getCategoryName = (categoryId: string): string =>
     categories?.find((c) => c.id === categoryId)?.name ?? "Categoria";
@@ -228,12 +261,23 @@ export default function Goals() {
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const totalLimit = Object.values(goalsMap).reduce((a, b) => a + b.limit, 0);
-  const totalSpent = Object.keys(goalsMap).reduce((acc, id) => acc + getSpent(id), 0);
-  const totalPercent = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
-  const overBudgetCount = Object.keys(goalsMap).filter((id) => getSpent(id) > goalsMap[id].limit).length;
+  const totalSpent = Object.keys(goalsMap).reduce(
+    (acc, id) => acc + getSpent(id),
+    0
+  );
+  const totalPercent =
+    totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
+  const overBudgetCount = Object.keys(goalsMap).filter(
+    (id) => getSpent(id) > goalsMap[id].limit
+  ).length;
   const hasGoals = Object.keys(goalsMap).length > 0;
 
-  if (loading || goals === null) return <p className="p-6" style={{ color: "var(--text-muted)" }}>Carregando...</p>;
+  if (loading || goals === null)
+    return (
+      <p className="p-6" style={{ color: "var(--text-muted)" }}>
+        Carregando...
+      </p>
+    );
   if (!user) return null;
 
   return (
@@ -241,13 +285,14 @@ export default function Goals() {
       <Title navigateMonth={true}>Metas</Title>
 
       <p className="text-sm -mt-2" style={{ color: "var(--text-muted)" }}>
-        Defina limites mensais de gastos por categoria e acompanhe se está dentro do orçamento.
+        Defina limites mensais de gastos por categoria e acompanhe se está
+        dentro do orçamento.
       </p>
 
       {/* Card resumo geral */}
       {hasGoals && (
         <div
-          className="rounded-xl p-4 flex flex-col gap-3"
+          className="rounded-sm p-4 flex flex-col gap-3"
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
@@ -255,20 +300,32 @@ export default function Goals() {
         >
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+              <p
+                className="text-xs uppercase tracking-wider mb-1"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Orçamento total
               </p>
-              <p className="money text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+              <p
+                className="money text-2xl font-bold"
+                style={{ color: "var(--text-primary)" }}
+              >
                 {fmt(totalLimit)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+              <p
+                className="text-xs uppercase tracking-wider mb-1"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Gasto até agora
               </p>
               <p
                 className="money text-2xl font-bold"
-                style={{ color: totalSpent > totalLimit ? "var(--red)" : "var(--green)" }}
+                style={{
+                  color:
+                    totalSpent > totalLimit ? "var(--red)" : "var(--green)",
+                }}
               >
                 {fmt(totalSpent)}
               </p>
@@ -276,27 +333,43 @@ export default function Goals() {
           </div>
 
           <div>
-            <div className="flex justify-between text-xs mb-1" style={{ color: "var(--text-disabled)" }}>
+            <div
+              className="flex justify-between text-xs mb-1"
+              style={{ color: "var(--text-disabled)" }}
+            >
               <span>Progresso</span>
               <span>{totalPercent.toFixed(1)}%</span>
             </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-overlay)" }}>
+            <div
+              className="h-2 rounded-full overflow-hidden"
+              style={{ background: "var(--bg-overlay)" }}
+            >
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${totalPercent}%`,
                   background:
-                    totalPercent >= 100 ? "var(--red)" : totalPercent >= 80 ? "var(--yellow)" : "var(--green)",
+                    totalPercent >= 100
+                      ? "var(--red)"
+                      : totalPercent >= 80
+                      ? "var(--yellow)"
+                      : "var(--green)",
                 }}
               />
             </div>
           </div>
 
           {overBudgetCount > 0 && (
-            <div className="flex items-center gap-2 text-xs" style={{ color: "var(--red)" }}>
+            <div
+              className="flex items-center gap-2 text-xs"
+              style={{ color: "var(--red)" }}
+            >
               <FiAlertTriangle className="h-3 w-3 shrink-0" />
               {overBudgetCount}{" "}
-              {overBudgetCount === 1 ? "categoria ultrapassou" : "categorias ultrapassaram"} o limite este mês.
+              {overBudgetCount === 1
+                ? "categoria ultrapassou"
+                : "categorias ultrapassaram"}{" "}
+              o limite este mês.
             </div>
           )}
         </div>
@@ -305,7 +378,7 @@ export default function Goals() {
       {/* Empty state */}
       {!hasGoals && (
         <div
-          className="rounded-xl p-12 text-center flex flex-col items-center gap-4"
+          className="rounded-sm p-12 text-center flex flex-col items-center gap-4"
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
@@ -315,13 +388,22 @@ export default function Goals() {
             className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: "var(--bg-overlay)" }}
           >
-            <MdOutlineFlagCircle className="h-8 w-8" style={{ color: "var(--text-disabled)" }} />
+            <MdOutlineFlagCircle
+              className="h-8 w-8"
+              style={{ color: "var(--text-disabled)" }}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            <p
+              className="text-sm font-medium"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Nenhuma meta definida
             </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
+            <p
+              className="text-xs mt-1"
+              style={{ color: "var(--text-disabled)" }}
+            >
               Adicione metas para controlar seus gastos por categoria.
             </p>
           </div>
@@ -342,8 +424,13 @@ export default function Goals() {
         <div className="flex flex-col gap-3">
           {/* Cabeçalho da seção */}
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              {Object.keys(goalsMap).length} meta{Object.keys(goalsMap).length !== 1 ? "s" : ""} definida{Object.keys(goalsMap).length !== 1 ? "s" : ""}
+            <p
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: "var(--text-muted)" }}
+            >
+              {Object.keys(goalsMap).length} meta
+              {Object.keys(goalsMap).length !== 1 ? "s" : ""} definida
+              {Object.keys(goalsMap).length !== 1 ? "s" : ""}
             </p>
             {categoriesAvailable.length > 0 && (
               <button
@@ -357,136 +444,178 @@ export default function Goals() {
             )}
           </div>
 
-          {Object.entries(goalsMap).map(([categoryId, { id: goalId, limit }]) => {
-            const spent = getSpent(categoryId);
-            const percent = Math.min((spent / limit) * 100, 100);
-            const isOver = spent > limit;
-            const isWarning = !isOver && percent >= 80;
+          {Object.entries(goalsMap).map(
+            ([categoryId, { id: goalId, limit }]) => {
+              const spent = getSpent(categoryId);
+              const percent = Math.min((spent / limit) * 100, 100);
+              const isOver = spent > limit;
+              const isWarning = !isOver && percent >= 80;
 
-            return (
-              <div
-                key={categoryId}
-                className="rounded-xl p-4 transition-colors"
-                style={{
-                  background: "var(--bg-surface)",
-                  border: `1px solid ${isOver ? "var(--red-dim)" : isWarning ? "var(--yellow-dim)" : "var(--border-default)"}`,
-                }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate" style={{ color: "var(--text-primary)" }}>
-                        {getCategoryName(categoryId)}
+              return (
+                <div
+                  key={categoryId}
+                  className="rounded-sm p-4 transition-colors"
+                  style={{
+                    background: "var(--bg-surface)",
+                    border: `1px solid ${
+                      isOver
+                        ? "var(--red-dim)"
+                        : isWarning
+                        ? "var(--yellow-dim)"
+                        : "var(--border-default)"
+                    }`,
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p
+                          className="font-medium truncate"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {getCategoryName(categoryId)}
+                        </p>
+                        {isOver && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                            style={{
+                              background: "var(--red-dim)",
+                              color: "var(--red)",
+                            }}
+                          >
+                            Excedeu
+                          </span>
+                        )}
+                        {isWarning && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                            style={{
+                              background: "var(--yellow-dim)",
+                              color: "var(--yellow)",
+                            }}
+                          >
+                            Atenção
+                          </span>
+                        )}
+                      </div>
+
+                      <p
+                        className="text-xs mt-0.5"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {fmt(spent)} de{" "}
+                        {editingId === categoryId ? (
+                          <span className="inline-flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              className="w-24 rounded px-2 py-0.5 text-xs"
+                              style={{
+                                background: "var(--bg-elevated)",
+                                border: "1px solid var(--border-subtle)",
+                                color: "var(--text-primary)",
+                              }}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  handleSaveEdit(categoryId);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                            />
+                            <button
+                              onClick={() => handleSaveEdit(categoryId)}
+                              className="cursor-pointer"
+                              style={{ color: "var(--green)" }}
+                              disabled={saving}
+                            >
+                              <MdCheck className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="cursor-pointer"
+                              style={{ color: "var(--text-muted)" }}
+                            >
+                              <MdClose className="h-4 w-4" />
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditingId(categoryId);
+                              setEditValue(String(limit));
+                            }}
+                            className="underline cursor-pointer"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
+                            {fmt(limit)}
+                          </button>
+                        )}
                       </p>
-                      {isOver && (
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full shrink-0"
-                          style={{ background: "var(--red-dim)", color: "var(--red)" }}
-                        >
-                          Excedeu
-                        </span>
-                      )}
-                      {isWarning && (
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full shrink-0"
-                          style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
-                        >
-                          Atenção
-                        </span>
-                      )}
                     </div>
 
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {fmt(spent)} de{" "}
-                      {editingId === categoryId ? (
-                        <span className="inline-flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            className="w-24 rounded px-2 py-0.5 text-xs"
-                            style={{
-                              background: "var(--bg-elevated)",
-                              border: "1px solid var(--border-subtle)",
-                              color: "var(--text-primary)",
-                            }}
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit(categoryId);
-                              if (e.key === "Escape") setEditingId(null);
-                            }}
-                          />
-                          <button
-                            onClick={() => handleSaveEdit(categoryId)}
-                            className="cursor-pointer"
-                            style={{ color: "var(--green)" }}
-                            disabled={saving}
-                          >
-                            <MdCheck className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="cursor-pointer"
-                            style={{ color: "var(--text-muted)" }}
-                          >
-                            <MdClose className="h-4 w-4" />
-                          </button>
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => { setEditingId(categoryId); setEditValue(String(limit)); }}
-                          className="underline cursor-pointer"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {fmt(limit)}
-                        </button>
-                      )}
-                    </p>
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={() => {
+                          setEditingId(categoryId);
+                          setEditValue(String(limit));
+                        }}
+                        className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                        style={{ color: "var(--accent-light)" }}
+                      >
+                        <MdEdit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteGoal(goalId)}
+                        className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                        style={{ color: "var(--red)" }}
+                      >
+                        <MdDelete className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1 ml-2">
-                    <button
-                      onClick={() => { setEditingId(categoryId); setEditValue(String(limit)); }}
-                      className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
-                      style={{ color: "var(--accent-light)" }}
-                    >
-                      <MdEdit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteGoal(goalId)}
-                      className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
-                      style={{ color: "var(--red)" }}
-                    >
-                      <MdDelete className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Barra de progresso */}
-                <div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-overlay)" }}>
+                  {/* Barra de progresso */}
+                  <div>
                     <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${percent}%`,
-                        background: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)",
-                      }}
-                    />
-                  </div>
-                  <div
-                    className="flex justify-between text-xs mt-1"
-                    style={{ color: "var(--text-disabled)" }}
-                  >
-                    <span>0%</span>
-                    <span style={{ color: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--text-muted)" }}>
-                      {percent.toFixed(1)}% usado
-                    </span>
-                    <span>100%</span>
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ background: "var(--bg-overlay)" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${percent}%`,
+                          background: isOver
+                            ? "var(--red)"
+                            : isWarning
+                            ? "var(--yellow)"
+                            : "var(--accent)",
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="flex justify-between text-xs mt-1"
+                      style={{ color: "var(--text-disabled)" }}
+                    >
+                      <span>0%</span>
+                      <span
+                        style={{
+                          color: isOver
+                            ? "var(--red)"
+                            : isWarning
+                            ? "var(--yellow)"
+                            : "var(--text-muted)",
+                        }}
+                      >
+                        {percent.toFixed(1)}% usado
+                      </span>
+                      <span>100%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            }
+          )}
 
           {/* Botão de adicionar mais metas (ao final da lista) */}
           {categoriesAvailable.length > 0 && (

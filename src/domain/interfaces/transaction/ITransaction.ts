@@ -10,7 +10,8 @@ export interface ITransaction {
   dueDate: Date;
   description?: string;
   categoryId: string;
-  accountId: string;
+  accountId?: string;
+  creditCardId?: string;
   targetAccountId?: string;
   kind: TransactionKind;
   recurrence: IRecurrence;

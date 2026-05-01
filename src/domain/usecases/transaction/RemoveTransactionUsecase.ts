@@ -42,6 +42,12 @@ export class RemoveTransactionUsecase {
 
     const transaction = Transaction.fromData(transactionData);
 
+    // Credit card transactions have no accountId — just delete and return
+    if (transaction.creditCardId || !transaction.accountId) {
+      await this.transactionRepository.delete(transactionData.id);
+      return { message: "Transaction removed.", balanceUpdate: 0 };
+    }
+
     const accountData = await this.accountRepository.findById(
       transaction.accountId
     );

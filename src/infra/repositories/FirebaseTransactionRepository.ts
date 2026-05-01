@@ -124,6 +124,15 @@ export class TransactionRepositoryFirestore
     return snapshot.docs.map((doc) => this.mapToTransaction(doc.data()));
   }
 
+  async getTransactionsByCreditCard(creditCardId: string): Promise<Transaction[]> {
+    const q = query(
+      collection(db, "transactions"),
+      where("creditCardId", "==", creditCardId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => this.mapToTransaction(doc.data()));
+  }
+
   private mapToTransaction(data: any): Transaction {
     // Converte a dueDate principal
     const dueDate =

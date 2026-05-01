@@ -15,18 +15,51 @@ import { useUser } from "@/app/hooks/useUser";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend
+);
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const MONTHS_SHORT = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const MONTHS_FULL  = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const MONTHS_SHORT = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
+const MONTHS_FULL = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
 
 export function AnnualProjectionSection() {
-  const { allTransactions, transactions, currentBalance, year, month } = useUser();
-  const [investPct, setInvestPct]   = useState(100);
+  const { allTransactions, transactions, currentBalance, year, month } =
+    useUser();
+  const [investPct, setInvestPct] = useState(100);
   const [annualRate, setAnnualRate] = useState(12);
 
   // ── Líquido mensal de TODAS as transações agendadas ──────────
@@ -37,10 +70,14 @@ export function AnnualProjectionSection() {
       const sign = t.type === TransactionTypes.DEPOSIT ? 1 : -1;
       if (t.kind === TransactionKind.SIMPLE) {
         const d = new Date(t.dueDate);
-        if (d.getFullYear() === year) nets[d.getMonth()] += sign * (t.paymentHistory[0]?.amount ?? t.amount);
+        if (d.getFullYear() === year)
+          nets[d.getMonth()] +=
+            sign * (t.paymentHistory[0]?.amount ?? t.amount);
       } else if (t.kind === TransactionKind.INSTALLMENT) {
         const excl = t.recurrence?.excludedInstallments ?? [];
-        const end  = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
+        const end = t.recurrence?.endDate
+          ? new Date(t.recurrence.endDate)
+          : null;
         t.paymentHistory.forEach((p, idx) => {
           if (excl.includes(idx + 1)) return;
           const d = new Date(p.dueDate);
@@ -50,8 +87,13 @@ export function AnnualProjectionSection() {
         });
       } else if (t.kind === TransactionKind.FIXED) {
         const start = new Date(t.dueDate);
-        const end   = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
-        const excl  = (t.recurrence?.excludedFixeds ?? []) as Array<{ year: number; month: number }>;
+        const end = t.recurrence?.endDate
+          ? new Date(t.recurrence.endDate)
+          : null;
+        const excl = (t.recurrence?.excludedFixeds ?? []) as Array<{
+          year: number;
+          month: number;
+        }>;
         for (let m = 1; m <= 12; m++) {
           const occ = new Date(year, m - 1, start.getDate());
           if (occ < start) continue;
@@ -92,7 +134,8 @@ export function AnnualProjectionSection() {
     if (investPct <= 0 || annualRate <= 0) return projectedBalances;
     const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
     const r = [...projectedBalances];
-    let free = anchor, invested = 0;
+    let free = anchor,
+      invested = 0;
     for (let i = month - 1; i < 12; i++) {
       invested *= 1 + monthlyRate;
       const delta = monthlyNets[i];
@@ -102,7 +145,11 @@ export function AnnualProjectionSection() {
         invested += toInvest;
       } else {
         free += delta;
-        if (free < 0) { invested += free; free = 0; if (invested < 0) invested = 0; }
+        if (free < 0) {
+          invested += free;
+          free = 0;
+          if (invested < 0) invested = 0;
+        }
       }
       r[i] = free + invested;
     }
@@ -112,12 +159,12 @@ export function AnnualProjectionSection() {
   const hasInvestment = investPct > 0 && annualRate > 0;
 
   // ── Métricas resumo ───────────────────────────────────────────
-  const decBal      = projectedBalances[11];
+  const decBal = projectedBalances[11];
   const decInvested = investedBalances[11];
-  const totalGain   = decInvested - decBal;
-  const posMonths   = monthlyNets.filter((n) => n > 0).length;
-  const maxIdx      = projectedBalances.indexOf(Math.max(...projectedBalances));
-  const minIdx      = projectedBalances.indexOf(Math.min(...projectedBalances));
+  const totalGain = decInvested - decBal;
+  const posMonths = monthlyNets.filter((n) => n > 0).length;
+  const maxIdx = projectedBalances.indexOf(Math.max(...projectedBalances));
+  const minIdx = projectedBalances.indexOf(Math.min(...projectedBalances));
 
   // ── Chart.js ─────────────────────────────────────────────────
   const chartData = {
@@ -187,9 +234,11 @@ export function AnnualProjectionSection() {
           color: "#6b7280",
           font: { size: 11 },
           callback: (v: any) => {
-            const abs = Math.abs(v as number), s = v < 0 ? "-" : "";
-            if (abs >= 1_000_000) return `${s}R$${(abs / 1_000_000).toFixed(1)}M`;
-            if (abs >= 1_000)     return `${s}R$${(abs / 1_000).toFixed(1)}k`;
+            const abs = Math.abs(v as number),
+              s = v < 0 ? "-" : "";
+            if (abs >= 1_000_000)
+              return `${s}R$${(abs / 1_000_000).toFixed(1)}M`;
+            if (abs >= 1_000) return `${s}R$${(abs / 1_000).toFixed(1)}k`;
             return `R$${v}`;
           },
         },
@@ -202,7 +251,7 @@ export function AnnualProjectionSection() {
     <div className="flex flex-col gap-4">
       {/* Inputs + gráfico */}
       <div
-        className="p-5 rounded-xl flex flex-col gap-4"
+        className="p-5 rounded-sm flex flex-col gap-4"
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
@@ -216,38 +265,68 @@ export function AnnualProjectionSection() {
             Projeção anual & simulador de rendimento
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
-            Todas as transações agendadas de {year} · simulação de juros compostos a partir do mês atual
+            Todas as transações agendadas de {year} · simulação de juros
+            compostos a partir do mês atual
           </p>
         </div>
 
         {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-xs mb-1.5"
+              style={{ color: "var(--text-muted)" }}
+            >
               % do saldo mensal positivo a investir
             </p>
             <div className="relative">
               <input
-                type="number" min="0" max="100" value={investPct}
-                onChange={(e) => setInvestPct(Math.min(100, Math.max(0, Number(e.target.value))))}
+                type="number"
+                min="0"
+                max="100"
+                value={investPct}
+                onChange={(e) =>
+                  setInvestPct(
+                    Math.min(100, Math.max(0, Number(e.target.value)))
+                  )
+                }
                 className="input text-sm w-full pr-8"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
-                style={{ color: "var(--text-muted)" }}>%</span>
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                style={{ color: "var(--text-muted)" }}
+              >
+                %
+              </span>
             </div>
           </div>
           <div>
-            <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-xs mb-1.5"
+              style={{ color: "var(--text-muted)" }}
+            >
               Taxa de rendimento anual
             </p>
             <div className="relative">
               <input
-                type="number" min="0" max="100" step="0.1" value={annualRate}
-                onChange={(e) => setAnnualRate(Math.min(100, Math.max(0, Number(e.target.value))))}
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={annualRate}
+                onChange={(e) =>
+                  setAnnualRate(
+                    Math.min(100, Math.max(0, Number(e.target.value)))
+                  )
+                }
                 className="input text-sm w-full pr-14"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
-                style={{ color: "var(--text-muted)" }}>% a.a.</span>
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                style={{ color: "var(--text-muted)" }}
+              >
+                % a.a.
+              </span>
             </div>
           </div>
         </div>
@@ -261,12 +340,19 @@ export function AnnualProjectionSection() {
       {/* Cards de resumo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div
-          className="p-3 rounded-xl"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+          className="p-3 rounded-sm"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+          }}
         >
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>Projeção dezembro</p>
-          <p className="money text-base font-semibold mt-0.5"
-            style={{ color: decBal >= 0 ? "var(--green)" : "var(--red)" }}>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Projeção dezembro
+          </p>
+          <p
+            className="money text-base font-semibold mt-0.5"
+            style={{ color: decBal >= 0 ? "var(--green)" : "var(--red)" }}
+          >
             {fmt(decBal)}
           </p>
         </div>
@@ -274,23 +360,37 @@ export function AnnualProjectionSection() {
         {hasInvestment ? (
           <>
             <div
-              className="p-3 rounded-xl"
-              style={{ background: "var(--bg-surface)", border: "1px solid rgba(34,197,94,0.25)" }}
+              className="p-3 rounded-sm"
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid rgba(34,197,94,0.25)",
+              }}
             >
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 Investindo {investPct}%
               </p>
-              <p className="money text-base font-semibold mt-0.5" style={{ color: "var(--green)" }}>
+              <p
+                className="money text-base font-semibold mt-0.5"
+                style={{ color: "var(--green)" }}
+              >
                 {fmt(decInvested)}
               </p>
             </div>
 
             <div
-              className="p-3 rounded-xl"
-              style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.18)" }}
+              className="p-3 rounded-sm"
+              style={{
+                background: "rgba(34,197,94,0.05)",
+                border: "1px solid rgba(34,197,94,0.18)",
+              }}
             >
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Rendimento total</p>
-              <p className="money text-base font-semibold mt-0.5" style={{ color: "var(--green)" }}>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Rendimento total
+              </p>
+              <p
+                className="money text-base font-semibold mt-0.5"
+                style={{ color: "var(--green)" }}
+              >
                 +{fmt(totalGain)}
               </p>
             </div>
@@ -298,21 +398,37 @@ export function AnnualProjectionSection() {
         ) : (
           <>
             <div
-              className="p-3 rounded-xl"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+              className="p-3 rounded-sm"
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-default)",
+              }}
             >
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Melhor mês</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: "var(--green)" }}>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Melhor mês
+              </p>
+              <p
+                className="text-base font-semibold mt-0.5"
+                style={{ color: "var(--green)" }}
+              >
                 {MONTHS_SHORT[maxIdx]}
               </p>
             </div>
 
             <div
-              className="p-3 rounded-xl"
-              style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+              className="p-3 rounded-sm"
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-default)",
+              }}
             >
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Pior mês</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: "var(--red)" }}>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Pior mês
+              </p>
+              <p
+                className="text-base font-semibold mt-0.5"
+                style={{ color: "var(--red)" }}
+              >
                 {MONTHS_SHORT[minIdx]}
               </p>
             </div>
@@ -320,12 +436,19 @@ export function AnnualProjectionSection() {
         )}
 
         <div
-          className="p-3 rounded-xl"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+          className="p-3 rounded-sm"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+          }}
         >
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>Meses positivos</p>
-          <p className="text-base font-semibold mt-0.5"
-            style={{ color: posMonths >= 6 ? "var(--green)" : "var(--yellow)" }}>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Meses positivos
+          </p>
+          <p
+            className="text-base font-semibold mt-0.5"
+            style={{ color: posMonths >= 6 ? "var(--green)" : "var(--yellow)" }}
+          >
             {posMonths}/12
           </p>
         </div>
@@ -333,12 +456,20 @@ export function AnnualProjectionSection() {
 
       {/* Tabela detalhada */}
       <div
-        className="rounded-xl overflow-hidden"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+        className="rounded-sm overflow-hidden"
+        style={{
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-default)",
+        }}
       >
-        <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "var(--text-muted)" }}>
+        <div
+          className="px-4 py-3"
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: "var(--text-muted)" }}
+          >
             Detalhamento mensal
           </p>
         </div>
@@ -347,67 +478,120 @@ export function AnnualProjectionSection() {
           <table className="w-full text-xs">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                <th className="text-left px-4 py-2.5 font-medium whitespace-nowrap"
-                  style={{ color: "var(--text-muted)" }}>Mês</th>
-                <th className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
-                  style={{ color: "var(--text-muted)" }}>Líquido do mês</th>
-                <th className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
-                  style={{ color: "var(--text-muted)" }}>Saldo projetado</th>
+                <th
+                  className="text-left px-4 py-2.5 font-medium whitespace-nowrap"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Mês
+                </th>
+                <th
+                  className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Líquido do mês
+                </th>
+                <th
+                  className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Saldo projetado
+                </th>
                 {hasInvestment && (
                   <>
-                    <th className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
-                      style={{ color: "rgba(34,197,94,0.8)" }}>Saldo investindo</th>
-                    <th className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
-                      style={{ color: "rgba(34,197,94,0.8)" }}>Rendimento acum.</th>
+                    <th
+                      className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
+                      style={{ color: "rgba(34,197,94,0.8)" }}
+                    >
+                      Saldo investindo
+                    </th>
+                    <th
+                      className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
+                      style={{ color: "rgba(34,197,94,0.8)" }}
+                    >
+                      Rendimento acum.
+                    </th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
               {MONTHS_FULL.map((mName, i) => {
-                const net   = monthlyNets[i];
-                const bal   = projectedBalances[i];
-                const inv   = investedBalances[i];
-                const gain  = inv - bal;
-                const isPast    = i < month - 1;
+                const net = monthlyNets[i];
+                const bal = projectedBalances[i];
+                const inv = investedBalances[i];
+                const gain = inv - bal;
+                const isPast = i < month - 1;
                 const isCurrent = i === month - 1;
 
                 return (
                   <tr
                     key={mName}
                     style={{
-                      borderBottom: i < 11 ? "1px solid var(--border-subtle)" : "none",
-                      background: isCurrent ? "rgba(99,102,241,0.05)" : "transparent",
+                      borderBottom:
+                        i < 11 ? "1px solid var(--border-subtle)" : "none",
+                      background: isCurrent
+                        ? "rgba(99,102,241,0.05)"
+                        : "transparent",
                       opacity: isPast ? 0.5 : 1,
                     }}
                   >
-                    <td className="px-4 py-2.5 font-medium whitespace-nowrap"
-                      style={{ color: isCurrent ? "#c7d2fe" : "var(--text-secondary)" }}>
+                    <td
+                      className="px-4 py-2.5 font-medium whitespace-nowrap"
+                      style={{
+                        color: isCurrent ? "#c7d2fe" : "var(--text-secondary)",
+                      }}
+                    >
                       {mName}
                       {isCurrent && (
-                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full"
-                          style={{ background: "rgba(99,102,241,0.2)", color: "#c7d2fe" }}>
+                        <span
+                          className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: "rgba(99,102,241,0.2)",
+                            color: "#c7d2fe",
+                          }}
+                        >
                           atual
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-right money whitespace-nowrap"
-                      style={{ color: net >= 0 ? "var(--green)" : "var(--red)" }}>
-                      {net >= 0 ? "+" : ""}{fmt(net)}
+                    <td
+                      className="px-4 py-2.5 text-right money whitespace-nowrap"
+                      style={{
+                        color: net >= 0 ? "var(--green)" : "var(--red)",
+                      }}
+                    >
+                      {net >= 0 ? "+" : ""}
+                      {fmt(net)}
                     </td>
-                    <td className="px-4 py-2.5 text-right money whitespace-nowrap"
-                      style={{ color: bal >= 0 ? "var(--text-primary)" : "var(--red)" }}>
+                    <td
+                      className="px-4 py-2.5 text-right money whitespace-nowrap"
+                      style={{
+                        color: bal >= 0 ? "var(--text-primary)" : "var(--red)",
+                      }}
+                    >
                       {fmt(bal)}
                     </td>
                     {hasInvestment && (
                       <>
-                        <td className="px-4 py-2.5 text-right money whitespace-nowrap"
-                          style={{ color: inv >= 0 ? "var(--green)" : "var(--red)" }}>
+                        <td
+                          className="px-4 py-2.5 text-right money whitespace-nowrap"
+                          style={{
+                            color: inv >= 0 ? "var(--green)" : "var(--red)",
+                          }}
+                        >
                           {fmt(inv)}
                         </td>
-                        <td className="px-4 py-2.5 text-right money whitespace-nowrap"
-                          style={{ color: gain > 0.01 ? "var(--green)" : "var(--text-muted)" }}>
-                          {gain > 0.01 ? "+" : ""}{fmt(gain)}
+                        <td
+                          className="px-4 py-2.5 text-right money whitespace-nowrap"
+                          style={{
+                            color:
+                              gain > 0.01
+                                ? "var(--green)"
+                                : "var(--text-muted)",
+                          }}
+                        >
+                          {gain > 0.01 ? "+" : ""}
+                          {fmt(gain)}
                         </td>
                       </>
                     )}
@@ -418,10 +602,15 @@ export function AnnualProjectionSection() {
           </table>
         </div>
 
-        <div className="px-4 py-2.5" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+        <div
+          className="px-4 py-2.5"
+          style={{ borderTop: "1px solid var(--border-subtle)" }}
+        >
           <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-            Meses passados exibidos com 50% de opacidade. Valores futuros consideram todas as transações agendadas.
-            {hasInvestment && " Rendimento calculado com juros compostos mensais. Meses negativos resgatam do investimento antes de apresentar déficit."}
+            Meses passados exibidos com 50% de opacidade. Valores futuros
+            consideram todas as transações agendadas.
+            {hasInvestment &&
+              " Rendimento calculado com juros compostos mensais. Meses negativos resgatam do investimento antes de apresentar déficit."}
           </p>
         </div>
       </div>

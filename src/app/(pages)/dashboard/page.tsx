@@ -17,6 +17,7 @@ import {
 } from "react-icons/ri";
 import { TbScale, TbTrendingUp } from "react-icons/tb";
 import { FiAlertCircle, FiClock, FiTarget } from "react-icons/fi";
+import { CreditCardsWidget } from "@/app/components/shared/CreditCardsWidget";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -36,25 +37,28 @@ export default function Dashboard() {
   // ── Métricas de metas ──────────────────────────────────────────
   const goalsEntries = (goals ?? []).map((g) => {
     const spent =
-      dataCategoryExpenses?.expenses.find((e) => e.categoryId === g.categoryId)?.amount ?? 0;
+      dataCategoryExpenses?.expenses.find((e) => e.categoryId === g.categoryId)
+        ?.amount ?? 0;
     return { ...g, spent };
   });
   const goalsTotal = goalsEntries.reduce((s, g) => s + g.monthlyLimit, 0);
   const goalsSpent = goalsEntries.reduce((s, g) => s + g.spent, 0);
-  const goalsTotalPct = goalsTotal > 0 ? Math.min((goalsSpent / goalsTotal) * 100, 100) : 0;
+  const goalsTotalPct =
+    goalsTotal > 0 ? Math.min((goalsSpent / goalsTotal) * 100, 100) : 0;
   const goalsOver = goalsEntries.filter((g) => g.spent > g.monthlyLimit).length;
-  const goalsWarn = goalsEntries.filter((g) => !g.spent || (g.spent / g.monthlyLimit) >= 0.8).filter(
-    (g) => g.spent <= g.monthlyLimit
-  ).length;
+  const goalsWarn = goalsEntries
+    .filter((g) => !g.spent || g.spent / g.monthlyLimit >= 0.8)
+    .filter((g) => g.spent <= g.monthlyLimit).length;
   const hasGoals = goalsEntries.length > 0;
 
-  const goalsStatusColor = goalsOver > 0
-    ? "var(--red)"
-    : goalsWarn > 0
-    ? "var(--yellow)"
-    : hasGoals
-    ? "var(--green)"
-    : "var(--text-muted)";
+  const goalsStatusColor =
+    goalsOver > 0
+      ? "var(--red)"
+      : goalsWarn > 0
+      ? "var(--yellow)"
+      : hasGoals
+      ? "var(--green)"
+      : "var(--text-muted)";
 
   const goalsValueText = !hasGoals
     ? "Sem metas"
@@ -81,7 +85,12 @@ export default function Dashboard() {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className={`skeleton h-28 rounded-xl${i === 0 ? " col-span-2 lg:col-span-1" : ""}`} />
+            <div
+              key={i}
+              className={`skeleton h-28 rounded-xl${
+                i === 0 ? " col-span-2 lg:col-span-1" : ""
+              }`}
+            />
           ))}
         </div>
       ) : metrics ? (
@@ -145,7 +154,7 @@ export default function Dashboard() {
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && setActiveModal("goals")}
-            className="relative flex flex-col gap-3 rounded-xl p-4 overflow-hidden transition-all duration-200 group cursor-pointer col-span-2 lg:col-span-1"
+            className="relative flex flex-col gap-3 rounded-sm p-4 overflow-hidden transition-all duration-200 group cursor-pointer col-span-2 lg:col-span-1"
             style={{
               background: "var(--bg-surface)",
               border: "1px solid var(--border-default)",
@@ -154,7 +163,7 @@ export default function Dashboard() {
           >
             {/* Hover overlay */}
             <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-sm"
               style={{ background: "rgba(255,255,255,0.03)" }}
             />
 
@@ -170,7 +179,10 @@ export default function Dashboard() {
                 >
                   ver detalhes
                 </span>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-600" style={{ opacity: 0.9 }}>
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-600"
+                  style={{ opacity: 0.9 }}
+                >
                   <FiTarget className="h-5 w-5 text-white" />
                 </div>
               </div>
@@ -184,7 +196,10 @@ export default function Dashboard() {
               >
                 {goalsValueText}
               </p>
-              <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+              <p
+                className="text-xs mt-1.5"
+                style={{ color: "var(--text-muted)" }}
+              >
                 {goalsInfoText}
               </p>
             </div>
@@ -197,13 +212,19 @@ export default function Dashboard() {
               >
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${goalsTotalPct}%`, background: goalsStatusColor }}
+                  style={{
+                    width: `${goalsTotalPct}%`,
+                    background: goalsStatusColor,
+                  }}
                 />
               </div>
             )}
           </div>
         </div>
       ) : null}
+
+      {/* ── Cartões de crédito ───────────────────────── */}
+      <CreditCardsWidget />
 
       {/* ── Modal dos cards ───────────────────────── */}
       <DashboardCardModal
@@ -217,7 +238,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {nearbyTransactions && nearbyTransactions.length > 0 && (
             <div
-              className="rounded-xl overflow-hidden"
+              className="rounded-sm overflow-hidden"
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid var(--border-default)",
@@ -255,7 +276,7 @@ export default function Dashboard() {
 
           {overdueTransactions && overdueTransactions.length > 0 && (
             <div
-              className="rounded-xl overflow-hidden"
+              className="rounded-sm overflow-hidden"
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid rgba(239,68,68,0.2)",
@@ -289,6 +310,7 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
       {/* ── Gastos por categoria ─────────────────────── */}
       {dataCategoryExpenses && dataCategoryExpenses.expenses.length > 0 && (
         <div>

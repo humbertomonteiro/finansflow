@@ -114,7 +114,7 @@ export function DashboardCardModal({ type, onClose }: DashboardCardModalProps) {
       }}
     >
       <div
-        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-2xl animate-fade-in-scale overflow-hidden"
+        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-sm animate-fade-in-scale overflow-hidden"
         style={{
           background: "var(--bg-elevated)",
           border: "1px solid var(--border-strong)",
@@ -216,7 +216,7 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
     <div className="px-5 py-4 flex flex-col gap-4">
       {/* Total */}
       <div
-        className="flex items-center justify-between p-4 rounded-xl"
+        className="flex items-center justify-between p-4 rounded-sm"
         style={{
           background:
             "linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(99,102,241,0.05) 100%)",
@@ -247,7 +247,7 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
             // ── Modo edição ──────────────────────────────────
             <div
               key={acc.id}
-              className="flex flex-col gap-2 p-3 rounded-xl"
+              className="flex flex-col gap-2 p-3 rounded-sm"
               style={{
                 background: "var(--bg-overlay)",
                 border: "1px solid var(--border-accent)",
@@ -303,7 +303,7 @@ function BalanceModal({ onClose }: { onClose: () => void }) {
             // ── Modo visualização ─────────────────────────────
             <div
               key={acc.id}
-              className="flex items-center justify-between px-4 py-3 rounded-xl"
+              className="flex items-center justify-between px-4 py-3 rounded-sm"
               style={{
                 background: "var(--bg-overlay)",
                 border: "1px solid var(--border-subtle)",
@@ -400,7 +400,7 @@ function RevenuesModal({ onClose }: { onClose: () => void }) {
     <div className="px-5 py-4 flex flex-col gap-4">
       {/* Barra de progresso */}
       <div
-        className="p-4 rounded-xl flex flex-col gap-3"
+        className="p-4 rounded-sm flex flex-col gap-3"
         style={{
           background: "var(--bg-overlay)",
           border: "1px solid var(--border-subtle)",
@@ -508,7 +508,7 @@ function ExpensesModal() {
     <div className="px-5 py-4 flex flex-col gap-4">
       {/* Barra de progresso pago */}
       <div
-        className="p-4 rounded-xl flex flex-col gap-3"
+        className="p-4 rounded-sm flex flex-col gap-3"
         style={{
           background: "var(--bg-overlay)",
           border: "1px solid var(--border-subtle)",
@@ -637,7 +637,7 @@ function MonthlyModal() {
     <div className="px-5 py-4 flex flex-col gap-4">
       {/* Balanço atual em destaque */}
       <div
-        className="p-4 rounded-xl"
+        className="p-4 rounded-sm"
         style={{
           background:
             currentBalance >= 0
@@ -664,7 +664,7 @@ function MonthlyModal() {
       {prevBalance !== null && (
         <div className="grid grid-cols-2 gap-3">
           <div
-            className="p-3 rounded-xl flex flex-col gap-1"
+            className="p-3 rounded-sm flex flex-col gap-1"
             style={{
               background: "var(--bg-overlay)",
               border: "1px solid var(--border-subtle)",
@@ -685,7 +685,7 @@ function MonthlyModal() {
           </div>
 
           <div
-            className="p-3 rounded-xl flex flex-col gap-1"
+            className="p-3 rounded-sm flex flex-col gap-1"
             style={{
               background: "var(--bg-overlay)",
               border: "1px solid var(--border-subtle)",
@@ -778,7 +778,20 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
   const [investPct, setInvestPct] = useState(100);
   const [annualRate, setAnnualRate] = useState(12);
 
-  const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const MONTHS = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
 
   // Net (receitas − despesas) de TODAS as transações para cada mês — exclui transferências
   const monthlyNets = useMemo(() => {
@@ -795,7 +808,9 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
         }
       } else if (t.kind === TransactionKind.INSTALLMENT) {
         const excl = t.recurrence?.excludedInstallments ?? [];
-        const end = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
+        const end = t.recurrence?.endDate
+          ? new Date(t.recurrence.endDate)
+          : null;
         t.paymentHistory.forEach((p, idx) => {
           if (excl.includes(idx + 1)) return;
           const d = new Date(p.dueDate);
@@ -805,8 +820,13 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
         });
       } else if (t.kind === TransactionKind.FIXED) {
         const start = new Date(t.dueDate);
-        const end = t.recurrence?.endDate ? new Date(t.recurrence.endDate) : null;
-        const excl = (t.recurrence?.excludedFixeds ?? []) as Array<{ year: number; month: number }>;
+        const end = t.recurrence?.endDate
+          ? new Date(t.recurrence.endDate)
+          : null;
+        const excl = (t.recurrence?.excludedFixeds ?? []) as Array<{
+          year: number;
+          month: number;
+        }>;
         for (let m = 1; m <= 12; m++) {
           const occ = new Date(year, m - 1, start.getDate());
           if (occ < start) continue;
@@ -880,8 +900,12 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
   const gain = decInvested - decBal;
 
   // ── SVG ──────────────────────────────────────────────────────
-  const W = 340, H = 158;
-  const pL = 4, pR = 4, pT = 22, pB = 20;
+  const W = 340,
+    H = 158;
+  const pL = 4,
+    pR = 4,
+    pT = 22,
+    pB = 20;
   const cW = W - pL - pR;
   const cH = H - pT - pB;
 
@@ -893,14 +917,21 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
   const gx = (i: number) => pL + (i / 11) * cW;
   const gy = (v: number) => pT + cH - ((v - minVal) / range) * cH;
 
-  const basePts = projectedBalances.map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`).join(" ");
-  const invPts  = investedBalances.map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`).join(" ");
-  const area    = `${gx(0).toFixed(1)},${H - pB} ${basePts} ${gx(11).toFixed(1)},${H - pB}`;
+  const basePts = projectedBalances
+    .map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`)
+    .join(" ");
+  const invPts = investedBalances
+    .map((v, i) => `${gx(i).toFixed(1)},${gy(v).toFixed(1)}`)
+    .join(" ");
+  const area = `${gx(0).toFixed(1)},${H - pB} ${basePts} ${gx(11).toFixed(1)},${
+    H - pB
+  }`;
 
   const fmtShort = (v: number) => {
-    const abs = Math.abs(v), s = v < 0 ? "-" : "";
+    const abs = Math.abs(v),
+      s = v < 0 ? "-" : "";
     if (abs >= 1_000_000) return `${s}${(abs / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000)     return `${s}${(abs / 1_000).toFixed(1)}k`;
+    if (abs >= 1_000) return `${s}${(abs / 1_000).toFixed(1)}k`;
     return `${s}${abs.toFixed(0)}`;
   };
 
@@ -908,29 +939,51 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
     <div className="px-5 py-4 flex flex-col gap-4">
       {/* Saldo projetado */}
       <div
-        className="flex items-center justify-between p-4 rounded-xl"
-        style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)" }}
+        className="flex items-center justify-between p-4 rounded-sm"
+        style={{
+          background: "rgba(14,165,233,0.08)",
+          border: "1px solid rgba(14,165,233,0.2)",
+        }}
       >
         <div>
-          <p className="text-xs mb-1" style={{ color: "rgba(186,230,253,0.6)" }}>
+          <p
+            className="text-xs mb-1"
+            style={{ color: "rgba(186,230,253,0.6)" }}
+          >
             Saldo projetado
           </p>
-          <p className="money text-2xl font-semibold" style={{ color: "#38bdf8" }}>
+          <p
+            className="money text-2xl font-semibold"
+            style={{ color: "#38bdf8" }}
+          >
             {fmt(projectedBalance)}
           </p>
-          <p className="text-[0.65rem] mt-1" style={{ color: "rgba(148,163,184,0.6)" }}>
+          <p
+            className="text-[0.65rem] mt-1"
+            style={{ color: "rgba(148,163,184,0.6)" }}
+          >
             Saldo atual + tudo pendente
           </p>
         </div>
-        <TbTrendingUp className="h-8 w-8" style={{ color: "rgba(56,189,248,0.4)" }} />
+        <TbTrendingUp
+          className="h-8 w-8"
+          style={{ color: "rgba(56,189,248,0.4)" }}
+        />
       </div>
 
       {/* Gráfico Jan–Dez com rótulos de valor */}
       <div>
-        <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+        <p
+          className="text-xs uppercase tracking-wider mb-2"
+          style={{ color: "var(--text-muted)" }}
+        >
           Balanço projetado {year}
         </p>
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
+        <svg
+          width="100%"
+          viewBox={`0 0 ${W} ${H}`}
+          style={{ overflow: "visible" }}
+        >
           <defs>
             <linearGradient id="proj-grad2" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.14" />
@@ -939,63 +992,120 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
           </defs>
 
           {minVal < 0 && maxVal > 0 && (
-            <line x1={pL} y1={gy(0)} x2={pL + cW} y2={gy(0)}
-              stroke="rgba(255,255,255,0.08)" strokeDasharray="3,3" strokeWidth="1" />
+            <line
+              x1={pL}
+              y1={gy(0)}
+              x2={pL + cW}
+              y2={gy(0)}
+              stroke="rgba(255,255,255,0.08)"
+              strokeDasharray="3,3"
+              strokeWidth="1"
+            />
           )}
 
           <polygon points={area} fill="url(#proj-grad2)" />
 
           {month > 1 && (
-            <rect x={pL} y={pT} width={gx(month - 1) - pL} height={cH}
-              fill="rgba(7,11,20,0.28)" />
+            <rect
+              x={pL}
+              y={pT}
+              width={gx(month - 1) - pL}
+              height={cH}
+              fill="rgba(7,11,20,0.28)"
+            />
           )}
 
-          <line x1={gx(month - 1)} y1={pT} x2={gx(month - 1)} y2={H - pB}
-            stroke="rgba(99,102,241,0.45)" strokeDasharray="3,2" strokeWidth="1" />
+          <line
+            x1={gx(month - 1)}
+            y1={pT}
+            x2={gx(month - 1)}
+            y2={H - pB}
+            stroke="rgba(99,102,241,0.45)"
+            strokeDasharray="3,2"
+            strokeWidth="1"
+          />
 
           {/* Linha base (tracejada e mais fraca quando há investimento) */}
-          <polyline points={basePts} fill="none"
+          <polyline
+            points={basePts}
+            fill="none"
             stroke={hasInvestment ? "rgba(56,189,248,0.35)" : "#38bdf8"}
             strokeWidth={hasInvestment ? 1.5 : 2}
             strokeDasharray={hasInvestment ? "5,2" : undefined}
-            strokeLinejoin="round" strokeLinecap="round" />
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
 
           {/* Linha investida */}
           {hasInvestment && (
-            <polyline points={invPts} fill="none"
-              stroke="var(--green)" strokeWidth="2"
-              strokeLinejoin="round" strokeLinecap="round" />
+            <polyline
+              points={invPts}
+              fill="none"
+              stroke="var(--green)"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           )}
 
           {/* Rótulos de valor em cada ponto */}
           {labelSeries.map((v, i) => (
-            <text key={i}
-              x={gx(i)} y={Math.max(8, gy(v) - 5)}
-              textAnchor="middle" fontSize="7.5"
+            <text
+              key={i}
+              x={gx(i)}
+              y={Math.max(8, gy(v) - 5)}
+              textAnchor="middle"
+              fontSize="7.5"
               fontWeight={i === month - 1 || i === 11 ? "700" : "400"}
-              fill={v >= 0
-                ? (i === month - 1 || i === 11 ? "#94a3b8" : "#4b5563")
-                : "var(--red)"}
+              fill={
+                v >= 0
+                  ? i === month - 1 || i === 11
+                    ? "#94a3b8"
+                    : "#4b5563"
+                  : "var(--red)"
+              }
             >
               {fmtShort(v)}
             </text>
           ))}
 
           {/* Ponto do mês atual */}
-          <circle cx={gx(month - 1)} cy={gy(labelSeries[month - 1])}
-            r="3.5" fill="#6366f1" stroke="white" strokeWidth="1.5" />
+          <circle
+            cx={gx(month - 1)}
+            cy={gy(labelSeries[month - 1])}
+            r="3.5"
+            fill="#6366f1"
+            stroke="white"
+            strokeWidth="1.5"
+          />
 
           {/* Ponto de dezembro */}
-          <circle cx={gx(11)} cy={gy(labelSeries[11])}
+          <circle
+            cx={gx(11)}
+            cy={gy(labelSeries[11])}
             r="3.5"
-            fill={labelSeries[11] >= 0 ? (hasInvestment ? "var(--green)" : "#38bdf8") : "var(--red)"}
-            stroke="white" strokeWidth="1.5" />
+            fill={
+              labelSeries[11] >= 0
+                ? hasInvestment
+                  ? "var(--green)"
+                  : "#38bdf8"
+                : "var(--red)"
+            }
+            stroke="white"
+            strokeWidth="1.5"
+          />
 
           {/* Rótulos dos meses */}
           {MONTHS.map((label, i) => (
-            <text key={i} x={gx(i)} y={H - 4}
-              textAnchor="middle" fontSize="8.5"
-              fill={i === month - 1 ? "#c7d2fe" : i === 11 ? "#94a3b8" : "#374151"}
+            <text
+              key={i}
+              x={gx(i)}
+              y={H - 4}
+              textAnchor="middle"
+              fontSize="8.5"
+              fill={
+                i === month - 1 ? "#c7d2fe" : i === 11 ? "#94a3b8" : "#374151"
+              }
             >
               {label}
             </text>
@@ -1003,25 +1113,59 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
         </svg>
 
         {/* Legenda das linhas */}
-        <div className="flex items-center gap-4 mt-1 text-[10px]" style={{ color: "var(--text-muted)" }}>
+        <div
+          className="flex items-center gap-4 mt-1 text-[10px]"
+          style={{ color: "var(--text-muted)" }}
+        >
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ background: "#6366f1" }} />
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ background: "#6366f1" }}
+            />
             Mês atual
           </div>
           {hasInvestment ? (
             <>
               <div className="flex items-center gap-1.5">
-                <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="4,2"/></svg>
+                <svg width="16" height="2">
+                  <line
+                    x1="0"
+                    y1="1"
+                    x2="16"
+                    y2="1"
+                    stroke="#38bdf8"
+                    strokeWidth="1.5"
+                    strokeDasharray="4,2"
+                  />
+                </svg>
                 Sem investir
               </div>
               <div className="flex items-center gap-1.5">
-                <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="var(--green)" strokeWidth="2"/></svg>
+                <svg width="16" height="2">
+                  <line
+                    x1="0"
+                    y1="1"
+                    x2="16"
+                    y2="1"
+                    stroke="var(--green)"
+                    strokeWidth="2"
+                  />
+                </svg>
                 Investindo
               </div>
             </>
           ) : (
             <div className="flex items-center gap-1.5">
-              <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="#38bdf8" strokeWidth="2"/></svg>
+              <svg width="16" height="2">
+                <line
+                  x1="0"
+                  y1="1"
+                  x2="16"
+                  y2="1"
+                  stroke="#38bdf8"
+                  strokeWidth="2"
+                />
+              </svg>
               Projeção
             </div>
           )}
@@ -1030,50 +1174,75 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
 
       {/* Simulador de rendimento */}
       <div
-        className="flex flex-col gap-3 p-3 rounded-xl"
-        style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+        className="flex flex-col gap-3 p-3 rounded-sm"
+        style={{
+          background: "var(--bg-overlay)",
+          border: "1px solid var(--border-subtle)",
+        }}
       >
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+        <p
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: "var(--text-muted)" }}
+        >
           Simulador de rendimento
         </p>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-[11px] mb-1"
+              style={{ color: "var(--text-muted)" }}
+            >
               % do saldo positivo
             </p>
             <div className="relative">
               <input
-                type="number" min="0" max="100"
+                type="number"
+                min="0"
+                max="100"
                 value={investPct}
                 onChange={(e) =>
-                  setInvestPct(Math.min(100, Math.max(0, Number(e.target.value))))
+                  setInvestPct(
+                    Math.min(100, Math.max(0, Number(e.target.value)))
+                  )
                 }
                 className="input text-sm w-full pr-7"
               />
               <span
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
                 style={{ color: "var(--text-muted)" }}
-              >%</span>
+              >
+                %
+              </span>
             </div>
           </div>
           <div>
-            <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-[11px] mb-1"
+              style={{ color: "var(--text-muted)" }}
+            >
               Taxa anual
             </p>
             <div className="relative">
               <input
-                type="number" min="0" max="100" step="0.1"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
                 value={annualRate}
                 onChange={(e) =>
-                  setAnnualRate(Math.min(100, Math.max(0, Number(e.target.value))))
+                  setAnnualRate(
+                    Math.min(100, Math.max(0, Number(e.target.value)))
+                  )
                 }
                 className="input text-sm w-full pr-14"
               />
               <span
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
                 style={{ color: "var(--text-muted)" }}
-              >% a.a.</span>
+              >
+                % a.a.
+              </span>
             </div>
           </div>
         </div>
@@ -1082,34 +1251,66 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
         {hasInvestment && (
           <div className="grid grid-cols-3 gap-2 pt-1">
             <div
-              className="p-2.5 rounded-lg flex flex-col gap-0.5"
-              style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
+              className="p-2.5 rounded-sm flex flex-col gap-0.5"
+              style={{
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+              }}
             >
-              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>Sem investir</p>
-              <p className="money text-xs font-semibold"
-                style={{ color: decBal >= 0 ? "var(--text-primary)" : "var(--red)" }}>
+              <p
+                className="text-[10px]"
+                style={{ color: "var(--text-disabled)" }}
+              >
+                Sem investir
+              </p>
+              <p
+                className="money text-xs font-semibold"
+                style={{
+                  color: decBal >= 0 ? "var(--text-primary)" : "var(--red)",
+                }}
+              >
                 {fmt(decBal)}
               </p>
             </div>
             <div
-              className="p-2.5 rounded-lg flex flex-col gap-0.5"
-              style={{ background: "var(--bg-elevated)", border: "1px solid rgba(34,197,94,0.2)" }}
+              className="p-2.5 rounded-sm flex flex-col gap-0.5"
+              style={{
+                background: "var(--bg-elevated)",
+                border: "1px solid rgba(34,197,94,0.2)",
+              }}
             >
-              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+              <p
+                className="text-[10px]"
+                style={{ color: "var(--text-disabled)" }}
+              >
                 Investindo {investPct}%
               </p>
-              <p className="money text-xs font-semibold" style={{ color: "var(--green)" }}>
+              <p
+                className="money text-xs font-semibold"
+                style={{ color: "var(--green)" }}
+              >
                 {fmt(decInvested)}
               </p>
             </div>
             <div
-              className="p-2.5 rounded-lg flex flex-col gap-0.5"
-              style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}
+              className="p-2.5 rounded-sm flex flex-col gap-0.5"
+              style={{
+                background: "rgba(34,197,94,0.06)",
+                border: "1px solid rgba(34,197,94,0.18)",
+              }}
             >
-              <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>Rendimento</p>
-              <p className="money text-xs font-semibold"
-                style={{ color: gain >= 0 ? "var(--green)" : "var(--red)" }}>
-                {gain >= 0 ? "+" : ""}{fmt(gain)}
+              <p
+                className="text-[10px]"
+                style={{ color: "var(--text-disabled)" }}
+              >
+                Rendimento
+              </p>
+              <p
+                className="money text-xs font-semibold"
+                style={{ color: gain >= 0 ? "var(--green)" : "var(--red)" }}
+              >
+                {gain >= 0 ? "+" : ""}
+                {fmt(gain)}
               </p>
             </div>
           </div>
@@ -1118,16 +1319,29 @@ function ProjectionModal({ onClose }: { onClose: () => void }) {
 
       {/* Saber mais → /performance */}
       <button
-        onClick={() => { router.push("/performance"); onClose(); }}
-        className="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all cursor-pointer"
-        style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
-        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
+        onClick={() => {
+          router.push("/performance");
+          onClose();
+        }}
+        className="flex items-center justify-between w-full px-4 py-3 rounded-sm transition-all cursor-pointer"
+        style={{
+          background: "var(--bg-overlay)",
+          border: "1px solid var(--border-subtle)",
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.borderColor = "var(--border-strong)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.borderColor = "var(--border-subtle)")
+        }
       >
         <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
           Ver análise completa em Performance
         </span>
-        <FiArrowRight className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+        <FiArrowRight
+          className="h-4 w-4"
+          style={{ color: "var(--text-muted)" }}
+        />
       </button>
     </div>
   );
@@ -1149,7 +1363,8 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
   }, [goals]);
 
   const getSpent = (categoryId: string) =>
-    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)?.amount ?? 0;
+    dataCategoryExpenses?.expenses.find((e) => e.categoryId === categoryId)
+      ?.amount ?? 0;
 
   const getCategoryName = (categoryId: string) =>
     categories?.find((c) => c.id === categoryId)?.name ?? "Categoria";
@@ -1157,22 +1372,29 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
   const fmt = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const entries = Object.entries(goalsMap).map(([categoryId, { limit }]) => {
-    const spent = getSpent(categoryId);
-    const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
-    const isOver = spent > limit;
-    const isWarning = !isOver && percent >= 80;
-    return { categoryId, limit, spent, percent, isOver, isWarning };
-  }).sort((a, b) => b.percent - a.percent);
+  const entries = Object.entries(goalsMap)
+    .map(([categoryId, { limit }]) => {
+      const spent = getSpent(categoryId);
+      const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
+      const isOver = spent > limit;
+      const isWarning = !isOver && percent >= 80;
+      return { categoryId, limit, spent, percent, isOver, isWarning };
+    })
+    .sort((a, b) => b.percent - a.percent);
 
   const totalLimit = entries.reduce((s, e) => s + e.limit, 0);
   const totalSpent = entries.reduce((s, e) => s + e.spent, 0);
-  const totalPercent = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
+  const totalPercent =
+    totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
   const overCount = entries.filter((e) => e.isOver).length;
   const warnCount = entries.filter((e) => e.isWarning).length;
 
   const totalColor =
-    totalPercent >= 100 ? "var(--red)" : totalPercent >= 80 ? "var(--yellow)" : "var(--green)";
+    totalPercent >= 100
+      ? "var(--red)"
+      : totalPercent >= 80
+      ? "var(--yellow)"
+      : "var(--green)";
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
@@ -1180,21 +1402,34 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
         /* ── Empty state ── */
         <div className="flex flex-col items-center gap-3 py-8 text-center">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            className="w-14 h-14 rounded-sm flex items-center justify-center"
             style={{ background: "var(--bg-overlay)" }}
           >
-            <FiTarget className="h-7 w-7" style={{ color: "var(--text-disabled)" }} />
+            <FiTarget
+              className="h-7 w-7"
+              style={{ color: "var(--text-disabled)" }}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+            <p
+              className="text-sm font-medium"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Nenhuma meta definida
             </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
-              Defina limites de gastos por categoria para acompanhar seu orçamento.
+            <p
+              className="text-xs mt-1"
+              style={{ color: "var(--text-disabled)" }}
+            >
+              Defina limites de gastos por categoria para acompanhar seu
+              orçamento.
             </p>
           </div>
           <button
-            onClick={() => { router.push("/goals"); onClose(); }}
+            onClick={() => {
+              router.push("/goals");
+              onClose();
+            }}
             className="button button-primary flex items-center gap-1.5 mt-1"
           >
             Criar primeira meta
@@ -1205,19 +1440,32 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
         <>
           {/* ── Resumo geral ── */}
           <div
-            className="p-4 rounded-xl flex flex-col gap-3"
-            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
+            className="p-4 rounded-sm flex flex-col gap-3"
+            style={{
+              background: "var(--bg-overlay)",
+              border: "1px solid var(--border-subtle)",
+            }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Gasto total</p>
-                <p className="money text-xl font-semibold mt-0.5" style={{ color: totalColor }}>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Gasto total
+                </p>
+                <p
+                  className="money text-xl font-semibold mt-0.5"
+                  style={{ color: totalColor }}
+                >
                   {fmt(totalSpent)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Orçamento</p>
-                <p className="money text-xl font-semibold mt-0.5" style={{ color: "var(--text-primary)" }}>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Orçamento
+                </p>
+                <p
+                  className="money text-xl font-semibold mt-0.5"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   {fmt(totalLimit)}
                 </p>
               </div>
@@ -1232,10 +1480,18 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
                   style={{ width: `${totalPercent}%`, background: totalColor }}
                 />
               </div>
-              <div className="flex items-center justify-between mt-1 text-xs" style={{ color: "var(--text-disabled)" }}>
+              <div
+                className="flex items-center justify-between mt-1 text-xs"
+                style={{ color: "var(--text-disabled)" }}
+              >
                 <span>{totalPercent.toFixed(1)}% do orçamento usado</span>
                 {(overCount > 0 || warnCount > 0) && (
-                  <span className="flex items-center gap-1" style={{ color: overCount > 0 ? "var(--red)" : "var(--yellow)" }}>
+                  <span
+                    className="flex items-center gap-1"
+                    style={{
+                      color: overCount > 0 ? "var(--red)" : "var(--yellow)",
+                    }}
+                  >
                     <FiAlertTriangle className="h-3 w-3" />
                     {overCount > 0
                       ? `${overCount} excedeu`
@@ -1248,78 +1504,122 @@ function GoalsModal({ onClose }: { onClose: () => void }) {
 
           {/* ── Lista de metas ── */}
           <div className="flex flex-col gap-1">
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-xs uppercase tracking-wider mb-1"
+              style={{ color: "var(--text-muted)" }}
+            >
               Por categoria
             </p>
-            {entries.map(({ categoryId, limit, spent, percent, isOver, isWarning }) => (
-              <div
-                key={categoryId}
-                className="py-2.5"
-                style={{ borderBottom: "1px solid var(--border-subtle)" }}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="text-sm truncate"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {getCategoryName(categoryId)}
-                    </span>
-                    {isOver && (
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
-                        style={{ background: "var(--red-dim)", color: "var(--red)" }}
-                      >
-                        Excedeu
-                      </span>
-                    )}
-                    {isWarning && (
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
-                        style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
-                      >
-                        Atenção
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className="money text-xs" style={{ color: isOver ? "var(--red)" : "var(--text-muted)" }}>
-                      {fmt(spent)}
-                    </span>
-                    <span className="text-xs" style={{ color: "var(--text-disabled)" }}>/</span>
-                    <span className="money text-xs" style={{ color: "var(--text-muted)" }}>
-                      {fmt(limit)}
-                    </span>
-                  </div>
-                </div>
+            {entries.map(
+              ({ categoryId, limit, spent, percent, isOver, isWarning }) => (
                 <div
-                  className="h-1.5 rounded-full overflow-hidden"
-                  style={{ background: "var(--bg-elevated)" }}
+                  key={categoryId}
+                  className="py-2.5"
+                  style={{ borderBottom: "1px solid var(--border-subtle)" }}
                 >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="text-sm truncate"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {getCategoryName(categoryId)}
+                      </span>
+                      {isOver && (
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                          style={{
+                            background: "var(--red-dim)",
+                            color: "var(--red)",
+                          }}
+                        >
+                          Excedeu
+                        </span>
+                      )}
+                      {isWarning && (
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                          style={{
+                            background: "var(--yellow-dim)",
+                            color: "var(--yellow)",
+                          }}
+                        >
+                          Atenção
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span
+                        className="money text-xs"
+                        style={{
+                          color: isOver ? "var(--red)" : "var(--text-muted)",
+                        }}
+                      >
+                        {fmt(spent)}
+                      </span>
+                      <span
+                        className="text-xs"
+                        style={{ color: "var(--text-disabled)" }}
+                      >
+                        /
+                      </span>
+                      <span
+                        className="money text-xs"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {fmt(limit)}
+                      </span>
+                    </div>
+                  </div>
                   <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${percent}%`,
-                      background: isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)",
-                    }}
-                  />
+                    className="h-1.5 rounded-full overflow-hidden"
+                    style={{ background: "var(--bg-elevated)" }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${percent}%`,
+                        background: isOver
+                          ? "var(--red)"
+                          : isWarning
+                          ? "var(--yellow)"
+                          : "var(--accent)",
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
 
           {/* ── Link → /goals ── */}
           <button
-            onClick={() => { router.push("/goals"); onClose(); }}
+            onClick={() => {
+              router.push("/goals");
+              onClose();
+            }}
             className="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all cursor-pointer"
-            style={{ background: "var(--bg-overlay)", border: "1px solid var(--border-subtle)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
+            style={{
+              background: "var(--bg-overlay)",
+              border: "1px solid var(--border-subtle)",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.borderColor = "var(--border-strong)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.borderColor = "var(--border-subtle)")
+            }
           >
-            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            <span
+              className="text-sm"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Gerenciar metas
             </span>
-            <FiArrowRight className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+            <FiArrowRight
+              className="h-4 w-4"
+              style={{ color: "var(--text-muted)" }}
+            />
           </button>
         </>
       )}

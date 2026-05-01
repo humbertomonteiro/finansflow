@@ -67,7 +67,7 @@ function ScopeOption({
   return (
     <button
       onClick={() => onSelect(scope)}
-      className="w-full text-left p-3.5 rounded-xl transition-all cursor-pointer"
+      className="w-full text-left p-3.5 rounded-sm transition-all cursor-pointer"
       style={{
         background: active ? "var(--accent-dim)" : "var(--bg-overlay)",
         border: active
@@ -77,7 +77,7 @@ function ScopeOption({
     >
       <div className="flex items-start gap-3">
         <div
-          className="w-4 h-4 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center"
+          className="w-4 h-4 rounded-sm border-2 mt-0.5 shrink-0 flex items-center justify-center"
           style={{
             borderColor: active ? "var(--accent)" : "var(--border-strong)",
             background: active ? "var(--accent)" : "transparent",
@@ -437,7 +437,10 @@ export const TransactionDetails = ({
       amountInput.reset(transaction.amount);
       const d = new Date(transaction.dueDate);
       setEditedDate(
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(d.getDate()).padStart(2, "0")}`
       );
     }
   }, [transaction?.id]);
@@ -515,7 +518,7 @@ export const TransactionDetails = ({
       }}
     >
       <div
-        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl animate-fade-in-scale"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-sm animate-fade-in-scale"
         style={{
           background: "var(--bg-elevated)",
           border: "1px solid var(--border-strong)",
@@ -546,7 +549,7 @@ export const TransactionDetails = ({
               </button>
             )}
             <div
-              className="w-2 h-2 rounded-full"
+              className="w-2 h-2 rounded-sm"
               style={{ background: isDeposit ? "var(--green)" : "var(--red)" }}
             />
             <h2
@@ -578,7 +581,7 @@ export const TransactionDetails = ({
         {step === "view" && (
           <div className="px-5 py-4 flex flex-col gap-4">
             <div
-              className="flex items-center justify-between p-4 rounded-xl"
+              className="flex items-center justify-between p-4 rounded-sm"
               style={{
                 background: isDeposit ? "var(--green-dim)" : "var(--red-dim)",
                 border: `1px solid ${
@@ -682,7 +685,7 @@ export const TransactionDetails = ({
 
             {isRecurring && (
               <div
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs"
                 style={{
                   background: "var(--accent-dim)",
                   color: "var(--accent-light)",

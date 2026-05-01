@@ -32,7 +32,7 @@ const Card = ({
       onKeyDown={
         isClickable ? (e) => e.key === "Enter" && onClick?.() : undefined
       }
-      className="relative flex flex-col gap-3 rounded-xl p-4 w-full overflow-hidden transition-all duration-200 group"
+      className="relative flex flex-col gap-3 rounded-sm p-4 w-full overflow-hidden transition-all duration-200 group"
       style={{
         background: highligth
           ? "linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(99,102,241,0.08) 100%)"
@@ -57,7 +57,7 @@ const Card = ({
       {/* Hover overlay — só aparece quando clicável */}
       {isClickable && (
         <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-sm"
           style={{ background: "rgba(255,255,255,0.03)" }}
         />
       )}

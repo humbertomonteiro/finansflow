@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FiHome,
-  FiList,
-  FiPlus,
-  FiTarget,
-} from "react-icons/fi";
+import { FiHome, FiList, FiPlus, FiTarget } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
 import { useState } from "react";
@@ -100,7 +95,7 @@ export const Aside = () => {
                   <li key={href}>
                     <Link
                       href={href}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all duration-150 group"
                       style={{
                         background: active
                           ? "var(--accent-dim)"
@@ -147,7 +142,7 @@ export const Aside = () => {
               <button
                 onClick={() => setShowForm(true)}
                 className="button button-primary w-full"
-                style={{ borderRadius: "var(--radius-md)" }}
+                style={{ borderRadius: "var(--radius-sm)" }}
               >
                 <FiPlus className="h-4 w-4" />
                 Nova Transação

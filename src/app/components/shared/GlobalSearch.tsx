@@ -328,7 +328,7 @@ export function GlobalSearch() {
               style={{
                 background: "var(--bg-elevated)",
                 border: "1px solid var(--border-strong)",
-                borderRadius: "var(--radius-xl)",
+                borderRadius: "var(--radius-sm)",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
                 maxHeight: "70vh",
               }}

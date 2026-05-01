@@ -1,4 +1,4 @@
-import { PayerTransactionUseCase } from "@/domain/usecases/transaction/PayerTransactionUseCase";
+import { PayerTransactionUseCase } from "@/domain/usecases/transaction/PayerTransactionUsecase";
 import { AccountRepositoryFirestore } from "@/infra/repositories/FirebaseAccountRepository";
 import { TransactionRepositoryFirestore } from "@/infra/repositories/FirebaseTransactionRepository";
 

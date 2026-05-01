@@ -52,7 +52,7 @@ export default function Performance() {
 
       {/* ── Resumo narrativo ──────────────────────── */}
       <div
-        className="p-5 rounded-xl"
+        className="p-5 rounded-sm"
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
@@ -194,7 +194,7 @@ export default function Performance() {
         </div>
       ) : (
         <div
-          className="p-8 rounded-xl text-center"
+          className="p-8 rounded-sm text-center"
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
@@ -219,7 +219,7 @@ export default function Performance() {
       {/* Gráfico histórico */}
       {monthlyMetrics && monthlyMetrics.labels.length > 0 && (
         <div
-          className="rounded-xl p-4 h-[320px]"
+          className="rounded-sm p-4 h-[320px]"
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",

@@ -18,7 +18,8 @@ export class Transaction implements ITransaction {
   public readonly dueDate: Date;
   public readonly description?: string;
   public readonly categoryId: string;
-  public readonly accountId: string;
+  public readonly accountId?: string;
+  public readonly creditCardId?: string;
   public readonly targetAccountId?: string;
   public readonly kind: TransactionKind;
   public readonly recurrence: IRecurrence;
@@ -32,6 +33,7 @@ export class Transaction implements ITransaction {
     this.description = props.description;
     this.categoryId = props.categoryId;
     this.accountId = props.accountId;
+    this.creditCardId = props.creditCardId;
     this.targetAccountId = props.targetAccountId;
     this.kind = props.kind;
     this.recurrence = props.recurrence;
@@ -69,6 +71,7 @@ export class Transaction implements ITransaction {
       description: props.description ?? this.description,
       categoryId: props.categoryId ?? this.categoryId,
       accountId: props.accountId ?? this.accountId,
+      creditCardId: props.creditCardId ?? this.creditCardId,
       targetAccountId: props.targetAccountId ?? this.targetAccountId,
       kind: props.kind ?? this.kind,
       recurrence: props.recurrence ?? this.recurrence,

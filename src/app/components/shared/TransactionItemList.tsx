@@ -95,7 +95,7 @@ export const TransactionItemList = ({
     }
     // Se há mais de uma conta, abre o seletor
     if (accounts && accounts.length > 1) {
-      setPickerAccountId(transaction.accountId);
+      setPickerAccountId(transaction.accountId ?? "");
       setShowAccountPicker(true);
     } else {
       setIsPaying(true);
@@ -191,7 +191,7 @@ export const TransactionItemList = ({
 
   return (
     <>
-      <li className="relative overflow-hidden rounded-xl select-none">
+      <li className="relative overflow-hidden rounded-sm select-none">
         {/* Fundo swipe */}
         {!isSelecting && (
           <div className="absolute inset-0 flex items-stretch pointer-events-none">
@@ -226,7 +226,7 @@ export const TransactionItemList = ({
 
         {/* Card principal */}
         <div
-          className={`relative flex flex-col border ${borderColor} ${bgColor} rounded-xl
+          className={`relative flex flex-col border ${borderColor} ${bgColor} rounded-sm
             transition-all duration-150 ease-out`}
           style={
             !isSelecting
@@ -301,7 +301,8 @@ export const TransactionItemList = ({
                 {isTransfer ? (
                   <span className="text-[0.7rem] bg-violet-900/40 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
                     <FiArrowRight className="h-2.5 w-2.5" />
-                    {getAccountName(transaction.accountId)} → {getAccountName(transaction.targetAccountId ?? "")}
+                    {getAccountName(transaction.accountId ?? "")} →{" "}
+                    {getAccountName(transaction.targetAccountId ?? "")}
                   </span>
                 ) : (
                   <span className="text-[0.7rem] bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">
@@ -406,7 +407,7 @@ export const TransactionItemList = ({
                       Transferência
                     </p>
                     <p className="text-gray-300 flex items-center gap-1">
-                      {getAccountName(transaction.accountId)}
+                      {getAccountName(transaction.accountId ?? "")}
                       <FiArrowRight className="h-3 w-3 text-violet-400 shrink-0" />
                       {getAccountName(transaction.targetAccountId ?? "")}
                     </p>
@@ -418,7 +419,9 @@ export const TransactionItemList = ({
                         Conta
                       </p>
                       <p className="text-gray-300">
-                        {getAccountName(transaction.accountId)}
+                        {transaction.creditCardId
+                          ? "💳 Cartão"
+                          : getAccountName(transaction.accountId ?? "")}
                       </p>
                     </div>
                     <div>

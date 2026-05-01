@@ -145,7 +145,7 @@ export default function DiagnosticoPage() {
           dueDate: d,
           label: "transfer",
           signedAmount: 0,
-          accountId: t.accountId,
+          accountId: t.accountId ?? "",
           targetAccountId: t.targetAccountId,
         });
         continue;
@@ -164,7 +164,7 @@ export default function DiagnosticoPage() {
           dueDate: o.dueDate,
           label: o.label,
           signedAmount: sign(t) * o.amount,
-          accountId: t.accountId,
+          accountId: t.accountId ?? "",
         });
       }
     }

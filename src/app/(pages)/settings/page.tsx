@@ -14,6 +14,7 @@ import {
   MdCheck,
 } from "react-icons/md";
 import { IoExitOutline } from "react-icons/io5";
+import { BsCreditCard2Front } from "react-icons/bs";
 import { FiAlertCircle, FiLoader, FiActivity } from "react-icons/fi";
 import {
   BalanceDiagnosticUsecase,
@@ -35,6 +36,7 @@ import { removeCategoryController } from "@/controllers/category/RemoveCategoryC
 type ActivePanel =
   | null
   | "accounts"
+  | "credit-cards"
   | "categories"
   | "balance"
   | "reset"
@@ -51,6 +53,9 @@ export default function Settings() {
     refreshAccounts,
     refreshCategories,
     updateAccount,
+    creditCards,
+    addCreditCard,
+    deleteCreditCard,
   } = useUser();
   const router = useRouter();
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
@@ -67,6 +72,16 @@ export default function Settings() {
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categorySuccess, setCategorySuccess] = useState<string | null>(null);
+
+  // --- Cartões de Crédito ---
+  const [newCardName, setNewCardName] = useState("");
+  const [newCardLimit, setNewCardLimit] = useState("");
+  const [newCardClosingDay, setNewCardClosingDay] = useState("");
+  const [newCardDueDay, setNewCardDueDay] = useState("");
+  const [newCardColor, setNewCardColor] = useState("#7c3aed");
+  const [cardError, setCardError] = useState<string | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
+  const [cardSuccess, setCardSuccess] = useState<string | null>(null);
 
   // --- Diagnóstico de Saldo ---
   const [diagnosticData, setDiagnosticData] = useState<
@@ -116,13 +131,14 @@ export default function Settings() {
 
   const togglePanel = (panel: ActivePanel) => {
     setActivePanel((prev) => (prev === panel ? null : panel));
-    // Limpa feedbacks ao trocar painel
     setAccountError(null);
     setAccountSuccess(null);
     setCategoryError(null);
     setCategorySuccess(null);
     setBalanceError(null);
     setBalanceSuccess(null);
+    setCardError(null);
+    setCardSuccess(null);
   };
 
   // ────────────────────────────────────────────
@@ -182,6 +198,87 @@ export default function Settings() {
       setAccountError("Erro ao remover conta.");
     } finally {
       setAccountLoading(false);
+    }
+  };
+
+  // ────────────────────────────────────────────
+  // CARTÕES DE CRÉDITO
+  // ────────────────────────────────────────────
+  const CARD_COLORS = [
+    { hex: "#7c3aed", label: "Roxo" },
+    { hex: "#2563eb", label: "Azul" },
+    { hex: "#16a34a", label: "Verde" },
+    { hex: "#dc2626", label: "Vermelho" },
+    { hex: "#d97706", label: "Âmbar" },
+    { hex: "#0e7490", label: "Ciano" },
+  ];
+
+  const handleCreateCreditCard = async () => {
+    setCardError(null);
+    setCardSuccess(null);
+
+    if (!newCardName.trim() || newCardName.trim().length < 3) {
+      setCardError("Nome deve ter ao menos 3 caracteres.");
+      return;
+    }
+    const limit = Number(newCardLimit.replace(",", ".").replace(/[^\d.]/g, ""));
+    if (isNaN(limit) || limit <= 0) {
+      setCardError("Informe um limite válido maior que zero.");
+      return;
+    }
+    const closingDay = Number(newCardClosingDay);
+    if (!closingDay || closingDay < 1 || closingDay > 28) {
+      setCardError("Dia de fechamento deve ser entre 1 e 28.");
+      return;
+    }
+    const dueDay = Number(newCardDueDay);
+    if (!dueDay || dueDay < 1 || dueDay > 28) {
+      setCardError("Dia de vencimento deve ser entre 1 e 28.");
+      return;
+    }
+    if (!user) return;
+
+    setCardLoading(true);
+    try {
+      await addCreditCard({
+        name: newCardName.trim(),
+        creditLimit: limit,
+        closingDay,
+        dueDay,
+        color: newCardColor,
+      });
+      setNewCardName("");
+      setNewCardLimit("");
+      setNewCardClosingDay("");
+      setNewCardDueDay("");
+      setNewCardColor("#7c3aed");
+      setCardSuccess(`Cartão "${newCardName.trim()}" criado!`);
+    } catch (error: any) {
+      const msg = error?.message?.includes("2 cartões")
+        ? "Limite de 2 cartões atingido."
+        : error?.message ?? "Erro ao criar cartão.";
+      setCardError(msg);
+    } finally {
+      setCardLoading(false);
+    }
+  };
+
+  const handleRemoveCreditCard = async (cardId: string, cardName: string) => {
+    if (
+      !confirm(
+        `Remover o cartão "${cardName}"? Esta ação não pode ser desfeita.`
+      )
+    )
+      return;
+    setCardLoading(true);
+    setCardError(null);
+    try {
+      await deleteCreditCard(cardId);
+      setCardSuccess(`Cartão "${cardName}" removido.`);
+    } catch {
+      setCardError("Erro ao remover cartão.");
+    } finally {
+      setCardLoading(false);
     }
   };
 
@@ -294,14 +391,14 @@ export default function Settings() {
       <BoxUser />
 
       <ul
-        className="text-gray-400 flex flex-col py-2 px-2 rounded-2xl"
+        className="text-gray-400 flex flex-col py-2 px-2 rounded-sm"
         style={{ background: "var(--bg-surface)" }}
       >
         {/* ── CONTAS ── */}
         <li>
           <button
             onClick={() => togglePanel("accounts")}
-            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
           >
             <span className="flex items-center gap-4">
               <MdOutlineAccountBalance className="h-5 w-5" />
@@ -314,7 +411,7 @@ export default function Settings() {
 
           {activePanel === "accounts" && (
             <div
-              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-4"
+              className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-4"
               style={{ background: "var(--bg-surface)" }}
             >
               {/* Lista de contas */}
@@ -323,7 +420,7 @@ export default function Settings() {
                   accounts.map((account) => (
                     <div
                       key={account.id}
-                      className="flex items-center justify-between bg-gray-900 rounded-lg px-4 py-3"
+                      className="flex items-center justify-between bg-gray-900 rounded-sm px-4 py-3"
                     >
                       <div>
                         <p className="text-gray-200 font-medium">
@@ -340,7 +437,7 @@ export default function Settings() {
                       <button
                         onClick={() => handleRemoveAccount(account)}
                         disabled={accountLoading}
-                        className="h-8 w-8 rounded-full bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
                       >
                         <MdDelete className="h-4 w-4" />
                       </button>
@@ -410,11 +507,194 @@ export default function Settings() {
           )}
         </li>
 
+        {/* ── CARTÕES DE CRÉDITO ── */}
+        <li>
+          <button
+            onClick={() => togglePanel("credit-cards")}
+            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+          >
+            <span className="flex items-center gap-4">
+              <BsCreditCard2Front className="h-5 w-5" />
+              Cartões de Crédito
+            </span>
+            <span className="text-xs text-gray-600">
+              {creditCards?.length ?? 0}/2
+            </span>
+          </button>
+
+          {activePanel === "credit-cards" && (
+            <div
+              className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-4"
+              style={{ background: "var(--bg-surface)" }}
+            >
+              {/* Lista de cartões */}
+              <div className="flex flex-col gap-2">
+                {creditCards && creditCards.length > 0 ? (
+                  creditCards.map((card) => (
+                    <div
+                      key={card.id}
+                      className="flex items-center justify-between rounded-sm px-4 py-3"
+                      style={{ background: "var(--bg-overlay)" }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0"
+                          style={{
+                            background: card.color + "33",
+                            border: `1px solid ${card.color}66`,
+                          }}
+                        >
+                          <BsCreditCard2Front
+                            className="h-4 w-4"
+                            style={{ color: card.color }}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-gray-200 font-medium text-sm">
+                            {card.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Limite:{" "}
+                            {card.creditLimit.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                            {" · "}Fecha dia {card.closingDay}
+                            {" · "}Vence dia {card.dueDay}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleRemoveCreditCard(card.id, card.name)
+                        }
+                        disabled={cardLoading}
+                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <MdDelete className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-2">
+                    Nenhum cartão cadastrado.
+                  </p>
+                )}
+              </div>
+
+              {/* Criar novo cartão */}
+              {(creditCards?.length ?? 0) < 2 && (
+                <div className="flex flex-col gap-2 border-t border-gray-700 pt-4">
+                  <p className="text-gray-400 text-sm font-medium">
+                    Novo cartão
+                  </p>
+                  <input
+                    className="input"
+                    type="text"
+                    placeholder="Nome do cartão (ex: Nubank, Inter)"
+                    value={newCardName}
+                    onChange={(e) => setNewCardName(e.target.value)}
+                  />
+                  <input
+                    className="input"
+                    type="text"
+                    placeholder="Limite de crédito (ex: 5.000,00)"
+                    value={newCardLimit}
+                    onChange={(e) => setNewCardLimit(e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-gray-500 text-xs mb-1">
+                        Dia de fechamento
+                      </p>
+                      <input
+                        className="input"
+                        type="number"
+                        min={1}
+                        max={28}
+                        placeholder="Ex: 5"
+                        value={newCardClosingDay}
+                        onChange={(e) => setNewCardClosingDay(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-xs mb-1">
+                        Dia de vencimento
+                      </p>
+                      <input
+                        className="input"
+                        type="number"
+                        min={1}
+                        max={28}
+                        placeholder="Ex: 25"
+                        value={newCardDueDay}
+                        onChange={(e) => setNewCardDueDay(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs mb-2">Cor do cartão</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {CARD_COLORS.map((c) => (
+                        <button
+                          key={c.hex}
+                          type="button"
+                          title={c.label}
+                          onClick={() => setNewCardColor(c.hex)}
+                          className="w-7 h-7 rounded-sm transition-all"
+                          style={{
+                            background: c.hex,
+                            outline:
+                              newCardColor === c.hex
+                                ? `2px solid white`
+                                : "none",
+                            outlineOffset: "2px",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {cardError && (
+                    <p className="text-red-400 text-xs flex items-center gap-1">
+                      <FiAlertCircle className="h-3 w-3" /> {cardError}
+                    </p>
+                  )}
+                  {cardSuccess && (
+                    <p className="text-green-400 text-xs flex items-center gap-1">
+                      <MdCheck className="h-3 w-3" /> {cardSuccess}
+                    </p>
+                  )}
+                  <button
+                    onClick={handleCreateCreditCard}
+                    disabled={cardLoading}
+                    className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold disabled:opacity-50"
+                  >
+                    {cardLoading ? (
+                      <span className="flex items-center gap-2">
+                        <FiLoader className="h-4 w-4 animate-spin" /> Criando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <MdAdd /> Criar Cartão
+                      </span>
+                    )}
+                  </button>
+                </div>
+              )}
+              {(creditCards?.length ?? 0) >= 2 && (
+                <p className="text-yellow-600 text-xs text-center">
+                  Limite de 2 cartões atingido.
+                </p>
+              )}
+            </div>
+          )}
+        </li>
+
         {/* ── CATEGORIAS ── */}
         <li>
           <button
             onClick={() => togglePanel("categories")}
-            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
           >
             <span className="flex items-center gap-4">
               <MdOutlineCategory className="h-5 w-5" />
@@ -427,7 +707,7 @@ export default function Settings() {
 
           {activePanel === "categories" && (
             <div
-              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-4"
+              className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-4"
               style={{ background: "var(--bg-surface)" }}
             >
               {/* Categorias padrão */}
@@ -439,7 +719,7 @@ export default function Settings() {
                   {defaultCategories.map((cat) => (
                     <span
                       key={cat.id}
-                      className="text-xs bg-gray-700 text-gray-400 px-3 py-1 rounded-full"
+                      className="text-xs bg-gray-700 text-gray-400 px-3 py-1 rounded-sm"
                     >
                       {cat.name}
                     </span>
@@ -457,7 +737,7 @@ export default function Settings() {
                     {userCreatedCategories.map((cat) => (
                       <div
                         key={cat.id}
-                        className="flex items-center justify-between bg-gray-900 rounded-lg px-4 py-2"
+                        className="flex items-center justify-between bg-gray-900 rounded-sm px-4 py-2"
                       >
                         <span className="text-gray-200 text-sm">
                           {cat.name}
@@ -465,7 +745,7 @@ export default function Settings() {
                         <button
                           onClick={() => handleRemoveCategory(cat)}
                           disabled={categoryLoading}
-                          className="h-7 w-7 rounded-full bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                          className="h-7 w-7 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
                         >
                           <MdDelete className="h-3 w-3" />
                         </button>
@@ -524,7 +804,7 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("balance")}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
           >
             <MdOutlineBalance className="h-5 w-5" />
             Ajustar Saldo
@@ -532,7 +812,7 @@ export default function Settings() {
 
           {activePanel === "balance" && (
             <div
-              className="rounded-xl mx-2 my-2 p-4 flex flex-col gap-3"
+              className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-3"
               style={{ background: "var(--bg-surface)" }}
             >
               <p className="text-gray-400 text-sm">
@@ -633,7 +913,7 @@ export default function Settings() {
               togglePanel("diagnostic");
               if (activePanel !== "diagnostic") runDiagnostic();
             }}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
           >
             <FiActivity className="h-5 w-5" />
             Diagnóstico de Saldo
@@ -641,7 +921,7 @@ export default function Settings() {
 
           {activePanel === "diagnostic" && (
             <div
-              className="rounded-xl mx-2 mb-2 p-4 flex flex-col gap-4"
+              className="rounded-sm mx-2 mb-2 p-4 flex flex-col gap-4"
               style={{ background: "var(--bg-surface)" }}
             >
               <p className="text-gray-400 text-sm">
@@ -667,7 +947,7 @@ export default function Settings() {
                     return (
                       <div
                         key={d.accountId}
-                        className="rounded-xl p-4 flex flex-col gap-2"
+                        className="rounded-sm p-4 flex flex-col gap-2"
                         style={{ background: "var(--bg-surface)" }}
                       >
                         <p className="text-gray-200 font-semibold text-sm">
@@ -726,13 +1006,13 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("reset")}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-xl"
+            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
           >
             <MdOutlineReplay className="h-5 w-5" />
             Começar do zero
           </button>
           {activePanel === "reset" && (
-            <div className="bg-gray-800 rounded-xl mx-2 mb-2 p-4">
+            <div className="bg-gray-800 rounded-sm mx-2 mb-2 p-4">
               <p className="text-red-400 text-sm mb-3">
                 Atenção: Esta ação irá apagar todas as suas transações e contas.
                 Esta operação é irreversível.
@@ -750,7 +1030,7 @@ export default function Settings() {
         {/* ── SAIR ── */}
         <li
           onClick={handleLogout}
-          className="flex gap-4 p-4 hover:bg-red-800 hover:text-gray-200 transition-all cursor-pointer hover:rounded-xl"
+          className="flex gap-4 p-4 hover:bg-red-800 hover:text-gray-200 transition-all cursor-pointer hover:rounded-sm"
         >
           <div className="flex items-center gap-4">
             <IoExitOutline className="h-5 w-5" />

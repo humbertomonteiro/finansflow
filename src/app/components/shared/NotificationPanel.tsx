@@ -239,7 +239,7 @@ export function NotificationPanel() {
               maxHeight: "70vh",
               background: "var(--bg-elevated)",
               border: "1px solid var(--border-strong)",
-              borderRadius: "var(--radius-xl)",
+              borderRadius: "var(--radius-sm)",
               boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
             }}
           >

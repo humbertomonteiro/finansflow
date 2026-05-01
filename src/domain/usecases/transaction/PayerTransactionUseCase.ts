@@ -55,15 +55,17 @@ export class PayerTransactionUseCase {
 
       if (transaction.type === TransactionTypes.TRANSFER) {
         // Transferência: debita da origem e credita no destino
-        await this.attBalance(paymentAmount, TransactionTypes.WITHDRAW, transaction.accountId, !wasPaid);
+        await this.attBalance(paymentAmount, TransactionTypes.WITHDRAW, transaction.accountId!, !wasPaid);
         if (transaction.targetAccountId) {
           await this.attBalance(paymentAmount, TransactionTypes.DEPOSIT, transaction.targetAccountId, !wasPaid);
         }
+      } else if (transaction.creditCardId) {
+        // Compra no cartão de crédito: não afeta saldo bancário
       } else {
         // Conta a usar: ao pagar, usa paidAccountId ou a original; ao desfazer, usa a que foi registrada
         const accountToAdjust = !wasPaid
-          ? (paidAccountId ?? transaction.accountId)
-          : (existingPaidAccountId ?? transaction.accountId);
+          ? (paidAccountId ?? transaction.accountId!)
+          : (existingPaidAccountId ?? transaction.accountId!);
         await this.attBalance(paymentAmount, transaction.type, accountToAdjust, !wasPaid);
       }
     } else if (
@@ -91,13 +93,14 @@ export class PayerTransactionUseCase {
         paidAccountId,
       });
 
-      // Atualizar saldo da conta
-      await this.attBalance(
-        paymentAmount,
-        transaction.type,
-        paidAccountId ?? transaction.accountId,
-        true
-      );
+      if (!transaction.creditCardId) {
+        await this.attBalance(
+          paymentAmount,
+          transaction.type,
+          paidAccountId ?? transaction.accountId!,
+          true
+        );
+      }
     } else {
       console.warn(
         `No payment record found for ${month}/${year} and transaction is not FIXED or INSTALLMENT`

@@ -23,7 +23,7 @@ interface FormErrors {
 }
 
 export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
-  const { categories, accounts, addTransaction, updateTransaction, refreshAccounts } = useUser();
+  const { categories, accounts, creditCards, addTransaction, updateTransaction, refreshAccounts } = useUser();
 
   const [showInstallment, setShowInstallment] = useState(true);
   const [type, setType] = useState<TransactionTypes>(TransactionTypes.DEPOSIT);
@@ -32,16 +32,19 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [markAsPaid, setMarkAsPaid] = useState(false);
+  const [selectedSource, setSelectedSource] = useState(""); // "acc_<id>" | "cc_<id>"
 
   const amountInput = useAmountInput();
 
   const isDeposit = type === TransactionTypes.DEPOSIT;
   const isTransfer = type === TransactionTypes.TRANSFER;
+  const isCreditCardSelected = selectedSource.startsWith("cc_");
 
   const handleTypeChange = (selected: TransactionTypes) => {
     setType(selected);
     setErrors({});
     setMarkAsPaid(false);
+    setSelectedSource("");
   };
 
   const getKindAndRecurrence = (
@@ -121,9 +124,16 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     // ── Receita / Despesa ────────────────────────────────────────────
     const description = String(formData.get("description") || "").trim();
     const categoryId = String(formData.get("categoryId") || "");
-    const accountId = String(formData.get("accountId") || "");
     const isFixed = formData.get("fixed") === "on";
     const installments = Number(formData.get("installments") || 1);
+
+    let accountId: string | undefined;
+    let creditCardId: string | undefined;
+    if (selectedSource.startsWith("acc_")) {
+      accountId = selectedSource.slice(4);
+    } else if (selectedSource.startsWith("cc_")) {
+      creditCardId = selectedSource.slice(3);
+    }
 
     const newErrors: FormErrors = {};
     if (!description.trim()) newErrors.description = "Descrição é obrigatória";
@@ -131,7 +141,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
     if (!amount || isNaN(amount) || amount <= 0) newErrors.amount = "Informe um valor válido maior que zero";
     if (!dueDate) newErrors.dueDate = "Data de vencimento é obrigatória";
     if (!categoryId) newErrors.categoryId = "Selecione uma categoria";
-    if (!accountId) newErrors.accountId = "Selecione uma conta";
+    if (!selectedSource) newErrors.accountId = "Selecione uma conta ou cartão";
 
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
@@ -146,7 +156,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
       amount,
       dueDate: new Date(year, month - 1, day),
       categoryId,
-      accountId,
+      ...(accountId && { accountId }),
+      ...(creditCardId && { creditCardId }),
       description,
       recurrence,
       kind,
@@ -157,7 +168,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
       if (created) {
         addTransaction(created);
-        if (markAsPaid) {
+        if (markAsPaid && !creditCardId) {
           try {
             const paidTx = await payerTransactionController(created.id, year, month, accountId);
             if (paidTx) updateTransaction(paidTx);
@@ -325,17 +336,25 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
             <label>
               <p className="text-gray-500 text-xs ml-1 mb-1">
-                Conta <span className="text-red-400">*</span>
+                {isDeposit ? "Conta" : "Conta / Cartão"} <span className="text-red-400">*</span>
               </p>
               <select
                 className={`input ${errors.accountId ? "border-red-500" : ""}`}
-                name="accountId"
+                value={selectedSource}
+                onChange={(e) => setSelectedSource(e.target.value)}
                 disabled={isLoading}
               >
                 <option value="">Selecione uma conta</option>
                 {accounts?.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
+                  <option key={a.id} value={`acc_${a.id}`}>{a.name}</option>
                 ))}
+                {!isDeposit && creditCards && creditCards.length > 0 && (
+                  <optgroup label="Cartões de Crédito">
+                    {creditCards.map((c) => (
+                      <option key={c.id} value={`cc_${c.id}`}>💳 {c.name}</option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
               {errors.accountId && (
                 <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
@@ -461,9 +480,14 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
           </>
         )}
 
-        {/* Toggle já pago/recebido/transferido */}
+        {/* Toggle já pago/recebido/transferido — hidden for credit card purchases */}
+        {isCreditCardSelected && (
+          <p className="text-xs px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text-muted)" }}>
+            Compras no cartão são registradas na fatura. Pague a fatura em Cartões.
+          </p>
+        )}
         <div
-          className="flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-all"
+          className={`flex items-center justify-between px-3 py-3 rounded-xl cursor-pointer transition-all ${isCreditCardSelected ? "hidden" : ""}`}
           style={{
             background: markAsPaid
               ? isDeposit

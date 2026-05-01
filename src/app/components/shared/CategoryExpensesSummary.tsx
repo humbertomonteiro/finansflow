@@ -28,7 +28,7 @@ export const CategoryExpensesSummary = ({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
+      className="rounded-sm overflow-hidden"
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
