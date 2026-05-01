@@ -57,8 +57,11 @@ export class TransactionRepositoryFirestore
     transaction: Partial<Transaction>
   ): Promise<Transaction> {
     const docRef = doc(db, this.collection, id);
-    const updateData = {
-      ...transaction,
+
+    const base = transaction.toJSON ? transaction.toJSON() : { ...transaction };
+
+    const updateData: Record<string, unknown> = {
+      ...base,
       dueDate:
         transaction.dueDate instanceof Date
           ? Timestamp.fromDate(transaction.dueDate)
@@ -77,6 +80,11 @@ export class TransactionRepositoryFirestore
           }))
         : undefined,
     };
+
+    // Firestore rejeita campos com valor undefined
+    Object.keys(updateData).forEach((k) => {
+      if (updateData[k] === undefined) delete updateData[k];
+    });
 
     await setDoc(docRef, updateData, { merge: true });
 
