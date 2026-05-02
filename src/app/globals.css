@@ -5,9 +5,9 @@
 :root {
   /* Backgrounds */
   --bg-base: #000;
-  --bg-surface: #070707;
+  --bg-surface: #0a0a0a;
   --bg-elevated: #121212;
-  --bg-overlay: #0a0a0a;
+  --bg-overlay: #0c0c0c;
   --bg-hover: #1e293b;
 
   /* Borders */
