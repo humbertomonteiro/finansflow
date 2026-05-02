@@ -4,7 +4,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col lg:flex-row overflow-x-hidden bg-red-500">
       <Aside />
-      <main className="flex-1 bg-black min-h-screen pt-18 lg:pt-16 lg:pl-[263px] px-2 sm:px-6 pb-20 lg:pb-6 overflow-x-hidden">
+      <main
+        className="flex-1 min-h-screen pt-18 lg:pt-16 lg:pl-[263px] px-2 sm:px-6 pb-20 lg:pb-6 overflow-x-hidden"
+        style={{ background: "var(--bg-base)" }}
+      >
         {children}
       </main>
     </div>

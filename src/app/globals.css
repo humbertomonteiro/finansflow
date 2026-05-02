@@ -4,17 +4,17 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-base: #000;
-  --bg-surface: #0a0a0a;
-  --bg-elevated: #121212;
-  --bg-overlay: #0c0c0c;
+  --bg-base: #0a0a0a;
+  --bg-surface: #000;
+  --bg-elevated: #010101;
+  --bg-overlay: #050505;
   --bg-hover: #1e293b;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --border-accent: rgba(99, 102, 241, 0.4);
+  --border-subtle: rgba(255, 255, 255, 0.171);
+  --border-default: rgba(255, 255, 255, 0.205);
+  --border-strong: rgba(255, 255, 255, 0.253);
+  --border-accent: rgba(99, 101, 241, 0.459);
 
   /* Brand */
   --accent: #6366f1;
