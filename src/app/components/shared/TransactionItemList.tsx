@@ -5,7 +5,9 @@ import { createPortal } from "react-dom";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { FiArrowRight } from "react-icons/fi";
+import { BsCreditCard2Front } from "react-icons/bs";
 import { useUser } from "@/app/hooks/useUser";
+import Link from "next/link";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { TransactionDetails } from "./TransactionDetails";
 import { format } from "date-fns";
@@ -145,7 +147,7 @@ export const TransactionItemList = ({
 
   const onTouchEnd = async () => {
     if (isSelecting) return;
-    if (swipeAction === "pay" && (index !== -1 || isFixed)) {
+    if (swipeAction === "pay" && (index !== -1 || isFixed) && !transaction.creditCardId) {
       setIsPaying(true);
       try {
         await payTransaction(transaction.id);
@@ -281,14 +283,19 @@ export const TransactionItemList = ({
                 <p className="text-gray-200 text-sm font-medium truncate">
                   {transaction.description || "Sem descrição"}
                 </p>
-                {isOverdue && (
+                {isOverdue && !transaction.creditCardId && (
                   <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-red-900/70 text-red-400 font-semibold flex items-center gap-1">
                     <FiClock className="h-2.5 w-2.5" /> Atrasado
                   </span>
                 )}
-                {isNearby && (
+                {isNearby && !transaction.creditCardId && (
                   <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-yellow-900/60 text-yellow-400 font-semibold">
                     Vence em breve
+                  </span>
+                )}
+                {transaction.creditCardId && (
+                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-gray-800 text-gray-500 flex items-center gap-1">
+                    <BsCreditCard2Front className="h-2.5 w-2.5" /> Cartão
                   </span>
                 )}
                 {payment?.isPaid && (
@@ -348,30 +355,31 @@ export const TransactionItemList = ({
               )}
             </div>
 
-            {/* Botão pagar — oculto em modo seleção */}
+            {/* Botão pagar / link cartão — oculto em modo seleção */}
             {!isSelecting && (
-              <button
-                onClick={handlePay}
-                disabled={(index === -1 && !isFixed) || isPaying}
-                title={
-                  payment?.isPaid ? "Desfazer pagamento" : "Marcar como pago"
-                }
-                className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center
-                  transition-all duration-200 cursor-pointer
-                  disabled:opacity-30 disabled:cursor-not-allowed
-                  ${
-                    payment?.isPaid
-                      ? "bg-violet-700 hover:bg-violet-600 text-white"
-                      : "bg-gray-700 hover:bg-gray-600 text-gray-400"
-                  }
-                  ${isPaying ? "animate-pulse" : ""}`}
-              >
-                {payment?.isPaid ? (
-                  <FiCheck className="h-4 w-4" />
-                ) : (
-                  <FiX className="h-4 w-4" />
-                )}
-              </button>
+              transaction.creditCardId ? (
+                <Link
+                  href="/credit-cards"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Ver cartão de crédito"
+                  className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-700 hover:bg-gray-600"
+                >
+                  <BsCreditCard2Front className="h-4 w-4 text-gray-400" />
+                </Link>
+              ) : (
+                <button
+                  onClick={handlePay}
+                  disabled={(index === -1 && !isFixed) || isPaying}
+                  title={payment?.isPaid ? "Desfazer pagamento" : "Marcar como pago"}
+                  className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center
+                    transition-all duration-200 cursor-pointer
+                    disabled:opacity-30 disabled:cursor-not-allowed
+                    ${payment?.isPaid ? "bg-violet-700 hover:bg-violet-600 text-white" : "bg-gray-700 hover:bg-gray-600 text-gray-400"}
+                    ${isPaying ? "animate-pulse" : ""}`}
+                >
+                  {payment?.isPaid ? <FiCheck className="h-4 w-4" /> : <FiX className="h-4 w-4" />}
+                </button>
+              )
             )}
           </div>
 

@@ -26,7 +26,7 @@ const mobileNavItems = navItems.filter((item) => item.href !== "/settings");
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
   const pathname = usePathname();
-  const { user, overdueTransactions, nearbyTransactions } = useUser();
+  const { user, overdueTransactions, nearbyTransactions, ccInvoiceAlerts } = useUser();
 
   const { BellButton, Panel: NotifPanel } = NotificationPanel();
   const {
@@ -39,10 +39,11 @@ export const Aside = () => {
 
   const overdueCount = overdueTransactions?.length ?? 0;
   const nearbyCount = nearbyTransactions?.length ?? 0;
+  const ccAlertCount = ccInvoiceAlerts?.length ?? 0;
 
   const getBadge = (href: string): number => {
     if (href === "/dashboard" || href === "/transactions")
-      return overdueCount + nearbyCount;
+      return overdueCount + nearbyCount + ccAlertCount;
     return 0;
   };
 

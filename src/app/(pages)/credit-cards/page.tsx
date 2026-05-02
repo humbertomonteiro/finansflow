@@ -12,6 +12,9 @@ import { BsCreditCard2Front } from "react-icons/bs";
 import { FiChevronDown, FiChevronUp, FiCalendar, FiPlus, FiTrash2 } from "react-icons/fi";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CategoryExpensesChart } from "@/app/components/shared/CategoryExpensesChart";
+import { ICategory } from "@/domain/interfaces/category/ICategory";
+import type { CategoryExpensesSummary } from "@/domain/usecases/transaction/CalculateCategoryExpensesUsecase";
 
 const CARD_COLORS = [
   { hex: "#7c3aed", label: "Roxo" },
@@ -415,10 +418,11 @@ function InstallmentsTracker({
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-2xl overflow-y-auto"
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
+        maxHeight: "700px",
       }}
     >
       {/* Header */}
@@ -562,6 +566,83 @@ function InstallmentsTracker({
   );
 }
 
+// ── Gráfico de categorias por cartão ─────────────────────────────────────────
+function CardCategoryChart({
+  card,
+  transactions,
+  categories,
+}: {
+  card: ICreditCard;
+  transactions: ITransaction[];
+  categories: ICategory[];
+}) {
+  const { start, end } = getBillingPeriod(card.closingDay);
+
+  const cardExpenses = useMemo<CategoryExpensesSummary>(() => {
+    const byCategory: Record<string, { name: string; amount: number }> = {};
+
+    for (const t of transactions) {
+      if (t.creditCardId !== card.id) continue;
+      if (t.type !== TransactionTypes.WITHDRAW) continue;
+      const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+
+      t.paymentHistory.forEach((p, idx) => {
+        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1))
+          return;
+        const d = new Date(p.dueDate);
+        if (d < start || d >= end) return;
+        const catId = t.categoryId || "uncategorized";
+        const cat = categories.find((c) => c.id === catId);
+        const catName = cat?.name ?? "Sem categoria";
+        if (!byCategory[catId]) byCategory[catId] = { name: catName, amount: 0 };
+        byCategory[catId].amount += p.amount;
+      });
+    }
+
+    const totalExpenses = Object.values(byCategory).reduce(
+      (s, c) => s + c.amount,
+      0
+    );
+    const expenses = Object.entries(byCategory)
+      .map(([categoryId, { name, amount }]) => ({
+        categoryId,
+        categoryName: name,
+        amount,
+        percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return { expenses, totalExpenses };
+  }, [transactions, card.id, categories, start, end]);
+
+  return (
+    <div
+      className="rounded-2xl p-5 flex flex-col gap-4"
+      style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+      }}
+    >
+      <p
+        className="text-[10px] font-semibold uppercase tracking-wider"
+        style={{ color: "var(--text-disabled)" }}
+      >
+        Gastos por categoria · {fmtMonth(start)} {fmtMonth(start) !== fmtMonth(new Date(end.getTime() - 1)) ? `→ ${fmtMonth(new Date(end.getTime() - 1))}` : ""}
+      </p>
+      {cardExpenses.expenses.length === 0 ? (
+        <p
+          className="text-sm text-center py-6"
+          style={{ color: "var(--text-disabled)" }}
+        >
+          Nenhum gasto nesta fatura
+        </p>
+      ) : (
+        <CategoryExpensesChart dataCategoryExpenses={cardExpenses} />
+      )}
+    </div>
+  );
+}
+
 // ── Formulário de criação de cartão ──────────────────────────────────────────
 function CreateCardForm({ onCreated }: { onCreated: () => void }) {
   const { addCreditCard } = useUser();
@@ -671,7 +752,7 @@ function CreateCardForm({ onCreated }: { onCreated: () => void }) {
 
 // ── Página ────────────────────────────────────────────────────────────────────
 export default function CreditCardsPage() {
-  const { creditCards, allTransactions, deleteCreditCard } = useUser();
+  const { creditCards, allTransactions, deleteCreditCard, categories } = useUser();
   const transactions = allTransactions ?? [];
   const [showForm, setShowForm] = useState(false);
 
@@ -728,17 +809,51 @@ export default function CreditCardsPage() {
           </div>
         )
       ) : (
-        <div className="flex flex-col gap-6">
-          {creditCards.map((card) => (
-            <div key={card.id} className="flex flex-col gap-3">
-              <CardBillView
-                card={card}
-                transactions={transactions}
-                onDelete={() => handleDelete(card.id, card.name)}
-              />
-              <InstallmentsTracker card={card} transactions={transactions} />
-            </div>
-          ))}
+        <div className="flex flex-col gap-8">
+          {creditCards.map((card) => {
+            const hasInstallments = transactions.some(
+              (t) =>
+                t.creditCardId === card.id &&
+                t.kind === TransactionKind.INSTALLMENT &&
+                t.type === TransactionTypes.WITHDRAW
+            );
+            return (
+              <div
+                key={card.id}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-3"
+              >
+                {/* Col 1, Row 1: Fatura */}
+                <CardBillView
+                  card={card}
+                  transactions={transactions}
+                  onDelete={() => handleDelete(card.id, card.name)}
+                />
+
+                {/* Col 2, Rows 1-2: Parcelamentos (spans both rows) */}
+                {hasInstallments ? (
+                  <div className="lg:row-span-2">
+                    <InstallmentsTracker card={card} transactions={transactions} />
+                  </div>
+                ) : (
+                  /* Sem parcelamentos: categoria ocupa col 2 ao lado da fatura */
+                  <CardCategoryChart
+                    card={card}
+                    transactions={transactions}
+                    categories={categories ?? []}
+                  />
+                )}
+
+                {/* Col 1, Row 2: Categoria (só quando há parcelamentos) */}
+                {hasInstallments && (
+                  <CardCategoryChart
+                    card={card}
+                    transactions={transactions}
+                    categories={categories ?? []}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

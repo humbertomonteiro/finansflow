@@ -14,6 +14,16 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import { TransactionRemovalScope } from "@/domain/enums/transaction/TransactionRemovalScope";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
+import { getBillingPeriod } from "@/utils/getBillingPeriod";
+
+export interface CcInvoiceAlert {
+  cardId: string;
+  cardName: string;
+  cardColor: string;
+  dueDate: Date;
+  amount: number;
+  status: "overdue" | "nearby";
+}
 
 import { listAccountByUserController } from "@/controllers/account/ListAccountByUserController";
 import { listCategoryController } from "@/controllers/category/ListCategoryController";
@@ -106,6 +116,7 @@ interface UserContextType {
   updateCreditCard: (cardId: string, props: Partial<Omit<ICreditCard, "id" | "userId">>) => Promise<void>;
   deleteCreditCard: (cardId: string) => Promise<void>;
   refreshCreditCards: () => Promise<void>;
+  ccInvoiceAlerts: CcInvoiceAlert[];
 }
 
 export const UserContext = createContext<UserContextType>({
@@ -151,6 +162,7 @@ export const UserContext = createContext<UserContextType>({
   updateCreditCard: async () => {},
   deleteCreditCard: async () => {},
   refreshCreditCards: async () => {},
+  ccInvoiceAlerts: [],
 });
 
 type FiltersTransactios = "all" | "paid" | "unpaid" | "nearby" | "overdue";
@@ -189,6 +201,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     useState<CategoryExpensesSummary | null>(null);
   const [goals, setGoals] = useState<IGoal[] | null>(null);
   const [creditCards, setCreditCards] = useState<ICreditCard[] | null>(null);
+  const [ccInvoiceAlerts, setCcInvoiceAlerts] = useState<CcInvoiceAlert[]>([]);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -319,6 +332,45 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     setProjectedBalance(currentBalance + pending);
   }, [allTransactions, currentBalance, year, month]);
+
+  // Alertas de fatura de cartão de crédito (próximas / vencidas)
+  useEffect(() => {
+    if (!creditCards || !allTransactions) { setCcInvoiceAlerts([]); return; }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const alerts: CcInvoiceAlert[] = [];
+
+    for (const card of creditCards) {
+      const { start, end } = getBillingPeriod(card.closingDay);
+      let bill = 0;
+
+      for (const t of allTransactions) {
+        if (t.creditCardId !== card.id) continue;
+        if (t.type !== TransactionTypes.WITHDRAW) continue;
+        const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+        t.paymentHistory.forEach((p, idx) => {
+          if (excluded.has(idx + 1)) return;
+          const d = new Date(p.dueDate);
+          if (d >= start && d < end) bill += p.amount;
+        });
+      }
+
+      if (bill <= 0) continue;
+
+      const dueDate = new Date(end.getFullYear(), end.getMonth(), card.dueDay);
+      dueDate.setHours(0, 0, 0, 0);
+      const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
+
+      if (days < 0) {
+        alerts.push({ cardId: card.id, cardName: card.name, cardColor: card.color, dueDate, amount: bill, status: "overdue" });
+      } else if (days <= 5) {
+        alerts.push({ cardId: card.id, cardName: card.name, cardColor: card.color, dueDate, amount: bill, status: "nearby" });
+      }
+    }
+
+    setCcInvoiceAlerts(alerts);
+  }, [allTransactions, creditCards]);
 
   const logout = async () => {
     setLoading(true);
@@ -527,8 +579,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       );
 
       setTransactions(transactions);
-      setNearbyTransactions(nearbyTransaction);
-      setOverdueTransactions(overdueTransaction);
+      // Transações de CC não são obrigações diretas — excluir de nearby/overdue
+      setNearbyTransactions(nearbyTransaction.filter((t) => !t.creditCardId));
+      setOverdueTransactions(overdueTransaction.filter((t) => !t.creditCardId));
       setPaidTransactions(paidTransaction);
       setUnpaidTransactions(unpaidTransaction);
 
@@ -841,6 +894,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         updateCreditCard,
         deleteCreditCard,
         refreshCreditCards,
+        ccInvoiceAlerts,
       }}
     >
       {children}

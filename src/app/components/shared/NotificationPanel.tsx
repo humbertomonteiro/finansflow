@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useUser } from "@/app/hooks/useUser";
 import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
+import { CcInvoiceAlert } from "@/app/contexts/UserContext";
 import { FiBell, FiX, FiAlertCircle, FiClock, FiCheck } from "react-icons/fi";
+import { BsCreditCard2Front } from "react-icons/bs";
+import Link from "next/link";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -133,9 +136,58 @@ function NotifItem({ transaction, onPay, paying }: NotifItemProps) {
   );
 }
 
+// ── Item de fatura de cartão ────────────────────────────────────
+function InvoiceNotifItem({ alert }: { alert: CcInvoiceAlert }) {
+  const days = daysFromToday(alert.dueDate);
+  const isOverdue = alert.status === "overdue";
+  const isToday = days === 0;
+  const fmt = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <div
+      className="flex items-start gap-3 px-4 py-3 transition-all"
+      style={{ borderBottom: "1px solid var(--border-subtle)" }}
+    >
+      <div
+        className="w-1.5 self-stretch rounded-full shrink-0 mt-0.5"
+        style={{ background: isOverdue ? "var(--red)" : isToday ? "var(--yellow)" : "var(--yellow)" }}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <BsCreditCard2Front className="h-3 w-3 shrink-0" style={{ color: alert.cardColor }} />
+          <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+            Fatura {alert.cardName}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="money text-xs" style={{ color: "var(--red)" }}>
+            {fmt(alert.amount)}
+          </span>
+          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>•</span>
+          <span className="text-xs" style={{ color: isOverdue ? "var(--red)" : "var(--yellow)" }}>
+            {getDueLabel(days)}
+          </span>
+        </div>
+      </div>
+      <Link
+        href="/credit-cards"
+        className="shrink-0 text-[0.65rem] px-2 py-1 rounded-lg font-medium transition-all"
+        style={{
+          background: "var(--accent-dim)",
+          color: "var(--accent-light)",
+          border: "1px solid var(--border-accent)",
+        }}
+      >
+        Ver cartão
+      </Link>
+    </div>
+  );
+}
+
 // ── Componente principal ────────────────────────────────────────
 export function NotificationPanel() {
-  const { overdueTransactions, nearbyTransactions, payTransaction } = useUser();
+  const { overdueTransactions, nearbyTransactions, payTransaction, ccInvoiceAlerts } = useUser();
   const [open, setOpen] = useState(false);
   const [paying, setPaying] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -145,7 +197,9 @@ export function NotificationPanel() {
 
   const overdue = overdueTransactions ?? [];
   const nearby = nearbyTransactions ?? [];
-  const total = overdue.length + nearby.length;
+  const overdueInvoices = ccInvoiceAlerts.filter((a) => a.status === "overdue");
+  const nearbyInvoices = ccInvoiceAlerts.filter((a) => a.status === "nearby");
+  const total = overdue.length + nearby.length + ccInvoiceAlerts.length;
 
   // Badge no título da aba
   useEffect(() => {
@@ -306,7 +360,7 @@ export function NotificationPanel() {
               ) : (
                 <>
                   {/* Em atraso */}
-                  {overdue.length > 0 && (
+                  {(overdue.length > 0 || overdueInvoices.length > 0) && (
                     <>
                       <div
                         className="flex items-center gap-2 px-4 py-2 sticky top-0"
@@ -315,39 +369,25 @@ export function NotificationPanel() {
                           borderBottom: "1px solid var(--border-subtle)",
                         }}
                       >
-                        <FiAlertCircle
-                          className="h-3.5 w-3.5"
-                          style={{ color: "var(--red)" }}
-                        />
-                        <span
-                          className="text-xs font-semibold uppercase tracking-wider"
-                          style={{ color: "var(--red)" }}
-                        >
+                        <FiAlertCircle className="h-3.5 w-3.5" style={{ color: "var(--red)" }} />
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--red)" }}>
                           Em atraso
                         </span>
-                        <span
-                          className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                          style={{
-                            background: "var(--red-dim)",
-                            color: "var(--red)",
-                          }}
-                        >
-                          {overdue.length}
+                        <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full" style={{ background: "var(--red-dim)", color: "var(--red)" }}>
+                          {overdue.length + overdueInvoices.length}
                         </span>
                       </div>
                       {overdue.map((t) => (
-                        <NotifItem
-                          key={t.id}
-                          transaction={t}
-                          onPay={handlePay}
-                          paying={paying}
-                        />
+                        <NotifItem key={t.id} transaction={t} onPay={handlePay} paying={paying} />
+                      ))}
+                      {overdueInvoices.map((a) => (
+                        <InvoiceNotifItem key={`inv-${a.cardId}`} alert={a} />
                       ))}
                     </>
                   )}
 
                   {/* Vencendo em breve */}
-                  {nearby.length > 0 && (
+                  {(nearby.length > 0 || nearbyInvoices.length > 0) && (
                     <>
                       <div
                         className="flex items-center gap-2 px-4 py-2 sticky top-0"
@@ -356,33 +396,19 @@ export function NotificationPanel() {
                           borderBottom: "1px solid var(--border-subtle)",
                         }}
                       >
-                        <FiClock
-                          className="h-3.5 w-3.5"
-                          style={{ color: "var(--yellow)" }}
-                        />
-                        <span
-                          className="text-xs font-semibold uppercase tracking-wider"
-                          style={{ color: "var(--yellow)" }}
-                        >
+                        <FiClock className="h-3.5 w-3.5" style={{ color: "var(--yellow)" }} />
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--yellow)" }}>
                           Vencendo em breve
                         </span>
-                        <span
-                          className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                          style={{
-                            background: "var(--yellow-dim)",
-                            color: "var(--yellow)",
-                          }}
-                        >
-                          {nearby.length}
+                        <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full" style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}>
+                          {nearby.length + nearbyInvoices.length}
                         </span>
                       </div>
                       {nearby.map((t) => (
-                        <NotifItem
-                          key={t.id}
-                          transaction={t}
-                          onPay={handlePay}
-                          paying={paying}
-                        />
+                        <NotifItem key={t.id} transaction={t} onPay={handlePay} paying={paying} />
+                      ))}
+                      {nearbyInvoices.map((a) => (
+                        <InvoiceNotifItem key={`inv-${a.cardId}`} alert={a} />
                       ))}
                     </>
                   )}
