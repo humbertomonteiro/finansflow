@@ -4,10 +4,10 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-base: #070b14;
-  --bg-surface: rgba(7, 11, 20, 0.9);
-  --bg-elevated: #121827;
-  --bg-overlay: #1a2236;
+  --bg-base: #000;
+  --bg-surface: #070707;
+  --bg-elevated: #121212;
+  --bg-overlay: #0a0a0a;
   --bg-hover: #1e293b;
 
   /* Borders */

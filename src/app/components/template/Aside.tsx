@@ -26,7 +26,8 @@ const mobileNavItems = navItems.filter((item) => item.href !== "/settings");
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
   const pathname = usePathname();
-  const { user, overdueTransactions, nearbyTransactions, ccInvoiceAlerts } = useUser();
+  const { user, overdueTransactions, nearbyTransactions, ccInvoiceAlerts } =
+    useUser();
 
   const { BellButton, Panel: NotifPanel } = NotificationPanel();
   const {
@@ -53,7 +54,7 @@ export const Aside = () => {
       <aside
         className="hidden lg:flex flex-col justify-between fixed top-0 left-0 h-screen w-[240px] z-20"
         style={{
-          background: "var(--bg-surface)",
+          background: "var(--bg-base)",
           borderRight: "1px solid var(--border-subtle)",
           boxShadow: "4px 0 24px rgba(0,0,0,0.3)",
         }}
@@ -169,7 +170,7 @@ export const Aside = () => {
       <header
         className="hidden lg:flex fixed top-0 left-[240px] right-0 h-14 items-center justify-between px-6 z-20"
         style={{
-          background: "var(--bg-surface)",
+          background: "var(--bg-base)",
           borderBottom: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
@@ -220,7 +221,7 @@ export const Aside = () => {
       <header
         className="lg:hidden fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 z-20"
         style={{
-          background: "rgba(7,11,20,0.9)",
+          background: "var(--bg-base)",
           borderBottom: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
@@ -264,7 +265,7 @@ export const Aside = () => {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center z-20"
         style={{
-          background: "rgba(13,18,32,0.95)",
+          background: "var(--bg-base)",
           borderTop: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}

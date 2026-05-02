@@ -147,7 +147,11 @@ export const TransactionItemList = ({
 
   const onTouchEnd = async () => {
     if (isSelecting) return;
-    if (swipeAction === "pay" && (index !== -1 || isFixed) && !transaction.creditCardId) {
+    if (
+      swipeAction === "pay" &&
+      (index !== -1 || isFixed) &&
+      !transaction.creditCardId
+    ) {
       setIsPaying(true);
       try {
         await payTransaction(transaction.id);
@@ -228,7 +232,7 @@ export const TransactionItemList = ({
 
         {/* Card principal */}
         <div
-          className={`relative flex flex-col border ${borderColor} ${bgColor} rounded-sm
+          className={`relative flex flex-col border ${borderColor} bg-black rounded-sm
             transition-all duration-150 ease-out`}
           style={
             !isSelecting
@@ -356,8 +360,8 @@ export const TransactionItemList = ({
             </div>
 
             {/* Botão pagar / link cartão — oculto em modo seleção */}
-            {!isSelecting && (
-              transaction.creditCardId ? (
+            {!isSelecting &&
+              (transaction.creditCardId ? (
                 <Link
                   href="/credit-cards"
                   onClick={(e) => e.stopPropagation()}
@@ -370,17 +374,26 @@ export const TransactionItemList = ({
                 <button
                   onClick={handlePay}
                   disabled={(index === -1 && !isFixed) || isPaying}
-                  title={payment?.isPaid ? "Desfazer pagamento" : "Marcar como pago"}
+                  title={
+                    payment?.isPaid ? "Desfazer pagamento" : "Marcar como pago"
+                  }
                   className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center
                     transition-all duration-200 cursor-pointer
                     disabled:opacity-30 disabled:cursor-not-allowed
-                    ${payment?.isPaid ? "bg-violet-700 hover:bg-violet-600 text-white" : "bg-gray-700 hover:bg-gray-600 text-gray-400"}
+                    ${
+                      payment?.isPaid
+                        ? "bg-violet-700 hover:bg-violet-600 text-white"
+                        : "bg-gray-700 hover:bg-gray-600 text-gray-400"
+                    }
                     ${isPaying ? "animate-pulse" : ""}`}
                 >
-                  {payment?.isPaid ? <FiCheck className="h-4 w-4" /> : <FiX className="h-4 w-4" />}
+                  {payment?.isPaid ? (
+                    <FiCheck className="h-4 w-4" />
+                  ) : (
+                    <FiX className="h-4 w-4" />
+                  )}
                 </button>
-              )
-            )}
+              ))}
           </div>
 
           {/* Expand inline — desativado em modo seleção */}
