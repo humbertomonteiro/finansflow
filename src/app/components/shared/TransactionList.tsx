@@ -244,12 +244,9 @@ export const TransactionList = ({
   }) => (
     <button
       onClick={() => handleSort(field)}
-      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer
-        ${
-          sortField === field
-            ? "bg-violet-800 text-violet-200"
-            : "bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300"
-        }`}
+      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer ${
+        sortField === field ? "sort-btn-active" : "sort-btn"
+      }`}
     >
       {label}
       {sortField === field &&
@@ -265,8 +262,8 @@ export const TransactionList = ({
   if (!transactions || transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-gray-500 text-sm">Nenhuma transação encontrada</p>
-        <p className="text-gray-700 text-xs mt-1">
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Nenhuma transação encontrada</p>
+        <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
           Adicione uma transação pelo botão&nbsp;+
         </p>
       </div>
@@ -280,7 +277,7 @@ export const TransactionList = ({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         {!hideSort && !isSelecting && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-gray-600 text-xs mr-1">Ordenar:</span>
+            <span className="text-xs mr-1" style={{ color: "var(--text-muted)" }}>Ordenar:</span>
             <SortButton field="date" label="Data" />
             <SortButton field="amount" label="Valor" />
             <SortButton field="status" label="Status" />
@@ -289,25 +286,28 @@ export const TransactionList = ({
 
         {isSelecting && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-violet-400 text-xs font-medium">
+            <span className="text-xs font-medium" style={{ color: "var(--accent-light)" }}>
               {selectedIds.size} selecionado{selectedIds.size !== 1 ? "s" : ""}
             </span>
             <button
               onClick={selectAll}
-              className="text-xs text-gray-400 hover:text-gray-200 underline underline-offset-2 cursor-pointer transition-colors"
+              className="text-xs underline underline-offset-2 cursor-pointer transition-colors"
+              style={{ color: "var(--text-secondary)" }}
             >
               Todos
             </button>
             <button
               onClick={selectUnpaid}
-              className="text-xs text-gray-400 hover:text-gray-200 underline underline-offset-2 cursor-pointer transition-colors"
+              className="text-xs underline underline-offset-2 cursor-pointer transition-colors"
+              style={{ color: "var(--text-secondary)" }}
             >
               Só pendentes
             </button>
             {selectedIds.size > 0 && (
               <button
                 onClick={clearSelection}
-                className="text-xs text-gray-600 hover:text-gray-400 underline underline-offset-2 cursor-pointer transition-colors"
+                className="text-xs underline underline-offset-2 cursor-pointer transition-colors"
+                style={{ color: "var(--text-muted)" }}
               >
                 Limpar
               </button>
@@ -319,13 +319,7 @@ export const TransactionList = ({
           onClick={() =>
             isSelecting ? exitSelectionMode() : setIsSelecting(true)
           }
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full
-            transition-all cursor-pointer ml-auto
-            ${
-              isSelecting
-                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-            }`}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer ml-auto sort-btn"
         >
           {isSelecting ? (
             <>
@@ -387,14 +381,13 @@ export const TransactionList = ({
                       )}
                     </button>
                   )}
-                  <h3 className="text-gray-400 text-sm capitalize">
+                  <h3 className="text-sm capitalize" style={{ color: "var(--text-secondary)" }}>
                     {dateLabel(group.date)}
                   </h3>
                 </div>
                 <span
-                  className={`text-xs font-medium ${
-                    totalGroup >= 0 ? "text-green-500" : "text-red-500"
-                  }`}
+                  className="text-xs font-medium"
+                  style={{ color: totalGroup >= 0 ? "var(--green)" : "var(--red)" }}
                 >
                   {totalGroup >= 0 ? "+" : ""}
                   {formatCurrency(Math.abs(totalGroup))}
@@ -429,21 +422,24 @@ export const TransactionList = ({
         mounted &&
         createPortal(
           <div
-            className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50
-            w-[calc(100%-2rem)] max-w-md
-            bg-gray-900 border border-violet-800/60 rounded-2xl shadow-2xl
-            shadow-violet-900/30 animate-[fadeIn_0.2s_ease-out]"
+            className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl animate-[fadeIn_0.2s_ease-out]"
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-accent)",
+              boxShadow: "var(--shadow-elevated)",
+            }}
           >
-            <div className="px-4 pt-4 pb-3 border-b border-gray-800">
+            <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-gray-500 uppercase tracking-wide">
+                <span className="text-xs uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
                   {selectionMetrics.count} transaç
                   {selectionMetrics.count !== 1 ? "ões" : "ão"} selecionada
                   {selectionMetrics.count !== 1 ? "s" : ""}
                 </span>
                 <button
                   onClick={exitSelectionMode}
-                  className="text-gray-600 hover:text-gray-400 transition-colors cursor-pointer"
+                  className="transition-colors cursor-pointer"
+                  style={{ color: "var(--text-muted)" }}
                 >
                   <FiX className="h-4 w-4" />
                 </button>
@@ -451,31 +447,28 @@ export const TransactionList = ({
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                  <p className="text-[0.65rem] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
                     Receitas
                   </p>
-                  <p className="text-sm font-semibold text-green-400">
+                  <p className="text-sm font-semibold" style={{ color: "var(--green)" }}>
                     +{formatCurrency(selectionMetrics.totalReceitas)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                  <p className="text-[0.65rem] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
                     Despesas
                   </p>
-                  <p className="text-sm font-semibold text-red-400">
+                  <p className="text-sm font-semibold" style={{ color: "var(--red)" }}>
                     -{formatCurrency(selectionMetrics.totalDespesas)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[0.65rem] text-gray-600 uppercase tracking-wide mb-0.5">
+                  <p className="text-[0.65rem] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
                     Resultado
                   </p>
                   <p
-                    className={`text-sm font-semibold ${
-                      selectionMetrics.saldo >= 0
-                        ? "text-green-300"
-                        : "text-red-300"
-                    }`}
+                    className="text-sm font-semibold"
+                    style={{ color: selectionMetrics.saldo >= 0 ? "var(--green)" : "var(--red)" }}
                   >
                     {selectionMetrics.saldo >= 0 ? "+" : ""}
                     {formatCurrency(selectionMetrics.saldo)}
@@ -484,7 +477,7 @@ export const TransactionList = ({
               </div>
 
               {selectionMetrics.pendentes > 0 && (
-                <p className="text-center text-[0.65rem] text-gray-600 mt-2">
+                <p className="text-center text-[0.65rem] mt-2" style={{ color: "var(--text-muted)" }}>
                   {selectionMetrics.pendentes} pendente
                   {selectionMetrics.pendentes !== 1 ? "s" : ""}
                   {selectionMetrics.jaResolvidos > 0
@@ -496,7 +489,7 @@ export const TransactionList = ({
               )}
               {selectionMetrics.pendentes === 0 &&
                 selectionMetrics.jaResolvidos > 0 && (
-                  <p className="text-center text-[0.65rem] text-green-700 mt-2">
+                  <p className="text-center text-[0.65rem] mt-2" style={{ color: "var(--green)" }}>
                     Todas já resolvidas ✓
                   </p>
                 )}
@@ -504,11 +497,8 @@ export const TransactionList = ({
 
             {resolveResult && (
               <div
-                className={`px-4 py-2 text-xs text-center ${
-                  resolveResult.failed > 0
-                    ? "text-yellow-400"
-                    : "text-green-400"
-                }`}
+                className="px-4 py-2 text-xs text-center"
+                style={{ color: resolveResult.failed > 0 ? "var(--yellow)" : "var(--green)" }}
               >
                 {resolveResult.success > 0 &&
                   `✓ ${resolveResult.success} resolvida${
@@ -526,11 +516,7 @@ export const TransactionList = ({
                 className={`w-full h-10 rounded-xl flex items-center justify-center gap-2
                 font-semibold text-sm transition-all cursor-pointer
                 disabled:opacity-40 disabled:cursor-not-allowed
-                ${
-                  selectionMetrics.pendentes > 0
-                    ? "bg-violet-700 hover:bg-violet-600 text-white"
-                    : "bg-gray-800 text-gray-500"
-                }`}
+                ${selectionMetrics.pendentes > 0 ? "btn-paid" : "btn-neutral"}`}
               >
                 {isResolvingAll ? (
                   <>

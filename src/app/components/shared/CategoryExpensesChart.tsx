@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Doughnut } from "react-chartjs-2";
+import { useTheme } from "next-themes";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { GenerateCategoryChartDataUsecase } from "@/domain/usecases/transaction/GenerateCategoryChartDataUsecase";
 import { CategoryExpensesSummary } from "@/domain/usecases/transaction/CalculateCategoryExpensesUsecase";
@@ -15,8 +16,17 @@ interface CategoryExpensesChartProps {
 export function CategoryExpensesChart({
   dataCategoryExpenses,
 }: CategoryExpensesChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+
   const usecase = new GenerateCategoryChartDataUsecase();
   const chartData = usecase.execute(dataCategoryExpenses);
+
+  const tooltipBg = isLight ? "#ffffff" : "#0d1220";
+  const tooltipBorder = isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)";
+  const titleColor = isLight ? "#0f172a" : "#f0f4ff";
+  const bodyColor = isLight ? "#475569" : "#94a3b8";
+  const legendColor = isLight ? "#475569" : "#94a3b8";
 
   const options = {
     responsive: true,
@@ -27,7 +37,7 @@ export function CategoryExpensesChart({
       legend: {
         position: "bottom" as const,
         labels: {
-          color: "#94a3b8",
+          color: legendColor,
           font: { size: 12, family: "'DM Sans', sans-serif" },
           padding: 16,
           boxWidth: 10,
@@ -37,11 +47,11 @@ export function CategoryExpensesChart({
         },
       },
       tooltip: {
-        backgroundColor: "#0d1220",
-        borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: tooltipBg,
+        borderColor: tooltipBorder,
         borderWidth: 1,
-        titleColor: "#f0f4ff",
-        bodyColor: "#94a3b8",
+        titleColor: titleColor,
+        bodyColor: bodyColor,
         padding: 12,
         callbacks: {
           label: function (context: any) {

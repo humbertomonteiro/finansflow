@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Line } from "react-chartjs-2";
+import { useTheme } from "next-themes";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -33,6 +34,13 @@ interface LineChartProps {
 }
 
 export function LineChart({ data }: LineChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+
+  const textColor = isLight ? "#475569" : "#d1d5dc";
+  const tickColor = isLight ? "#94a3b8" : "#9ca3af";
+  const gridColor = isLight ? "#e2e8f0" : "#374151";
+
   const chartData = {
     labels: data.labels,
     datasets: [
@@ -58,13 +66,13 @@ export function LineChart({ data }: LineChartProps) {
       legend: {
         position: "top" as const,
         labels: {
-          color: "#d1d5dc",
+          color: textColor,
         },
       },
       title: {
         display: true,
         text: "Evolução Mensal (Receitas vs. Despesas)",
-        color: "#d1d5dc",
+        color: textColor,
       },
       tooltip: {
         callbacks: {
@@ -86,15 +94,15 @@ export function LineChart({ data }: LineChartProps) {
     },
     scales: {
       x: {
-        ticks: { color: "#9ca3af" },
-        grid: { color: "#374151" },
+        ticks: { color: tickColor },
+        grid: { color: gridColor },
       },
       y: {
         ticks: {
-          color: "#9ca3af",
+          color: tickColor,
           callback: (value: any) => `R$ ${value.toLocaleString("pt-BR")}`,
         },
-        grid: { color: "#374151" },
+        grid: { color: gridColor },
       },
     },
   };

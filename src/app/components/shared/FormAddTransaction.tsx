@@ -201,16 +201,14 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div
-      className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px]
-        mx-auto bg-gray-900 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30
-        md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px]
-        md:h-auto md:rounded-none md:shadow-none`}
+      className="flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px] mx-auto rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 md:left-auto md:top-0 md:bottom-0 md:border md:w-[500px] md:h-auto md:rounded-none md:shadow-none"
+      style={{ background: "var(--bg-surface)", borderColor: "var(--border-default)" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-2 mb-4">
-        <h2 className="text-2xl font-bold text-gray-100">Adicionar Transação</h2>
+        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Adicionar Transação</h2>
         <button
-          className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-violet-800 transition-all"
+          className="px-2 py-1 rounded-lg cursor-pointer transition-all btn-neutral"
           onClick={onClose}
           disabled={isLoading}
         >
@@ -220,12 +218,18 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
       {/* Feedback */}
       {successMessage && (
-        <div className="mx-2 flex items-center gap-2 p-3 bg-green-900/50 border border-green-700 rounded-lg text-green-400 text-sm">
+        <div
+          className="mx-2 flex items-center gap-2 p-3 rounded-lg text-sm"
+          style={{ background: "var(--green-dim)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--green)" }}
+        >
           <FiCheck className="h-4 w-4 shrink-0" /> {successMessage}
         </div>
       )}
       {errorMessage && (
-        <div className="mx-2 flex items-center gap-2 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-400 text-sm">
+        <div
+          className="mx-2 flex items-center gap-2 p-3 rounded-lg text-sm"
+          style={{ background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.3)", color: "var(--red)" }}
+        >
           <FiAlertCircle className="h-4 w-4 shrink-0" /> {errorMessage}
         </div>
       )}
@@ -241,9 +245,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             key={t}
             type="button"
             disabled={isLoading}
-            className={`button flex-1 font-semibold transition-all text-sm ${
-              type === t ? active : "bg-gray-700 text-gray-400 hover:bg-gray-600"
-            }`}
+            className={`button flex-1 font-semibold transition-all text-sm ${type === t ? active : ""}`}
+            style={type !== t ? { background: "var(--bg-elevated)", color: "var(--text-secondary)" } : undefined}
             onClick={() => handleTypeChange(t)}
           >
             {label}
@@ -255,8 +258,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
         {/* ── Campos comuns: Valor e Data ── */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Valor <span className="text-red-400">*</span>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+            Valor <span style={{ color: "var(--red)" }}>*</span>
           </p>
           <input
             className={`input money ${errors.amount ? "border-red-500 focus:border-red-400" : ""}`}
@@ -268,7 +271,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             disabled={isLoading}
           />
           {errors.amount && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+            <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
               <FiAlertCircle className="h-3 w-3" /> {errors.amount}
             </p>
           )}
@@ -278,8 +281,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         {!isTransfer && (
           <>
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                Descrição <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                Descrição <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <input
                 className={`input ${errors.description ? "border-red-500 focus:border-red-400" : ""}`}
@@ -289,33 +292,32 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                 disabled={isLoading}
               />
               {errors.description && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.description}
                 </p>
               )}
             </label>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                Data de vencimento <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                Data de vencimento <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <input
                 className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
                 type="date"
                 name="dueDate"
                 disabled={isLoading}
-                style={{ colorScheme: "dark" }}
               />
               {errors.dueDate && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
                 </p>
               )}
             </label>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                Categoria <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                Categoria <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <select
                 className={`input ${errors.categoryId ? "border-red-500" : ""}`}
@@ -328,15 +330,15 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                 ))}
               </select>
               {errors.categoryId && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.categoryId}
                 </p>
               )}
             </label>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                {isDeposit ? "Conta" : "Conta / Cartão"} <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                {isDeposit ? "Conta" : "Conta / Cartão"} <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <select
                 className={`input ${errors.accountId ? "border-red-500" : ""}`}
@@ -357,7 +359,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                 )}
               </select>
               {errors.accountId && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.accountId}
                 </p>
               )}
@@ -365,7 +367,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
 
             {showInstallment && (
               <label>
-                <p className="text-gray-500 text-xs ml-1 mb-1">Número de parcelas</p>
+                <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>Número de parcelas</p>
                 <select className="input" name="installments" disabled={isLoading}>
                   {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>{n === 1 ? "À vista" : `${n}x`}</option>
@@ -375,7 +377,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             )}
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">Transação recorrente/fixa?</p>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>Transação recorrente/fixa?</p>
               <div className="flex items-center gap-2 ml-2">
                 <input
                   type="checkbox"
@@ -384,7 +386,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                   disabled={isLoading}
                   onChange={() => setShowInstallment((p) => !p)}
                 />
-                <label htmlFor="fixed" className="text-gray-400 text-sm cursor-pointer">
+                <label htmlFor="fixed" className="text-sm cursor-pointer" style={{ color: "var(--text-secondary)" }}>
                   Sim, é uma transação fixa mensal
                 </label>
               </div>
@@ -396,8 +398,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         {isTransfer && (
           <>
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                De (conta de origem) <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                De (conta de origem) <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <select
                 className={`input ${errors.fromAccountId ? "border-red-500" : ""}`}
@@ -410,7 +412,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                 ))}
               </select>
               {errors.fromAccountId && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.fromAccountId}
                 </p>
               )}
@@ -429,8 +431,8 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
             </div>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                Para (conta de destino) <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                Para (conta de destino) <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <select
                 className={`input ${errors.toAccountId ? "border-red-500" : ""}`}
@@ -443,32 +445,31 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
                 ))}
               </select>
               {errors.toAccountId && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.toAccountId}
                 </p>
               )}
             </label>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">
-                Data <span className="text-red-400">*</span>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+                Data <span style={{ color: "var(--red)" }}>*</span>
               </p>
               <input
                 className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
                 type="date"
                 name="dueDate"
                 disabled={isLoading}
-                style={{ colorScheme: "dark" }}
               />
               {errors.dueDate && (
-                <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+                <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
                   <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
                 </p>
               )}
             </label>
 
             <label>
-              <p className="text-gray-500 text-xs ml-1 mb-1">Descrição (opcional)</p>
+              <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>Descrição (opcional)</p>
               <input
                 className="input"
                 type="text"

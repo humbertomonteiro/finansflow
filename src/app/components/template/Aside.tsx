@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiHome, FiList, FiPlus, FiTarget } from "react-icons/fi";
+import { FiHome, FiList, FiPlus, FiTarget, FiSun, FiMoon } from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { FormAddTransaction } from "../shared/FormAddTransaction";
 import { NotificationPanel } from "../shared/NotificationPanel";
 import { GlobalSearch } from "../shared/GlobalSearch";
@@ -26,8 +27,11 @@ const mobileNavItems = navItems.filter((item) => item.href !== "/settings");
 export const Aside = () => {
   const [showForm, setShowForm] = useState(false);
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
   const { user, overdueTransactions, nearbyTransactions, ccInvoiceAlerts } =
     useUser();
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   const { BellButton, Panel: NotifPanel } = NotificationPanel();
   const {
@@ -154,7 +158,7 @@ export const Aside = () => {
         </div>
 
         <div
-          className="px-6 py-4"
+          className="px-4 py-4 flex items-center justify-between"
           style={{ borderTop: "1px solid var(--border-subtle)" }}
         >
           <p
@@ -163,6 +167,22 @@ export const Aside = () => {
           >
             © 2025 FinansFlow
           </p>
+          <button
+            onClick={toggleTheme}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+            style={{
+              background: "var(--bg-elevated)",
+              color: "var(--text-muted)",
+              border: "1px solid var(--border-subtle)",
+            }}
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? (
+              <FiSun className="h-3.5 w-3.5" />
+            ) : (
+              <FiMoon className="h-3.5 w-3.5" />
+            )}
+          </button>
         </div>
       </aside>
 
@@ -244,6 +264,18 @@ export const Aside = () => {
         <div className="flex items-center gap-1">
           {SearchIconButton}
           {BellButton}
+          <button
+            onClick={toggleTheme}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ml-0.5"
+            style={{ color: "var(--text-muted)" }}
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? (
+              <FiSun className="h-4 w-4" />
+            ) : (
+              <FiMoon className="h-4 w-4" />
+            )}
+          </button>
           {user && (
             <Link
               href="/settings"

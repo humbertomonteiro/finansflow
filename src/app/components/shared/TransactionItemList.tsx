@@ -183,17 +183,17 @@ export const TransactionItemList = ({
   };
 
   // ── Estilos dinâmicos ─────────────────────────────────────
-  const borderColor = isSelected
-    ? "border-violet-500"
+  const cardBorderColor = isSelected
+    ? "var(--accent)"
     : isOverdue
-    ? "border-red-800"
+    ? "rgba(239,68,68,0.45)"
     : payment?.isPaid
-    ? "border-green-900/40"
+    ? "rgba(34,197,94,0.2)"
     : isNearby
-    ? "border-yellow-800/60"
-    : "border-gray-800";
+    ? "rgba(245,158,11,0.3)"
+    : "var(--border-default)";
 
-  const bgColor = isSelected ? "bg-violet-950/40" : "bg-gray-900";
+  const cardBg = isSelected ? "rgba(99,102,241,0.08)" : "var(--bg-surface)";
 
   return (
     <>
@@ -232,13 +232,12 @@ export const TransactionItemList = ({
 
         {/* Card principal */}
         <div
-          className={`relative flex flex-col border ${borderColor} bg-black rounded-sm
-            transition-all duration-150 ease-out`}
-          style={
-            !isSelecting
-              ? { transform: `translateX(${swipeOffset}px)` }
-              : undefined
-          }
+          className="relative flex flex-col border rounded-sm transition-all duration-150 ease-out"
+          style={{
+            borderColor: cardBorderColor,
+            background: cardBg,
+            ...(!isSelecting ? { transform: `translateX(${swipeOffset}px)` } : {}),
+          }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -251,32 +250,31 @@ export const TransactionItemList = ({
             {/* Checkbox de seleção OU ícone de tipo */}
             {isSelecting ? (
               <div
-                className={`shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center
-                  transition-all duration-150
-                  ${
-                    isSelected
-                      ? "bg-violet-600 border-violet-500"
-                      : "bg-transparent border-gray-600"
-                  }`}
+                className="shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-all duration-150"
+                style={{
+                  background: isSelected ? "var(--accent)" : "transparent",
+                  borderColor: isSelected ? "var(--accent-light)" : "var(--border-strong)",
+                }}
               >
                 {isSelected && <FiCheck className="h-3 w-3 text-white" />}
               </div>
             ) : (
               <div
-                className={`shrink-0 rounded-full p-2 ${
-                  isTransfer
-                    ? "bg-violet-700/40"
+                className="shrink-0 rounded-full p-2"
+                style={{
+                  background: isTransfer
+                    ? "var(--accent-dim)"
                     : isDeposit
-                    ? "bg-green-700/60"
-                    : "bg-red-700/60"
-                }`}
+                    ? "var(--green-dim)"
+                    : "var(--red-dim)",
+                }}
               >
                 {isTransfer ? (
-                  <FiArrowRight className="h-4 w-4 text-violet-300" />
+                  <FiArrowRight className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
                 ) : isDeposit ? (
-                  <IoMdArrowUp className="h-4 w-4 text-green-300" />
+                  <IoMdArrowUp className="h-4 w-4" style={{ color: "var(--green)" }} />
                 ) : (
-                  <IoMdArrowDown className="h-4 w-4 text-red-300" />
+                  <IoMdArrowDown className="h-4 w-4" style={{ color: "var(--red)" }} />
                 )}
               </div>
             )}
@@ -284,49 +282,73 @@ export const TransactionItemList = ({
             {/* Descrição + badges */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-gray-200 text-sm font-medium truncate">
+                <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
                   {transaction.description || "Sem descrição"}
                 </p>
                 {isOverdue && !transaction.creditCardId && (
-                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-red-900/70 text-red-400 font-semibold flex items-center gap-1">
+                  <span
+                    className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1"
+                    style={{ background: "var(--red-dim)", color: "var(--red)" }}
+                  >
                     <FiClock className="h-2.5 w-2.5" /> Atrasado
                   </span>
                 )}
                 {isNearby && !transaction.creditCardId && (
-                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-yellow-900/60 text-yellow-400 font-semibold">
+                  <span
+                    className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold"
+                    style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
+                  >
                     Vence em breve
                   </span>
                 )}
                 {transaction.creditCardId && (
-                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-gray-800 text-gray-500 flex items-center gap-1">
+                  <span
+                    className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full flex items-center gap-1"
+                    style={{ background: "var(--bg-elevated)", color: "var(--text-muted)" }}
+                  >
                     <BsCreditCard2Front className="h-2.5 w-2.5" /> Cartão
                   </span>
                 )}
                 {payment?.isPaid && (
-                  <span className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full bg-green-900/50 text-green-400 font-semibold">
+                  <span
+                    className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold"
+                    style={{ background: "var(--green-dim)", color: "var(--green)" }}
+                  >
                     Pago
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 {isTransfer ? (
-                  <span className="text-[0.7rem] bg-violet-900/40 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
+                  <span
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full flex items-center gap-1"
+                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                  >
                     <FiArrowRight className="h-2.5 w-2.5" />
                     {getAccountName(transaction.accountId ?? "")} →{" "}
                     {getAccountName(transaction.targetAccountId ?? "")}
                   </span>
                 ) : (
-                  <span className="text-[0.7rem] bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">
+                  <span
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full"
+                    style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}
+                  >
                     {getCategoryName(transaction.categoryId)}
                   </span>
                 )}
                 {isFixed && (
-                  <span className="text-[0.7rem] bg-violet-900/50 px-2 py-0.5 rounded-full text-violet-400 flex items-center gap-1">
+                  <span
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full flex items-center gap-1"
+                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                  >
                     <MdRepeat className="h-2.5 w-2.5" /> Fixo
                   </span>
                 )}
                 {isInstallment && (
-                  <span className="text-[0.7rem] bg-blue-900/50 px-2 py-0.5 rounded-full text-blue-400">
+                  <span
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full"
+                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                  >
                     {transaction.installmentsNumber}/
                     {transaction.recurrence.installmentsCount}x
                   </span>
@@ -337,19 +359,20 @@ export const TransactionItemList = ({
             {/* Valor */}
             <div className="shrink-0 text-right">
               <p
-                className={`text-sm font-semibold ${
-                  isTransfer
-                    ? "text-violet-300"
+                className="text-sm font-semibold"
+                style={{
+                  color: isTransfer
+                    ? "var(--accent-light)"
                     : isDeposit
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
+                    ? "var(--green)"
+                    : "var(--red)",
+                }}
               >
                 {isTransfer ? "" : isDeposit ? "+" : "-"}
                 {formatCurrency(displayAmount)}
               </p>
               {isInstallment && transaction.recurrence.installmentsCount && (
-                <p className="text-[0.65rem] text-gray-600">
+                <p className="text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                   total{" "}
                   {formatCurrency(
                     displayAmount *
@@ -366,9 +389,9 @@ export const TransactionItemList = ({
                   href="/credit-cards"
                   onClick={(e) => e.stopPropagation()}
                   title="Ver cartão de crédito"
-                  className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-700 hover:bg-gray-600"
+                  className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center transition-all duration-200 btn-neutral"
                 >
-                  <BsCreditCard2Front className="h-4 w-4 text-gray-400" />
+                  <BsCreditCard2Front className="h-4 w-4" />
                 </Link>
               ) : (
                 <button
@@ -380,11 +403,7 @@ export const TransactionItemList = ({
                   className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center
                     transition-all duration-200 cursor-pointer
                     disabled:opacity-30 disabled:cursor-not-allowed
-                    ${
-                      payment?.isPaid
-                        ? "bg-violet-700 hover:bg-violet-600 text-white"
-                        : "bg-gray-700 hover:bg-gray-600 text-gray-400"
-                    }
+                    ${payment?.isPaid ? "btn-paid" : "btn-neutral"}
                     ${isPaying ? "animate-pulse" : ""}`}
                 >
                   {payment?.isPaid ? (
@@ -398,13 +417,13 @@ export const TransactionItemList = ({
 
           {/* Expand inline — desativado em modo seleção */}
           {isExpanded && !isSelecting && (
-            <div className="border-t border-gray-800 px-4 py-3 flex flex-col gap-2 animate-[fadeIn_0.15s_ease-out]">
+            <div className="px-4 py-3 flex flex-col gap-2 animate-[fadeIn_0.15s_ease-out]" style={{ borderTop: "1px solid var(--border-subtle)" }}>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 <div>
-                  <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                  <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                     Vencimento
                   </p>
-                  <p className="text-gray-300">
+                  <p style={{ color: "var(--text-secondary)" }}>
                     {format(transaction.dueDate, "dd/MM/yyyy", {
                       locale: ptBR,
                     })}
@@ -412,10 +431,10 @@ export const TransactionItemList = ({
                 </div>
                 {payment?.paidAt && (
                   <div>
-                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                       Pago em
                     </p>
-                    <p className="text-gray-300">
+                    <p style={{ color: "var(--text-secondary)" }}>
                       {format(new Date(payment.paidAt), "dd/MM/yyyy", {
                         locale: ptBR,
                       })}
@@ -424,32 +443,32 @@ export const TransactionItemList = ({
                 )}
                 {isTransfer ? (
                   <div className="col-span-2">
-                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                       Transferência
                     </p>
-                    <p className="text-gray-300 flex items-center gap-1">
+                    <p className="flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
                       {getAccountName(transaction.accountId ?? "")}
-                      <FiArrowRight className="h-3 w-3 text-violet-400 shrink-0" />
+                      <FiArrowRight className="h-3 w-3 shrink-0" style={{ color: "var(--accent-light)" }} />
                       {getAccountName(transaction.targetAccountId ?? "")}
                     </p>
                   </div>
                 ) : (
                   <>
                     <div>
-                      <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                      <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                         Conta
                       </p>
-                      <p className="text-gray-300">
+                      <p style={{ color: "var(--text-secondary)" }}>
                         {transaction.creditCardId
                           ? "💳 Cartão"
                           : getAccountName(transaction.accountId ?? "")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                      <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                         Tipo
                       </p>
-                      <p className="text-gray-300">
+                      <p style={{ color: "var(--text-secondary)" }}>
                         {isFixed
                           ? "Recorrente"
                           : isInstallment
@@ -461,10 +480,10 @@ export const TransactionItemList = ({
                 )}
                 {isInstallment && transaction.recurrence.installmentsCount && (
                   <div>
-                    <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                       Parcela
                     </p>
-                    <p className="text-gray-300">
+                    <p style={{ color: "var(--text-secondary)" }}>
                       {transaction.installmentsNumber} de{" "}
                       {transaction.recurrence.installmentsCount} (
                       {formatCurrency(displayAmount)} / parcela)

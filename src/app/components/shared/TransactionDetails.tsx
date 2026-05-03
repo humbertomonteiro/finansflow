@@ -345,7 +345,6 @@ function EditFormScreen({
             value={editedDate}
             onChange={(e) => setEditedDate(e.target.value)}
             className="input"
-            style={{ colorScheme: "dark" }}
           />
           {isFixed && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>

@@ -100,7 +100,7 @@ const Card = ({
       <div>
         <p
           className={`money leading-none font-medium  ${
-            highligth ? "text-3xl md:text-3xl" : "text-lg md:text-2xl"
+            highligth ? "text-2xl md:text-2xl" : "text-lg md:text-xl"
           }`}
           // style={{
           //   color: highligth ? "#fff" : "var(--text-primary)",

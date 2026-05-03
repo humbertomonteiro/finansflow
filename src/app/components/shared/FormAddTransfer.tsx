@@ -112,10 +112,8 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div
-      className={`flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px]
-        mx-auto bg-gray-900 rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30
-        md:left-auto md:top-0 md:bottom-0 md:border md:border-gray-700 md:w-[500px]
-        md:h-auto md:rounded-none md:shadow-none`}
+      className="flex flex-col gap-2 py-6 px-2 overflow-y-auto max-w-[500px] mx-auto rounded-xl fixed top-[48px] bottom-[60px] left-0 right-0 z-30 md:left-auto md:top-0 md:bottom-0 md:border md:w-[500px] md:h-auto md:rounded-none md:shadow-none"
+      style={{ background: "var(--bg-surface)", borderColor: "var(--border-default)" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-2 mb-4">
@@ -126,12 +124,12 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
           >
             <FiArrowRight className="h-3.5 w-3.5" style={{ color: "var(--accent-light)" }} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-100">
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
             Nova Transferência
           </h2>
         </div>
         <button
-          className="px-2 py-1 rounded-lg cursor-pointer text-gray-400 hover:bg-violet-800 transition-all"
+          className="px-2 py-1 rounded-lg cursor-pointer transition-all btn-neutral"
           onClick={onClose}
           disabled={isLoading}
         >
@@ -141,12 +139,18 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
       {/* Feedback */}
       {successMessage && (
-        <div className="mx-2 flex items-center gap-2 p-3 bg-green-900/50 border border-green-700 rounded-lg text-green-400 text-sm">
+        <div
+          className="mx-2 flex items-center gap-2 p-3 rounded-lg text-sm"
+          style={{ background: "var(--green-dim)", border: "1px solid rgba(34,197,94,0.3)", color: "var(--green)" }}
+        >
           <FiCheck className="h-4 w-4 shrink-0" /> {successMessage}
         </div>
       )}
       {errorMessage && (
-        <div className="mx-2 flex items-center gap-2 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-400 text-sm">
+        <div
+          className="mx-2 flex items-center gap-2 p-3 rounded-lg text-sm"
+          style={{ background: "var(--red-dim)", border: "1px solid rgba(239,68,68,0.3)", color: "var(--red)" }}
+        >
           <FiAlertCircle className="h-4 w-4 shrink-0" /> {errorMessage}
         </div>
       )}
@@ -158,8 +162,8 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
       >
         {/* Valor */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Valor <span className="text-red-400">*</span>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+            Valor <span style={{ color: "var(--red)" }}>*</span>
           </p>
           <input
             className={`input money ${errors.amount ? "border-red-500 focus:border-red-400" : ""}`}
@@ -171,7 +175,7 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
             disabled={isLoading}
           />
           {errors.amount && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+            <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
               <FiAlertCircle className="h-3 w-3" /> {errors.amount}
             </p>
           )}
@@ -179,8 +183,8 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
         {/* Conta de origem */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            De (conta de origem) <span className="text-red-400">*</span>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+            De (conta de origem) <span style={{ color: "var(--red)" }}>*</span>
           </p>
           <select
             className={`input ${errors.fromAccountId ? "border-red-500" : ""}`}
@@ -195,7 +199,7 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
             ))}
           </select>
           {errors.fromAccountId && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+            <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
               <FiAlertCircle className="h-3 w-3" /> {errors.fromAccountId}
             </p>
           )}
@@ -215,8 +219,8 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
         {/* Conta de destino */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Para (conta de destino) <span className="text-red-400">*</span>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+            Para (conta de destino) <span style={{ color: "var(--red)" }}>*</span>
           </p>
           <select
             className={`input ${errors.toAccountId ? "border-red-500" : ""}`}
@@ -231,7 +235,7 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
             ))}
           </select>
           {errors.toAccountId && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+            <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
               <FiAlertCircle className="h-3 w-3" /> {errors.toAccountId}
             </p>
           )}
@@ -239,18 +243,17 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
         {/* Data */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">
-            Data <span className="text-red-400">*</span>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>
+            Data <span style={{ color: "var(--red)" }}>*</span>
           </p>
           <input
             className={`input max-w-[100%] ${errors.dueDate ? "border-red-500" : ""}`}
             type="date"
             name="dueDate"
             disabled={isLoading}
-            style={{ colorScheme: "dark" }}
           />
           {errors.dueDate && (
-            <p className="text-red-400 text-xs mt-1 ml-1 flex items-center gap-1">
+            <p className="text-xs mt-1 ml-1 flex items-center gap-1" style={{ color: "var(--red)" }}>
               <FiAlertCircle className="h-3 w-3" /> {errors.dueDate}
             </p>
           )}
@@ -258,7 +261,7 @@ export const FormAddTransfer = ({ onClose }: { onClose: () => void }) => {
 
         {/* Descrição (opcional) */}
         <label>
-          <p className="text-gray-500 text-xs ml-1 mb-1">Descrição (opcional)</p>
+          <p className="text-xs ml-1 mb-1" style={{ color: "var(--text-secondary)" }}>Descrição (opcional)</p>
           <input
             className="input"
             type="text"
