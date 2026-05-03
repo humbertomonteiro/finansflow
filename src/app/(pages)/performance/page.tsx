@@ -56,11 +56,12 @@ export default function Performance() {
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <p
           className="text-xs font-semibold uppercase tracking-wider mb-4"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: "var(--text-secondary)" }}
         >
           Visão geral do mês
         </p>
@@ -172,7 +173,9 @@ export default function Performance() {
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-wider mb-3"
-              style={{ color: "var(--text-muted)" }}
+              style={{
+                color: "var(--text-secondary)",
+              }}
             >
               Gastos por categoria
             </p>
@@ -183,7 +186,9 @@ export default function Performance() {
           <div>
             <p
               className="text-xs font-semibold uppercase tracking-wider mb-3"
-              style={{ color: "var(--text-muted)" }}
+              style={{
+                color: "var(--text-secondary)",
+              }}
             >
               Distribuição
             </p>
@@ -223,6 +228,7 @@ export default function Performance() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <p

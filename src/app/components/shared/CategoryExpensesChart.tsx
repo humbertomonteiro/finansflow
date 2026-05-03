@@ -94,6 +94,7 @@ export function CategoryExpensesChart({
         // Largura máxima centrada para o gráfico não ficar imenso em telas grandes
         maxWidth: "400px",
         margin: "0 auto",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <Doughnut data={chartData} options={options} />

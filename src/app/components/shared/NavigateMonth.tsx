@@ -42,6 +42,7 @@ export const NavigateMonth = () => {
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <button

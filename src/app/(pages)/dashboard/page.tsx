@@ -242,6 +242,7 @@ export default function Dashboard() {
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid var(--border-default)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <div
@@ -280,6 +281,7 @@ export default function Dashboard() {
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid rgba(239,68,68,0.2)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <div
@@ -316,7 +318,9 @@ export default function Dashboard() {
         <div>
           <p
             className="text-sm font-semibold mb-3"
-            style={{ color: "var(--text-muted)" }}
+            style={{
+              color: "var(--text-muted)",
+            }}
           >
             Gastos por categoria
           </p>

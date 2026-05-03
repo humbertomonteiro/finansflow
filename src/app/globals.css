@@ -4,10 +4,10 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-base: #0a0a0a;
-  --bg-surface: #000;
-  --bg-elevated: #010101;
-  --bg-overlay: #050505;
+  --bg-base: #121212;
+  --bg-surface: #010101;
+  --bg-elevated: #050505;
+  --bg-overlay: #0a0a0a;
   --bg-hover: #1e293b;
 
   /* Borders */
@@ -40,7 +40,7 @@
   --text-primary: #f0f4ff;
   --text-secondary: #94a3b8;
   --text-muted: #475569;
-  --text-disabled: #2d3748;
+  --text-disabled: #343d4d;
 
   /* Font */
   --font-sans: "DM Sans", system-ui, sans-serif;
@@ -54,8 +54,7 @@
   --radius-full: 9999px;
 
   /* Shadow */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-card: 5px 5px 5px 15px rgba(0, 0, 0, 0.4),
   --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.06);
   --shadow-accent: 0 0 24px rgba(99, 102, 241, 0.2);
@@ -63,10 +62,10 @@
 
 /* ── Light Theme ────────────────────────────────────────────── */
 html.light {
-  --bg-base: #f8fafc;
+  --bg-base: #f8f8f8;
   --bg-surface: #ffffff;
   --bg-elevated: #f1f5f9;
-  --bg-overlay: #f8fafc;
+  --bg-overlay: #f0f0f0;
   --bg-hover: #e2e8f0;
 
   --border-subtle: rgba(0, 0, 0, 0.07);
@@ -78,11 +77,10 @@ html.light {
   --text-muted: #94a3b8;
   --text-disabled: #cbd5e1;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0px 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-accent: 0 0 24px rgba(99, 102, 241, 0.12);
+  --shadow-accent: 0 0 24px rgba(52, 52, 54, 0.12);
 
   --chip-bg: rgba(0, 0, 0, 0.06);
   --glass-bg: rgba(248, 250, 252, 0.9);

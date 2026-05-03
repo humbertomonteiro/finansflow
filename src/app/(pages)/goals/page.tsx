@@ -296,6 +296,7 @@ export default function Goals() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <div className="flex justify-between items-start">
@@ -362,7 +363,7 @@ export default function Goals() {
           {overBudgetCount > 0 && (
             <div
               className="flex items-center gap-2 text-xs"
-              style={{ color: "var(--red)" }}
+              style={{ color: "var(--red)", boxShadow: "var(--shadow-card)" }}
             >
               <FiAlertTriangle className="h-3 w-3 shrink-0" />
               {overBudgetCount}{" "}
@@ -382,6 +383,7 @@ export default function Goals() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <div
@@ -421,7 +423,7 @@ export default function Goals() {
 
       {/* Lista de metas */}
       {hasGoals && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 ">
           {/* Cabeçalho da seção */}
           <div className="flex items-center justify-between">
             <p
@@ -464,6 +466,7 @@ export default function Goals() {
                         ? "var(--yellow-dim)"
                         : "var(--border-default)"
                     }`,
+                    boxShadow: "var(--shadow-card)",
                   }}
                 >
                   <div className="flex items-start justify-between mb-3">

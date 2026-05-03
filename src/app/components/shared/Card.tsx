@@ -113,7 +113,7 @@ const Card = ({
           <p
             className="text-xs mt-1.5"
             style={{
-              color: highligth ? "rgba(199,210,254,0.6)" : "var(--text-muted)",
+              color: highligth ? "var(--text-secondary)" : "var(--text-muted)",
             }}
           >
             {info}

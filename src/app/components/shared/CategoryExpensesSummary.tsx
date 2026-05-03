@@ -32,6 +32,7 @@ export const CategoryExpensesSummary = ({
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <div style={{ borderColor: "var(--border-subtle)" }}>

@@ -197,7 +197,10 @@ export const TransactionItemList = ({
 
   return (
     <>
-      <li className="relative overflow-hidden rounded-sm select-none">
+      <li
+        className="relative overflow-hidden rounded-sm select-none"
+        style={{ boxShadow: "var(--shadow-card)" }}
+      >
         {/* Fundo swipe */}
         {!isSelecting && (
           <div className="absolute inset-0 flex items-stretch pointer-events-none">
@@ -236,7 +239,9 @@ export const TransactionItemList = ({
           style={{
             borderColor: cardBorderColor,
             background: cardBg,
-            ...(!isSelecting ? { transform: `translateX(${swipeOffset}px)` } : {}),
+            ...(!isSelecting
+              ? { transform: `translateX(${swipeOffset}px)` }
+              : {}),
           }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -253,7 +258,9 @@ export const TransactionItemList = ({
                 className="shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-all duration-150"
                 style={{
                   background: isSelected ? "var(--accent)" : "transparent",
-                  borderColor: isSelected ? "var(--accent-light)" : "var(--border-strong)",
+                  borderColor: isSelected
+                    ? "var(--accent-light)"
+                    : "var(--border-strong)",
                 }}
               >
                 {isSelected && <FiCheck className="h-3 w-3 text-white" />}
@@ -270,11 +277,20 @@ export const TransactionItemList = ({
                 }}
               >
                 {isTransfer ? (
-                  <FiArrowRight className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
+                  <FiArrowRight
+                    className="h-4 w-4"
+                    style={{ color: "var(--accent-light)" }}
+                  />
                 ) : isDeposit ? (
-                  <IoMdArrowUp className="h-4 w-4" style={{ color: "var(--green)" }} />
+                  <IoMdArrowUp
+                    className="h-4 w-4"
+                    style={{ color: "var(--green)" }}
+                  />
                 ) : (
-                  <IoMdArrowDown className="h-4 w-4" style={{ color: "var(--red)" }} />
+                  <IoMdArrowDown
+                    className="h-4 w-4"
+                    style={{ color: "var(--red)" }}
+                  />
                 )}
               </div>
             )}
@@ -282,13 +298,19 @@ export const TransactionItemList = ({
             {/* Descrição + badges */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   {transaction.description || "Sem descrição"}
                 </p>
                 {isOverdue && !transaction.creditCardId && (
                   <span
                     className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1"
-                    style={{ background: "var(--red-dim)", color: "var(--red)" }}
+                    style={{
+                      background: "var(--red-dim)",
+                      color: "var(--red)",
+                    }}
                   >
                     <FiClock className="h-2.5 w-2.5" /> Atrasado
                   </span>
@@ -296,7 +318,10 @@ export const TransactionItemList = ({
                 {isNearby && !transaction.creditCardId && (
                   <span
                     className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold"
-                    style={{ background: "var(--yellow-dim)", color: "var(--yellow)" }}
+                    style={{
+                      background: "var(--yellow-dim)",
+                      color: "var(--yellow)",
+                    }}
                   >
                     Vence em breve
                   </span>
@@ -304,7 +329,10 @@ export const TransactionItemList = ({
                 {transaction.creditCardId && (
                   <span
                     className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full flex items-center gap-1"
-                    style={{ background: "var(--bg-elevated)", color: "var(--text-muted)" }}
+                    style={{
+                      background: "var(--bg-elevated)",
+                      color: "var(--text-muted)",
+                    }}
                   >
                     <BsCreditCard2Front className="h-2.5 w-2.5" /> Cartão
                   </span>
@@ -312,7 +340,10 @@ export const TransactionItemList = ({
                 {payment?.isPaid && (
                   <span
                     className="shrink-0 text-[0.65rem] px-2 py-0.5 rounded-full font-semibold"
-                    style={{ background: "var(--green-dim)", color: "var(--green)" }}
+                    style={{
+                      background: "var(--green-dim)",
+                      color: "var(--green)",
+                    }}
                   >
                     Pago
                   </span>
@@ -322,7 +353,10 @@ export const TransactionItemList = ({
                 {isTransfer ? (
                   <span
                     className="text-[0.7rem] px-2 py-0.5 rounded-full flex items-center gap-1"
-                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                    style={{
+                      background: "var(--accent-dim)",
+                      color: "var(--accent-light)",
+                    }}
                   >
                     <FiArrowRight className="h-2.5 w-2.5" />
                     {getAccountName(transaction.accountId ?? "")} →{" "}
@@ -331,7 +365,10 @@ export const TransactionItemList = ({
                 ) : (
                   <span
                     className="text-[0.7rem] px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--bg-elevated)", color: "var(--text-secondary)" }}
+                    style={{
+                      background: "var(--bg-elevated)",
+                      color: "var(--text-secondary)",
+                    }}
                   >
                     {getCategoryName(transaction.categoryId)}
                   </span>
@@ -339,7 +376,10 @@ export const TransactionItemList = ({
                 {isFixed && (
                   <span
                     className="text-[0.7rem] px-2 py-0.5 rounded-full flex items-center gap-1"
-                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                    style={{
+                      background: "var(--accent-dim)",
+                      color: "var(--accent-light)",
+                    }}
                   >
                     <MdRepeat className="h-2.5 w-2.5" /> Fixo
                   </span>
@@ -347,7 +387,10 @@ export const TransactionItemList = ({
                 {isInstallment && (
                   <span
                     className="text-[0.7rem] px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--accent-dim)", color: "var(--accent-light)" }}
+                    style={{
+                      background: "var(--accent-dim)",
+                      color: "var(--accent-light)",
+                    }}
                   >
                     {transaction.installmentsNumber}/
                     {transaction.recurrence.installmentsCount}x
@@ -372,7 +415,10 @@ export const TransactionItemList = ({
                 {formatCurrency(displayAmount)}
               </p>
               {isInstallment && transaction.recurrence.installmentsCount && (
-                <p className="text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                <p
+                  className="text-[0.65rem]"
+                  style={{ color: "var(--text-muted)" }}
+                >
                   total{" "}
                   {formatCurrency(
                     displayAmount *
@@ -417,10 +463,16 @@ export const TransactionItemList = ({
 
           {/* Expand inline — desativado em modo seleção */}
           {isExpanded && !isSelecting && (
-            <div className="px-4 py-3 flex flex-col gap-2 animate-[fadeIn_0.15s_ease-out]" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+            <div
+              className="px-4 py-3 flex flex-col gap-2 animate-[fadeIn_0.15s_ease-out]"
+              style={{ borderTop: "1px solid var(--border-subtle)" }}
+            >
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 <div>
-                  <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                  <p
+                    className="uppercase tracking-wide text-[0.65rem]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Vencimento
                   </p>
                   <p style={{ color: "var(--text-secondary)" }}>
@@ -431,7 +483,10 @@ export const TransactionItemList = ({
                 </div>
                 {payment?.paidAt && (
                   <div>
-                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                    <p
+                      className="uppercase tracking-wide text-[0.65rem]"
+                      style={{ color: "var(--text-muted)" }}
+                    >
                       Pago em
                     </p>
                     <p style={{ color: "var(--text-secondary)" }}>
@@ -443,19 +498,31 @@ export const TransactionItemList = ({
                 )}
                 {isTransfer ? (
                   <div className="col-span-2">
-                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                    <p
+                      className="uppercase tracking-wide text-[0.65rem]"
+                      style={{ color: "var(--text-muted)" }}
+                    >
                       Transferência
                     </p>
-                    <p className="flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
+                    <p
+                      className="flex items-center gap-1"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
                       {getAccountName(transaction.accountId ?? "")}
-                      <FiArrowRight className="h-3 w-3 shrink-0" style={{ color: "var(--accent-light)" }} />
+                      <FiArrowRight
+                        className="h-3 w-3 shrink-0"
+                        style={{ color: "var(--accent-light)" }}
+                      />
                       {getAccountName(transaction.targetAccountId ?? "")}
                     </p>
                   </div>
                 ) : (
                   <>
                     <div>
-                      <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                      <p
+                        className="uppercase tracking-wide text-[0.65rem]"
+                        style={{ color: "var(--text-muted)" }}
+                      >
                         Conta
                       </p>
                       <p style={{ color: "var(--text-secondary)" }}>
@@ -465,7 +532,10 @@ export const TransactionItemList = ({
                       </p>
                     </div>
                     <div>
-                      <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                      <p
+                        className="uppercase tracking-wide text-[0.65rem]"
+                        style={{ color: "var(--text-muted)" }}
+                      >
                         Tipo
                       </p>
                       <p style={{ color: "var(--text-secondary)" }}>
@@ -480,7 +550,10 @@ export const TransactionItemList = ({
                 )}
                 {isInstallment && transaction.recurrence.installmentsCount && (
                   <div>
-                    <p className="uppercase tracking-wide text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
+                    <p
+                      className="uppercase tracking-wide text-[0.65rem]"
+                      style={{ color: "var(--text-muted)" }}
+                    >
                       Parcela
                     </p>
                     <p style={{ color: "var(--text-secondary)" }}>

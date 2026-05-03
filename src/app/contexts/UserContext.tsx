@@ -25,6 +25,7 @@ export interface CcInvoiceAlert {
   status: "overdue" | "nearby";
 }
 
+import { UserRepositoryFirestore } from "@/infra/repositories/FirebaseUserRepository";
 import { listAccountByUserController } from "@/controllers/account/ListAccountByUserController";
 import { listCategoryController } from "@/controllers/category/ListCategoryController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
@@ -207,21 +208,36 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
 
-      if (user) {
-        // FIX: guarda check de SSR antes de usar localStorage
+      if (firebaseUser) {
+        let resolved: IUser | null = null;
+
         if (typeof window !== "undefined") {
-          const userLocalStorage = localStorage.getItem("user-finan-flow");
-          if (userLocalStorage) {
-            setUser(JSON.parse(userLocalStorage) as IUser);
-          } else {
-            setUser(user as unknown as IUser);
+          const cached = localStorage.getItem("user-finan-flow");
+          if (cached) {
+            const parsed = JSON.parse(cached) as IUser;
+            if (parsed.id === firebaseUser.uid) {
+              resolved = parsed;
+            } else {
+              localStorage.removeItem("user-finan-flow");
+            }
           }
-        } else {
-          setUser(user as unknown as IUser);
         }
+
+        if (!resolved) {
+          const repo = new UserRepositoryFirestore();
+          const fetched = await repo.findById(firebaseUser.uid);
+          if (fetched) {
+            resolved = fetched.toJSON();
+            if (typeof window !== "undefined") {
+              localStorage.setItem("user-finan-flow", JSON.stringify(resolved));
+            }
+          }
+        }
+
+        setUser(resolved);
       } else {
         setUser(null);
         if (typeof window !== "undefined") {

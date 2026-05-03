@@ -9,7 +9,13 @@ import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
 import { getBillingPeriod } from "@/utils/getBillingPeriod";
 import { BsCreditCard2Front } from "react-icons/bs";
-import { FiChevronDown, FiChevronUp, FiCalendar, FiPlus, FiTrash2 } from "react-icons/fi";
+import {
+  FiChevronDown,
+  FiChevronUp,
+  FiCalendar,
+  FiPlus,
+  FiTrash2,
+} from "react-icons/fi";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CategoryExpensesChart } from "@/app/components/shared/CategoryExpensesChart";
@@ -28,8 +34,7 @@ const CARD_COLORS = [
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const fmtMonth = (d: Date) =>
-  format(d, "MMM/yy", { locale: ptBR });
+const fmtMonth = (d: Date) => format(d, "MMM/yy", { locale: ptBR });
 
 interface BillEntry {
   txId: string;
@@ -133,6 +138,7 @@ function CardBillView({
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <div
@@ -189,7 +195,10 @@ function CardBillView({
               }}
               title="Remover cartão"
             >
-              <FiTrash2 className="h-3.5 w-3.5" style={{ color: "var(--red)" }} />
+              <FiTrash2
+                className="h-3.5 w-3.5"
+                style={{ color: "var(--red)" }}
+              />
             </button>
           </div>
         </div>
@@ -223,7 +232,8 @@ function CardBillView({
             {usagePercent.toFixed(0)}% do limite utilizado
             {totalCommitted > billTotal && (
               <span style={{ color: "var(--text-muted)" }}>
-                {" "}· {fmt(totalCommitted)} comprometidos
+                {" "}
+                · {fmt(totalCommitted)} comprometidos
               </span>
             )}
           </p>
@@ -341,8 +351,7 @@ function InstallmentsTracker({
   const summaryItems = useMemo(() => {
     return installmentTxs.map((t) => {
       const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
-      const total =
-        t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+      const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
 
       // Current installment = the one in the current billing period
       const currentEntry = t.paymentHistory.find((p) => {
@@ -383,8 +392,7 @@ function InstallmentsTracker({
 
     for (const t of installmentTxs) {
       const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
-      const total =
-        t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+      const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
 
       t.paymentHistory.forEach((payment, idx) => {
         if (excluded.has(idx + 1)) return;
@@ -423,6 +431,7 @@ function InstallmentsTracker({
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
         maxHeight: "700px",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       {/* Header */}
@@ -536,10 +545,7 @@ function InstallmentsTracker({
               </div>
               <div className="flex flex-col gap-0.5 pl-3">
                 {row.items.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between"
-                  >
+                  <div key={i} className="flex items-center justify-between">
                     <p
                       className="text-xs"
                       style={{ color: "var(--text-muted)" }}
@@ -594,7 +600,8 @@ function CardCategoryChart({
         const catId = t.categoryId || "uncategorized";
         const cat = categories.find((c) => c.id === catId);
         const catName = cat?.name ?? "Sem categoria";
-        if (!byCategory[catId]) byCategory[catId] = { name: catName, amount: 0 };
+        if (!byCategory[catId])
+          byCategory[catId] = { name: catName, amount: 0 };
         byCategory[catId].amount += p.amount;
       });
     }
@@ -621,13 +628,17 @@ function CardCategoryChart({
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <p
         className="text-[10px] font-semibold uppercase tracking-wider"
-        style={{ color: "var(--text-disabled)" }}
+        style={{ color: "var(--text-secondary)" }}
       >
-        Gastos por categoria · {fmtMonth(start)} {fmtMonth(start) !== fmtMonth(new Date(end.getTime() - 1)) ? `→ ${fmtMonth(new Date(end.getTime() - 1))}` : ""}
+        Gastos por categoria · {fmtMonth(start)}{" "}
+        {fmtMonth(start) !== fmtMonth(new Date(end.getTime() - 1))
+          ? `→ ${fmtMonth(new Date(end.getTime() - 1))}`
+          : ""}
       </p>
       {cardExpenses.expenses.length === 0 ? (
         <p
@@ -677,11 +688,25 @@ function CreateCardForm({ onCreated }: { onCreated: () => void }) {
     }
     setLoading(true);
     try {
-      await addCreditCard({ name: name.trim(), creditLimit: lim, closingDay: cd, dueDay: dd, color });
+      await addCreditCard({
+        name: name.trim(),
+        creditLimit: lim,
+        closingDay: cd,
+        dueDay: dd,
+        color,
+      });
       onCreated();
-      setName(""); setLimit(""); setClosingDay(""); setDueDay(""); setColor(CARD_COLORS[0].hex);
+      setName("");
+      setLimit("");
+      setClosingDay("");
+      setDueDay("");
+      setColor(CARD_COLORS[0].hex);
     } catch (e: any) {
-      setError(e?.message?.includes("2 cartões") ? "Limite de 2 cartões atingido." : e?.message ?? "Erro ao criar cartão.");
+      setError(
+        e?.message?.includes("2 cartões")
+          ? "Limite de 2 cartões atingido."
+          : e?.message ?? "Erro ao criar cartão."
+      );
     } finally {
       setLoading(false);
     }
@@ -690,15 +715,27 @@ function CreateCardForm({ onCreated }: { onCreated: () => void }) {
   return (
     <div
       className="rounded-2xl p-5 flex flex-col gap-4"
-      style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+      style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-card)",
+      }}
     >
-      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+      <p
+        className="text-sm font-semibold"
+        style={{ color: "var(--text-primary)" }}
+      >
         Novo cartão
       </p>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Nome</label>
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Nome
+          </label>
           <input
             className="input w-full"
             placeholder="Ex: Nubank, Itaú..."
@@ -707,35 +744,75 @@ function CreateCardForm({ onCreated }: { onCreated: () => void }) {
           />
         </div>
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Limite (R$)</label>
-          <input className="input w-full" placeholder="5000" value={limit} onChange={(e) => setLimit(e.target.value)} />
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Limite (R$)
+          </label>
+          <input
+            className="input w-full"
+            placeholder="5000"
+            value={limit}
+            onChange={(e) => setLimit(e.target.value)}
+          />
         </div>
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Cor</label>
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Cor
+          </label>
           <div className="flex gap-2 flex-wrap">
             {CARD_COLORS.map((c) => (
               <button
                 key={c.hex}
                 onClick={() => setColor(c.hex)}
                 className="w-6 h-6 rounded-full border-2 transition-all"
-                style={{ background: c.hex, borderColor: color === c.hex ? "white" : "transparent" }}
+                style={{
+                  background: c.hex,
+                  borderColor: color === c.hex ? "white" : "transparent",
+                }}
                 title={c.label}
               />
             ))}
           </div>
         </div>
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Dia fechamento</label>
-          <input className="input w-full" placeholder="1–28" value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Dia fechamento
+          </label>
+          <input
+            className="input w-full"
+            placeholder="1–28"
+            value={closingDay}
+            onChange={(e) => setClosingDay(e.target.value)}
+          />
         </div>
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Dia vencimento</label>
-          <input className="input w-full" placeholder="1–28" value={dueDay} onChange={(e) => setDueDay(e.target.value)} />
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Dia vencimento
+          </label>
+          <input
+            className="input w-full"
+            placeholder="1–28"
+            value={dueDay}
+            onChange={(e) => setDueDay(e.target.value)}
+          />
         </div>
       </div>
 
       {error && (
-        <p className="text-xs" style={{ color: "var(--red)" }}>{error}</p>
+        <p className="text-xs" style={{ color: "var(--red)" }}>
+          {error}
+        </p>
       )}
 
       <button
@@ -752,12 +829,18 @@ function CreateCardForm({ onCreated }: { onCreated: () => void }) {
 
 // ── Página ────────────────────────────────────────────────────────────────────
 export default function CreditCardsPage() {
-  const { creditCards, allTransactions, deleteCreditCard, categories } = useUser();
+  const { creditCards, allTransactions, deleteCreditCard, categories } =
+    useUser();
   const transactions = allTransactions ?? [];
   const [showForm, setShowForm] = useState(false);
 
   const handleDelete = async (cardId: string, cardName: string) => {
-    if (!confirm(`Remover o cartão "${cardName}"? Esta ação não pode ser desfeita.`)) return;
+    if (
+      !confirm(
+        `Remover o cartão "${cardName}"? Esta ação não pode ser desfeita.`
+      )
+    )
+      return;
     await deleteCreditCard(cardId);
   };
 
@@ -778,31 +861,48 @@ export default function CreditCardsPage() {
         )}
       </div>
 
-      {showForm && (
-        <CreateCardForm onCreated={() => setShowForm(false)} />
-      )}
+      {showForm && <CreateCardForm onCreated={() => setShowForm(false)} />}
 
       {!creditCards || creditCards.length === 0 ? (
         !showForm && (
           <div
             className="rounded-2xl p-10 flex flex-col items-center gap-4 text-center"
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+            style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+              boxShadow: "var(--shadow-card)",
+            }}
           >
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center"
-              style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+              style={{
+                background: "var(--accent-dim)",
+                border: "1px solid var(--border-accent)",
+              }}
             >
-              <BsCreditCard2Front className="h-7 w-7" style={{ color: "var(--accent-light)" }} />
+              <BsCreditCard2Front
+                className="h-7 w-7"
+                style={{ color: "var(--accent-light)" }}
+              />
             </div>
             <div>
-              <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+              <p
+                className="font-semibold text-sm"
+                style={{ color: "var(--text-primary)" }}
+              >
                 Nenhum cartão cadastrado
               </p>
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              <p
+                className="text-xs mt-1"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Adicione até 2 cartões de crédito
               </p>
             </div>
-            <button onClick={() => setShowForm(true)} className="button button-primary text-sm">
+            <button
+              onClick={() => setShowForm(true)}
+              className="button button-primary text-sm"
+            >
               <FiPlus className="h-4 w-4" />
               Adicionar cartão
             </button>
@@ -832,7 +932,10 @@ export default function CreditCardsPage() {
                 {/* Col 2, Rows 1-2: Parcelamentos (spans both rows) */}
                 {hasInstallments ? (
                   <div className="lg:row-span-2">
-                    <InstallmentsTracker card={card} transactions={transactions} />
+                    <InstallmentsTracker
+                      card={card}
+                      transactions={transactions}
+                    />
                   </div>
                 ) : (
                   /* Sem parcelamentos: categoria ocupa col 2 ao lado da fatura */

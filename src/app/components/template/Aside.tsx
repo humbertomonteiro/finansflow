@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiHome, FiList, FiPlus, FiTarget, FiSun, FiMoon } from "react-icons/fi";
+import {
+  FiHome,
+  FiList,
+  FiPlus,
+  FiTarget,
+  FiSun,
+  FiMoon,
+} from "react-icons/fi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { GoGraph } from "react-icons/go";
 import { useState } from "react";
@@ -58,7 +65,7 @@ export const Aside = () => {
       <aside
         className="hidden lg:flex flex-col justify-between fixed top-0 left-0 h-screen w-[240px] z-20"
         style={{
-          background: "var(--bg-base)",
+          background: "var(--bg-surface)",
           borderRight: "1px solid var(--border-subtle)",
           boxShadow: "4px 0 24px rgba(0,0,0,0.3)",
         }}
@@ -190,7 +197,7 @@ export const Aside = () => {
       <header
         className="hidden lg:flex fixed top-0 left-[240px] right-0 h-14 items-center justify-between px-6 z-20"
         style={{
-          background: "var(--bg-base)",
+          background: "var(--bg-surface)",
           borderBottom: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
@@ -241,7 +248,7 @@ export const Aside = () => {
       <header
         className="lg:hidden fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 z-20"
         style={{
-          background: "var(--bg-base)",
+          background: "var(--bg-surface)",
           borderBottom: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}
@@ -297,7 +304,7 @@ export const Aside = () => {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 h-16 flex items-center z-20"
         style={{
-          background: "var(--bg-base)",
+          background: "var(--bg-surface)",
           borderTop: "1px solid var(--border-subtle)",
           backdropFilter: "blur(12px)",
         }}

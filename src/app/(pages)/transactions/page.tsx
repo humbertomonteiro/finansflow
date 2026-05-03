@@ -59,11 +59,24 @@ function getTxDueDate(tx: ITransaction, year: number, month: number): Date {
 
 // ── Componente ─────────────────────────────────────────────────
 export default function Transactions() {
-  const { transactions, categories, metrics, currentBalance, year, month,
-          creditCards, allTransactions, accounts, addTransaction, refreshAccounts } =
-    useUser();
+  const {
+    transactions,
+    categories,
+    metrics,
+    currentBalance,
+    year,
+    month,
+    creditCards,
+    allTransactions,
+    accounts,
+    addTransaction,
+    refreshAccounts,
+  } = useUser();
 
-  const [payingCard, setPayingCard] = useState<{ card: ICreditCard; amount: number } | null>(null);
+  const [payingCard, setPayingCard] = useState<{
+    card: ICreditCard;
+    amount: number;
+  } | null>(null);
   const [payAccountId, setPayAccountId] = useState("");
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -71,35 +84,46 @@ export default function Transactions() {
   // Compute invoice amount for each card in the navigated month
   const cardInvoices = useMemo(() => {
     if (!creditCards || !allTransactions) return [];
-    return creditCards.map((card) => {
-      const { start, end } = getBillingPeriod(card.closingDay);
-      let bill = 0;
-      for (const t of allTransactions) {
-        if (t.creditCardId !== card.id) continue;
-        if (t.type !== TransactionTypes.WITHDRAW) continue;
-        const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
-        t.paymentHistory.forEach((p, idx) => {
-          if (excluded.has(idx + 1)) return;
-          const d = new Date(p.dueDate);
-          if (d >= start && d < end) bill += p.amount;
-        });
-      }
-      // Due date is dueDay of the month after period end
-      const dueDate = new Date(end.getFullYear(), end.getMonth(), card.dueDay);
-      return { card, bill, dueDate };
-    }).filter(({ bill }) => bill > 0);
+    return creditCards
+      .map((card) => {
+        const { start, end } = getBillingPeriod(card.closingDay);
+        let bill = 0;
+        for (const t of allTransactions) {
+          if (t.creditCardId !== card.id) continue;
+          if (t.type !== TransactionTypes.WITHDRAW) continue;
+          const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+          t.paymentHistory.forEach((p, idx) => {
+            if (excluded.has(idx + 1)) return;
+            const d = new Date(p.dueDate);
+            if (d >= start && d < end) bill += p.amount;
+          });
+        }
+        // Due date is dueDay of the month after period end
+        const dueDate = new Date(
+          end.getFullYear(),
+          end.getMonth(),
+          card.dueDay
+        );
+        return { card, bill, dueDate };
+      })
+      .filter(({ bill }) => bill > 0);
   }, [creditCards, allTransactions]);
 
   // Only show invoices for the currently navigated month
   const visibleInvoices = useMemo(
-    () => cardInvoices.filter(({ dueDate }) =>
-      dueDate.getFullYear() === year && dueDate.getMonth() + 1 === month
-    ),
+    () =>
+      cardInvoices.filter(
+        ({ dueDate }) =>
+          dueDate.getFullYear() === year && dueDate.getMonth() + 1 === month
+      ),
     [cardInvoices, year, month]
   );
 
   const handlePayInvoice = async () => {
-    if (!payingCard || !payAccountId) { setPayError("Selecione uma conta."); return; }
+    if (!payingCard || !payAccountId) {
+      setPayError("Selecione uma conta.");
+      return;
+    }
     setPayLoading(true);
     setPayError(null);
     try {
@@ -114,7 +138,12 @@ export default function Transactions() {
         categoryId: "",
         recurrence: {},
       });
-      await payerTransactionController(tx.id, today.getFullYear(), today.getMonth() + 1, payAccountId);
+      await payerTransactionController(
+        tx.id,
+        today.getFullYear(),
+        today.getMonth() + 1,
+        payAccountId
+      );
       addTransaction(tx);
       await refreshAccounts();
       setPayingCard(null);
@@ -283,6 +312,7 @@ export default function Transactions() {
         style={{
           border: "1px solid var(--border-default)",
           background: "var(--bg-surface)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         {[
@@ -415,6 +445,7 @@ export default function Transactions() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <div>
@@ -750,49 +781,91 @@ export default function Transactions() {
       {visibleInvoices.length > 0 && (
         <div
           className="rounded-sm overflow-hidden"
-          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
+          }}
         >
           <div
             className="flex items-center gap-2 px-4 py-3"
             style={{ borderBottom: "1px solid var(--border-subtle)" }}
           >
-            <BsCreditCard2Front className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
-            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+            <BsCreditCard2Front
+              className="h-4 w-4"
+              style={{ color: "var(--accent-light)" }}
+            />
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Faturas de cartão
             </p>
           </div>
-          <div className="flex flex-col divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+          <div
+            className="flex flex-col divide-y"
+            style={{ borderColor: "var(--border-subtle)" }}
+          >
             {visibleInvoices.map(({ card, bill, dueDate }) => {
               const today = new Date();
               const isOverdue = dueDate < today;
               const statusColor = isOverdue ? "var(--red)" : "var(--yellow)";
               return (
-                <div key={card.id} className="flex items-center justify-between px-4 py-3 gap-4">
+                <div
+                  key={card.id}
+                  className="flex items-center justify-between px-4 py-3 gap-4"
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: card.color + "22", border: `1px solid ${card.color}44` }}
+                      style={{
+                        background: card.color + "22",
+                        border: `1px solid ${card.color}44`,
+                      }}
                     >
-                      <BsCreditCard2Front className="h-4 w-4" style={{ color: card.color }} />
+                      <BsCreditCard2Front
+                        className="h-4 w-4"
+                        style={{ color: card.color }}
+                      />
                     </div>
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                      <p
+                        className="text-sm font-medium"
+                        style={{ color: "var(--text-primary)" }}
+                      >
                         Fatura {card.name}
                       </p>
                       <p className="text-xs" style={{ color: statusColor }}>
                         {isOverdue ? "Venceu" : "Vence"}{" "}
-                        {dueDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                        {dueDate.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        })}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className="text-sm font-bold" style={{ color: "var(--red)" }}>
-                      {bill.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    <p
+                      className="text-sm font-bold"
+                      style={{ color: "var(--red)" }}
+                    >
+                      {bill.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </p>
                     <button
-                      onClick={() => { setPayingCard({ card, amount: bill }); setPayAccountId(accounts?.[0]?.id ?? ""); setPayError(null); }}
+                      onClick={() => {
+                        setPayingCard({ card, amount: bill });
+                        setPayAccountId(accounts?.[0]?.id ?? "");
+                        setPayError(null);
+                      }}
                       className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
-                      style={{ background: "var(--accent-dim)", color: "var(--accent-light)", border: "1px solid var(--border-accent)" }}
+                      style={{
+                        background: "var(--accent-dim)",
+                        color: "var(--accent-light)",
+                        border: "1px solid var(--border-accent)",
+                      }}
                     >
                       Pagar
                     </button>
@@ -813,34 +886,79 @@ export default function Transactions() {
         >
           <div
             className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
-            style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+            style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+            <p
+              className="font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Pagar fatura · {payingCard.card.name}
             </p>
-            <div className="rounded-xl p-4 text-center" style={{ background: "var(--bg-overlay)" }}>
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Valor da fatura</p>
+            <div
+              className="rounded-xl p-4 text-center"
+              style={{ background: "var(--bg-overlay)" }}
+            >
+              <p
+                className="text-xs mb-1"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Valor da fatura
+              </p>
               <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>
-                {payingCard.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {payingCard.amount.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
               </p>
             </div>
             <div>
-              <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Debitar da conta</label>
-              <select className="input w-full" value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)}>
+              <label
+                className="text-xs mb-1 block"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Debitar da conta
+              </label>
+              <select
+                className="input w-full"
+                value={payAccountId}
+                onChange={(e) => setPayAccountId(e.target.value)}
+              >
                 {(accounts ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.name} — {a.balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {a.name} —{" "}
+                    {a.balance.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </option>
                 ))}
               </select>
             </div>
-            {payError && <p className="text-xs" style={{ color: "var(--red)" }}>{payError}</p>}
+            {payError && (
+              <p className="text-xs" style={{ color: "var(--red)" }}>
+                {payError}
+              </p>
+            )}
             <div className="flex gap-2">
-              <button onClick={() => setPayingCard(null)} className="flex-1 button" style={{ background: "var(--bg-overlay)", color: "var(--text-secondary)" }}>
+              <button
+                onClick={() => setPayingCard(null)}
+                className="flex-1 button"
+                style={{
+                  background: "var(--bg-overlay)",
+                  color: "var(--text-secondary)",
+                }}
+              >
                 Cancelar
               </button>
-              <button onClick={handlePayInvoice} disabled={payLoading} className="flex-1 button button-primary">
+              <button
+                onClick={handlePayInvoice}
+                disabled={payLoading}
+                className="flex-1 button button-primary"
+              >
                 {payLoading ? "Registrando..." : "Confirmar"}
               </button>
             </div>
@@ -854,6 +972,7 @@ export default function Transactions() {
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <div

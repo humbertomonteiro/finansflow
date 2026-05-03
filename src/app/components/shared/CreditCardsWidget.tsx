@@ -32,7 +32,10 @@ function PayInvoiceModal({
   const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
-    if (!accountId) { setError("Selecione uma conta."); return; }
+    if (!accountId) {
+      setError("Selecione uma conta.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -72,7 +75,10 @@ function PayInvoiceModal({
     >
       <div
         className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+        style={{
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-subtle)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -88,14 +94,19 @@ function PayInvoiceModal({
           className="rounded-xl p-4 text-center"
           style={{ background: "var(--bg-overlay)" }}
         >
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Valor da fatura</p>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+            Valor da fatura
+          </p>
           <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>
             {fmt(invoiceAmount)}
           </p>
         </div>
 
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
             Debitar da conta
           </label>
           <select
@@ -111,7 +122,11 @@ function PayInvoiceModal({
           </select>
         </div>
 
-        {error && <p className="text-xs" style={{ color: "var(--red)" }}>{error}</p>}
+        {error && (
+          <p className="text-xs" style={{ color: "var(--red)" }}>
+            {error}
+          </p>
+        )}
 
         <button
           onClick={handlePay}
@@ -184,16 +199,20 @@ function CardMini({
 
   return (
     <div
-      className="rounded-xl p-4 flex flex-col gap-3"
+      className="rounded-sm p-4 flex flex-col gap-3"
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-subtle)",
         borderLeft: `3px solid ${card.color}`,
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BsCreditCard2Front className="h-4 w-4" style={{ color: card.color }} />
+          <BsCreditCard2Front
+            className="h-4 w-4"
+            style={{ color: card.color }}
+          />
           <p
             className="text-sm font-semibold"
             style={{ color: "var(--text-primary)" }}
@@ -276,7 +295,10 @@ function CardMini({
 // ── Widget público ─────────────────────────────────────────────────────────────
 export function CreditCardsWidget() {
   const { creditCards, allTransactions } = useUser();
-  const [paying, setPaying] = useState<{ card: ICreditCard; amount: number } | null>(null);
+  const [paying, setPaying] = useState<{
+    card: ICreditCard;
+    amount: number;
+  } | null>(null);
 
   if (!creditCards || creditCards.length === 0) return null;
 

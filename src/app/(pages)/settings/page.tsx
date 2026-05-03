@@ -391,14 +391,21 @@ export default function Settings() {
       <BoxUser />
 
       <ul
-        className="text-gray-400 flex flex-col py-2 px-2 rounded-sm"
-        style={{ background: "var(--bg-surface)" }}
+        className="flex flex-col py-2 px-2 rounded-sm"
+        style={{
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "var(--shadow-card)",
+        }}
       >
         {/* ── CONTAS ── */}
         <li>
           <button
             onClick={() => togglePanel("accounts")}
-            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center justify-between gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{
+              borderBottom: "1px solid var(--border-subtle)",
+            }}
           >
             <span className="flex items-center gap-4">
               <MdOutlineAccountBalance className="h-5 w-5" />
@@ -420,13 +427,20 @@ export default function Settings() {
                   accounts.map((account) => (
                     <div
                       key={account.id}
-                      className="flex items-center justify-between bg-gray-900 rounded-sm px-4 py-3"
+                      className="flex items-center justify-between rounded-sm px-4 py-3"
+                      style={{ background: "var(--bg-overlay)" }}
                     >
                       <div>
-                        <p className="text-gray-200 font-medium">
+                        <p
+                          className="font-medium"
+                          style={{ color: "var(--text-primary)" }}
+                        >
                           {account.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
                           Saldo:{" "}
                           {account.balance.toLocaleString("pt-BR", {
                             style: "currency",
@@ -437,14 +451,17 @@ export default function Settings() {
                       <button
                         onClick={() => handleRemoveAccount(account)}
                         disabled={accountLoading}
-                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-white transition-colors cursor-pointer"
                       >
                         <MdDelete className="h-4 w-4" />
                       </button>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-2">
+                  <p
+                    className="text-sm text-center py-2"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     Nenhuma conta cadastrada.
                   </p>
                 )}
@@ -452,8 +469,14 @@ export default function Settings() {
 
               {/* Criar nova conta */}
               {(accounts?.length ?? 0) < 3 && (
-                <div className="flex flex-col gap-2 border-t border-gray-700 pt-4">
-                  <p className="text-gray-400 text-sm font-medium">
+                <div
+                  className="flex flex-col gap-2 pt-4"
+                  style={{ borderTop: "1px solid var(--border-default" }}
+                >
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     Nova conta
                   </p>
                   <input
@@ -483,7 +506,8 @@ export default function Settings() {
                   <button
                     onClick={handleCreateAccount}
                     disabled={accountLoading}
-                    className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold disabled:opacity-50"
+                    className="button text-white font-semibold disabled:opacity-50"
+                    style={{ background: "var(--accent)" }}
                   >
                     {accountLoading ? (
                       <span className="flex items-center gap-2">
@@ -499,7 +523,10 @@ export default function Settings() {
                 </div>
               )}
               {(accounts?.length ?? 0) >= 3 && (
-                <p className="text-yellow-600 text-xs text-center">
+                <p
+                  className="text-xs text-center"
+                  style={{ color: "var(--yellow)" }}
+                >
                   Limite de 3 contas atingido.
                 </p>
               )}
@@ -511,15 +538,14 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("credit-cards")}
-            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center justify-between gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
           >
             <span className="flex items-center gap-4">
               <BsCreditCard2Front className="h-5 w-5" />
               Cartões de Crédito
             </span>
-            <span className="text-xs text-gray-600">
-              {creditCards?.length ?? 0}/2
-            </span>
+            <span className="text-xs">{creditCards?.length ?? 0}/2</span>
           </button>
 
           {activePanel === "credit-cards" && (
@@ -550,10 +576,16 @@ export default function Settings() {
                           />
                         </div>
                         <div>
-                          <p className="text-gray-200 font-medium text-sm">
+                          <p
+                            className="font-medium text-sm"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
                             {card.name}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p
+                            className="text-xs"
+                            style={{ color: "var(--text-muted)" }}
+                          >
                             Limite:{" "}
                             {card.creditLimit.toLocaleString("pt-BR", {
                               style: "currency",
@@ -569,14 +601,17 @@ export default function Settings() {
                           handleRemoveCreditCard(card.id, card.name)
                         }
                         disabled={cardLoading}
-                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                        className="h-8 w-8 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-white transition-colors cursor-pointer"
                       >
                         <MdDelete className="h-4 w-4" />
                       </button>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-2">
+                  <p
+                    className="text-sm text-center py-2"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     Nenhum cartão cadastrado.
                   </p>
                 )}
@@ -584,7 +619,10 @@ export default function Settings() {
 
               {/* Criar novo cartão */}
               {(creditCards?.length ?? 0) < 2 && (
-                <div className="flex flex-col gap-2 border-t border-gray-700 pt-4">
+                <div
+                  className="flex flex-col gap-2 pt-4"
+                  style={{ borderTop: "1px solid var(--border-default)" }}
+                >
                   <p className="text-gray-400 text-sm font-medium">
                     Novo cartão
                   </p>
@@ -667,7 +705,8 @@ export default function Settings() {
                   <button
                     onClick={handleCreateCreditCard}
                     disabled={cardLoading}
-                    className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold disabled:opacity-50"
+                    className="button text-white font-semibold disabled:opacity-50"
+                    style={{ background: "var(--accent)" }}
                   >
                     {cardLoading ? (
                       <span className="flex items-center gap-2">
@@ -694,13 +733,14 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("categories")}
-            className="w-full flex items-center justify-between gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center justify-between gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
           >
             <span className="flex items-center gap-4">
               <MdOutlineCategory className="h-5 w-5" />
               Categorias
             </span>
-            <span className="text-xs text-gray-600">
+            <span className="text-xs ">
               {userCreatedCategories.length}/20 personalizadas
             </span>
           </button>
@@ -710,42 +750,26 @@ export default function Settings() {
               className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-4"
               style={{ background: "var(--bg-surface)" }}
             >
-              {/* Categorias padrão */}
-              <div>
-                <p className="text-gray-500 text-xs mb-2 uppercase tracking-wider">
-                  Padrão
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {defaultCategories.map((cat) => (
-                    <span
-                      key={cat.id}
-                      className="text-xs bg-gray-700 text-gray-400 px-3 py-1 rounded-sm"
-                    >
-                      {cat.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
               {/* Categorias personalizadas */}
               {userCreatedCategories.length > 0 && (
                 <div>
-                  <p className="text-gray-500 text-xs mb-2 uppercase tracking-wider">
-                    Suas categorias
-                  </p>
                   <div className="flex flex-col gap-2">
                     {userCreatedCategories.map((cat) => (
                       <div
                         key={cat.id}
-                        className="flex items-center justify-between bg-gray-900 rounded-sm px-4 py-2"
+                        className="flex items-center justify-between rounded-sm px-4 py-2"
+                        style={{ background: "var(--bg-overlay)" }}
                       >
-                        <span className="text-gray-200 text-sm">
+                        <span
+                          className="text-sm"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
                           {cat.name}
                         </span>
                         <button
                           onClick={() => handleRemoveCategory(cat)}
                           disabled={categoryLoading}
-                          className="h-7 w-7 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-red-400 hover:text-white transition-colors cursor-pointer"
+                          className="h-7 w-7 rounded-sm bg-red-900/50 hover:bg-red-700 flex items-center justify-center text-white transition-colors cursor-pointer"
                         >
                           <MdDelete className="h-3 w-3" />
                         </button>
@@ -757,8 +781,14 @@ export default function Settings() {
 
               {/* Nova categoria */}
               {userCreatedCategories.length < 20 && (
-                <div className="flex flex-col gap-2 border-t border-gray-700 pt-4">
-                  <p className="text-gray-400 text-sm font-medium">
+                <div className="flex flex-col gap-2 pt-4">
+                  <p
+                    className="text-sm font-medium pt-4"
+                    style={{
+                      color: "var(--text-secondary)",
+                      borderTop: "1px solid var(--border-default)",
+                    }}
+                  >
                     Nova categoria
                   </p>
                   <input
@@ -781,7 +811,8 @@ export default function Settings() {
                   <button
                     onClick={handleCreateCategory}
                     disabled={categoryLoading}
-                    className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold disabled:opacity-50"
+                    className="button text-white font-semibold disabled:opacity-50"
+                    style={{ background: "var(--accent)" }}
                   >
                     {categoryLoading ? (
                       <span className="flex items-center gap-2">
@@ -804,7 +835,8 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("balance")}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
           >
             <MdOutlineBalance className="h-5 w-5" />
             Ajustar Saldo
@@ -815,14 +847,19 @@ export default function Settings() {
               className="rounded-sm mx-2 my-2 p-4 flex flex-col gap-3"
               style={{ background: "var(--bg-surface)" }}
             >
-              <p className="text-gray-400 text-sm">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 Selecione a conta para editar o nome e/ou corrigir o saldo
                 manualmente.
               </p>
 
               {/* Seletor de conta */}
               <div>
-                <p className="text-gray-500 text-xs mb-1">Conta</p>
+                <p
+                  className="text-xs mb-1"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Conta
+                </p>
                 <select
                   className="input"
                   value={balanceAccountId}
@@ -848,7 +885,12 @@ export default function Settings() {
               {balanceAccountId && (
                 <>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">Nome da conta</p>
+                    <p
+                      className="text-xs mb-1"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Nome da conta
+                    </p>
                     <input
                       className="input"
                       type="text"
@@ -858,7 +900,10 @@ export default function Settings() {
                     />
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">
+                    <p
+                      className="text-xs mb-1"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
                       Saldo atual (R$)
                     </p>
                     <input
@@ -886,7 +931,8 @@ export default function Settings() {
               <button
                 onClick={handleUpdateBalance}
                 disabled={balanceLoading || !balanceAccountId}
-                className="button bg-violet-700 hover:bg-violet-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="button  text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "var(--accent)" }}
               >
                 {balanceLoading ? (
                   <span className="flex items-center gap-2">
@@ -898,7 +944,7 @@ export default function Settings() {
                 )}
               </button>
 
-              <p className="text-yellow-600/70 text-xs">
+              <p className="text-xs" style={{ color: "var(--yellow)" }}>
                 ⚠️ O ajuste de saldo altera diretamente o valor armazenado no
                 banco, independente das transações.
               </p>
@@ -913,7 +959,10 @@ export default function Settings() {
               togglePanel("diagnostic");
               if (activePanel !== "diagnostic") runDiagnostic();
             }}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{
+              borderBottom: "1px solid var(--border-subtle)",
+            }}
           >
             <FiActivity className="h-5 w-5" />
             Diagnóstico de Saldo
@@ -924,7 +973,7 @@ export default function Settings() {
               className="rounded-sm mx-2 mb-2 p-4 flex flex-col gap-4"
               style={{ background: "var(--bg-surface)" }}
             >
-              <p className="text-gray-400 text-sm">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 Compara o saldo armazenado de cada conta com o saldo calculado
                 com base em todas as transações pagas. A diferença indica
                 ajustes manuais ou transações não cadastradas.
@@ -950,28 +999,40 @@ export default function Settings() {
                         className="rounded-sm p-4 flex flex-col gap-2"
                         style={{ background: "var(--bg-surface)" }}
                       >
-                        <p className="text-gray-200 font-semibold text-sm">
+                        <p
+                          className="font-semibold text-sm"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
                           {d.accountName}
                         </p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                           <div>
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                            <p
+                              className="uppercase tracking-wide text-[0.65rem]"
+                              style={{ color: "var(--text-muted)" }}
+                            >
                               Saldo armazenado
                             </p>
-                            <p className="text-gray-300">
+                            <p style={{ color: "var(--text-secondary)" }}>
                               {fmt(d.storedBalance)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                            <p
+                              className="uppercase tracking-wide text-[0.65rem]"
+                              style={{ color: "var(--text-muted)" }}
+                            >
                               Calculado pelas transações
                             </p>
-                            <p className="text-gray-300">
+                            <p style={{ color: "var(--text-secondary)" }}>
                               {fmt(d.calculatedBalance)}
                             </p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-gray-600 uppercase tracking-wide text-[0.65rem]">
+                            <p
+                              className="uppercase tracking-wide text-[0.65rem]"
+                              style={{ color: "var(--text-muted)" }}
+                            >
                               Diferença
                             </p>
                             <p className={`font-semibold ${diffColor}`}>
@@ -988,13 +1049,20 @@ export default function Settings() {
                   })}
                   <button
                     onClick={runDiagnostic}
-                    className="button bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm cursor-pointer"
+                    className="button text-sm cursor-pointer"
+                    style={{
+                      background: "var(--accent)",
+                      color: "#fff",
+                    }}
                   >
                     Recalcular
                   </button>
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm text-center py-2">
+                <p
+                  className="text-sm text-center py-2"
+                  style={{ color: "var(--text-  )" }}
+                >
                   Nenhum dado disponível.
                 </p>
               )}
@@ -1006,20 +1074,22 @@ export default function Settings() {
         <li>
           <button
             onClick={() => togglePanel("reset")}
-            className="w-full flex items-center gap-4 p-4 hover:bg-gray-800 transition-all cursor-pointer border-b border-b-gray-800 hover:rounded-sm"
+            className="w-full flex items-center gap-4 p-4 transition-all cursor-pointer hover:rounded-sm"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
           >
             <MdOutlineReplay className="h-5 w-5" />
             Começar do zero
           </button>
           {activePanel === "reset" && (
-            <div className="bg-gray-800 rounded-sm mx-2 mb-2 p-4">
+            <div className="rounded-sm mx-2 mb-2 p-4">
               <p className="text-red-400 text-sm mb-3">
                 Atenção: Esta ação irá apagar todas as suas transações e contas.
                 Esta operação é irreversível.
               </p>
               <button
                 disabled
-                className="button bg-red-900/50 text-red-400 cursor-not-allowed opacity-60 w-full"
+                className="button text-white cursor-not-allowed opacity-60 w-full"
+                style={{ background: "var(--red)" }}
               >
                 Em breve
               </button>
@@ -1030,7 +1100,7 @@ export default function Settings() {
         {/* ── SAIR ── */}
         <li
           onClick={handleLogout}
-          className="flex gap-4 p-4 hover:bg-red-800 hover:text-gray-200 transition-all cursor-pointer hover:rounded-sm"
+          className="flex gap-4 p-4 hover:bg-red-900 hover:text-gray-200 transition-all cursor-pointer hover:rounded-sm"
         >
           <div className="flex items-center gap-4">
             <IoExitOutline className="h-5 w-5" />

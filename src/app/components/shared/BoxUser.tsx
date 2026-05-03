@@ -32,6 +32,7 @@ export const BoxUser = () => {
       style={{
         background: "var(--bg-surface)",
         border: "1px solid var(--border-default)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <div className="flex items-center gap-3">

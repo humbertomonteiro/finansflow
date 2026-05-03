@@ -255,12 +255,13 @@ export function AnnualProjectionSection() {
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <div>
           <p
             className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: "var(--text-muted)" }}
+            style={{ color: "var(--text-secondary)" }}
           >
             Projeção anual & simulador de rendimento
           </p>
@@ -344,6 +345,7 @@ export function AnnualProjectionSection() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -364,6 +366,7 @@ export function AnnualProjectionSection() {
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid rgba(34,197,94,0.25)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -382,6 +385,7 @@ export function AnnualProjectionSection() {
               style={{
                 background: "rgba(34,197,94,0.05)",
                 border: "1px solid rgba(34,197,94,0.18)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -402,6 +406,7 @@ export function AnnualProjectionSection() {
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid var(--border-default)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -420,6 +425,7 @@ export function AnnualProjectionSection() {
               style={{
                 background: "var(--bg-surface)",
                 border: "1px solid var(--border-default)",
+                boxShadow: "var(--shadow-card)",
               }}
             >
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -440,6 +446,7 @@ export function AnnualProjectionSection() {
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -460,6 +467,7 @@ export function AnnualProjectionSection() {
         style={{
           background: "var(--bg-surface)",
           border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         <div
