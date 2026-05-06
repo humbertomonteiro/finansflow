@@ -204,6 +204,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [creditCards, setCreditCards] = useState<ICreditCard[] | null>(null);
   const [ccInvoiceAlerts, setCcInvoiceAlerts] = useState<CcInvoiceAlert[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const router = useRouter();
 
@@ -243,12 +244,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         if (typeof window !== "undefined") {
           localStorage.removeItem("user-finan-flow");
         }
-        router.push("/login");
       }
+      setIsAuthReady(true);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isAuthReady && !user) {
+      router.push("/login");
+    }
+  }, [isAuthReady, user]);
 
   useEffect(() => {
     if (user) {

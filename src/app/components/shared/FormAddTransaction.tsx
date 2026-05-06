@@ -171,7 +171,7 @@ export const FormAddTransaction = ({ onClose }: { onClose: () => void }) => {
         if (markAsPaid && !creditCardId) {
           try {
             const paidTx = await payerTransactionController(created.id, year, month, accountId);
-            if (paidTx) updateTransaction(paidTx);
+            if (paidTx) { updateTransaction(paidTx); await refreshAccounts(); }
           } catch (err) {
             console.warn("Não foi possível marcar como pago:", err);
           }
