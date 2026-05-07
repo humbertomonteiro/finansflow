@@ -7,7 +7,7 @@ export class AddCategoryUsecase {
 
   async execute(userId: string, categoryId: string): Promise<User> {
     try {
-      const MAX_CATEGORIES = 20;
+      const MAX_CATEGORIES = 25;
 
       const userData = await this.userRepository.findById(userId);
 

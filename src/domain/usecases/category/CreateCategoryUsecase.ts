@@ -14,7 +14,7 @@ export class CreateCategoryUsecase {
     userId: string,
     categoryData: Pick<ICategory, "name" | "description">,
   ): Promise<Category> {
-    const MAX_CATEGORIES = 20;
+    const MAX_CATEGORIES = 25;
 
     // 1. Valida que o usuário existe
     const userData = await this.userRepository.findById(userId);

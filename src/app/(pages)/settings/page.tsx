@@ -348,8 +348,8 @@ export default function Settings() {
       setCategorySuccess(`Categoria "${newCategoryName.trim()}" criada!`);
       setNewCategoryName("");
     } catch (error: any) {
-      const msg = error?.message?.includes("20 categories")
-        ? "Limite de 20 categorias personalizadas atingido."
+      const msg = error?.message?.includes("25 categories")
+        ? "Limite de 25 categorias personalizadas atingido."
         : "Erro ao criar categoria.";
       setCategoryError(msg);
     } finally {
@@ -741,7 +741,7 @@ export default function Settings() {
               Categorias
             </span>
             <span className="text-xs ">
-              {userCreatedCategories.length}/20 personalizadas
+              {userCreatedCategories.length}/25 personalizadas
             </span>
           </button>
 
@@ -780,7 +780,7 @@ export default function Settings() {
               )}
 
               {/* Nova categoria */}
-              {userCreatedCategories.length < 20 && (
+              {userCreatedCategories.length < 25 && (
                 <div className="flex flex-col gap-2 pt-4">
                   <p
                     className="text-sm font-medium pt-4"
