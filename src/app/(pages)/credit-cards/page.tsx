@@ -7,7 +7,7 @@ import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { ICreditCard } from "@/domain/interfaces/creditcard/ICreditCard";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
-import { getBillingPeriod } from "@/utils/getBillingPeriod";
+import { getBillingPeriods } from "@/utils/getBillingPeriod";
 import { BsCreditCard2Front } from "react-icons/bs";
 import {
   FiChevronDown,
@@ -55,7 +55,7 @@ function CardBillView({
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const { start, end } = getBillingPeriod(card.closingDay);
+  const { closed: { start, end, dueDate: invoiceDueDate } } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const billEntries = useMemo<BillEntry[]>(() => {
     const entries: BillEntry[] = [];
@@ -130,7 +130,7 @@ function CardBillView({
       ? "var(--yellow)"
       : "var(--green)";
 
-  const dueDate = new Date(end.getFullYear(), end.getMonth(), card.dueDay);
+  const dueDate = invoiceDueDate;
 
   return (
     <div
@@ -332,9 +332,7 @@ function InstallmentsTracker({
   card: ICreditCard;
   transactions: ITransaction[];
 }) {
-  const { start: periodStart, end: periodEnd } = getBillingPeriod(
-    card.closingDay
-  );
+  const { closed: { start: periodStart, end: periodEnd } } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const installmentTxs = useMemo(
     () =>
@@ -582,7 +580,7 @@ function CardCategoryChart({
   transactions: ITransaction[];
   categories: ICategory[];
 }) {
-  const { start, end } = getBillingPeriod(card.closingDay);
+  const { closed: { start, end } } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const cardExpenses = useMemo<CategoryExpensesSummary>(() => {
     const byCategory: Record<string, { name: string; amount: number }> = {};

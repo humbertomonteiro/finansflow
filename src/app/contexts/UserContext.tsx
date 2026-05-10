@@ -14,7 +14,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import { TransactionRemovalScope } from "@/domain/enums/transaction/TransactionRemovalScope";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
-import { getBillingPeriod } from "@/utils/getBillingPeriod";
+import { getBillingPeriods } from "@/utils/getBillingPeriod";
 
 export interface CcInvoiceAlert {
   cardId: string;
@@ -365,7 +365,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const alerts: CcInvoiceAlert[] = [];
 
     for (const card of creditCards) {
-      const { start, end } = getBillingPeriod(card.closingDay);
+      const { closed: { start, end, dueDate } } = getBillingPeriods(card.closingDay, card.dueDay);
       let bill = 0;
 
       for (const t of allTransactions) {
@@ -380,8 +380,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (bill <= 0) continue;
-
-      const dueDate = new Date(end.getFullYear(), end.getMonth(), card.dueDay);
       dueDate.setHours(0, 0, 0, 0);
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
 

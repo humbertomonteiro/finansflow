@@ -8,7 +8,7 @@ import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { ICreditCard } from "@/domain/interfaces/creditcard/ICreditCard";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
-import { getBillingPeriod } from "@/utils/getBillingPeriod";
+import { getBillingPeriods } from "@/utils/getBillingPeriod";
 import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { BsCreditCard2Front } from "react-icons/bs";
@@ -86,7 +86,7 @@ export default function Transactions() {
     if (!creditCards || !allTransactions) return [];
     return creditCards
       .map((card) => {
-        const { start, end } = getBillingPeriod(card.closingDay);
+        const { closed: { start, end, dueDate } } = getBillingPeriods(card.closingDay, card.dueDay);
         let bill = 0;
         for (const t of allTransactions) {
           if (t.creditCardId !== card.id) continue;
@@ -98,12 +98,6 @@ export default function Transactions() {
             if (d >= start && d < end) bill += p.amount;
           });
         }
-        // Due date is dueDay of the month after period end
-        const dueDate = new Date(
-          end.getFullYear(),
-          end.getMonth(),
-          card.dueDay
-        );
         return { card, bill, dueDate };
       })
       .filter(({ bill }) => bill > 0);

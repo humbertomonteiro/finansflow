@@ -6,15 +6,18 @@ import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 import { ICreditCard } from "@/domain/interfaces/creditcard/ICreditCard";
 import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
 import { TransactionKind } from "@/domain/enums/transaction/TransactionKind";
-import { getBillingPeriod } from "@/utils/getBillingPeriod";
+import { getBillingPeriods } from "@/utils/getBillingPeriod";
 import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { BsCreditCard2Front } from "react-icons/bs";
-import { FiArrowRight, FiX } from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiX } from "react-icons/fi";
 import Link from "next/link";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const fmtDate = (d: Date | null | undefined) =>
+  d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "";
 
 // ── Modal para pagar fatura ────────────────────────────────────────────────────
 function PayInvoiceModal({
@@ -50,14 +53,13 @@ function PayInvoiceModal({
         categoryId: "",
         recurrence: {},
       });
-      // mark as paid immediately
-      await payerTransactionController(
+      const paidTx = await payerTransactionController(
         tx.id,
         today.getFullYear(),
         today.getMonth() + 1,
         accountId
       );
-      addTransaction(tx);
+      addTransaction(paidTx ?? tx);
       await refreshAccounts();
       onClose();
     } catch (e: any) {
@@ -150,10 +152,11 @@ function CardMini({
   transactions: ITransaction[];
   onPay: (amount: number) => void;
 }) {
-  const { start, end } = getBillingPeriod(card.closingDay);
+  const { closed, open } = getBillingPeriods(card.closingDay, card.dueDay);
 
-  const { billTotal, totalCommitted } = useMemo(() => {
-    let bill = 0;
+  const { closedBillTotal, openBillTotal, totalCommitted } = useMemo(() => {
+    let closedBill = 0;
+    let openBill = 0;
     let committed = 0;
 
     for (const t of transactions) {
@@ -165,23 +168,38 @@ function CardMini({
         t.paymentHistory.forEach((p, idx) => {
           if (excluded.has(idx + 1)) return;
           const d = new Date(p.dueDate);
-          if (d >= start && d < end) bill += p.amount;
-          // comprometido: todas as parcelas não pagas a partir do período atual
-          if (d >= start && !p.isPaid) committed += p.amount;
+          if (d >= closed.start && d < closed.end) closedBill += p.amount;
+          if (d >= open.start && d < open.end) openBill += p.amount;
+          if (d >= closed.start && !p.isPaid) committed += p.amount;
         });
       } else {
-        // SIMPLE/FIXED: só conta o período atual em ambos
         t.paymentHistory.forEach((p) => {
           const d = new Date(p.dueDate);
-          if (d >= start && d < end) {
-            bill += p.amount;
+          if (d >= closed.start && d < closed.end) {
+            closedBill += p.amount;
             committed += p.amount;
           }
+          if (d >= open.start && d < open.end) openBill += p.amount;
         });
       }
     }
-    return { billTotal: bill, totalCommitted: committed };
-  }, [transactions, card.id, start, end]);
+    return { closedBillTotal: closedBill, openBillTotal: openBill, totalCommitted: committed };
+  }, [transactions, card.id, closed, open]);
+
+  // Detecta se a fatura fechada já foi paga (procura transação de pagamento no allTransactions)
+  const paidEntry = useMemo(() => {
+    return transactions.find(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= closed.start
+    );
+  }, [transactions, card.name, card.id, closed.start]);
+
+  const isPaid = !!paidEntry;
+  const paidAt = paidEntry?.paymentHistory?.[0]?.paidAt ?? null;
 
   const available = Math.max(0, card.creditLimit - totalCommitted);
   const usedPct =
@@ -195,8 +213,6 @@ function CardMini({
       ? "var(--yellow)"
       : "var(--green)";
 
-  const dueDate = new Date(end.getFullYear(), end.getMonth(), card.dueDay);
-
   return (
     <div
       className="rounded-sm p-4 flex flex-col gap-3"
@@ -207,6 +223,7 @@ function CardMini({
         boxShadow: "var(--shadow-card)",
       }}
     >
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BsCreditCard2Front
@@ -225,35 +242,98 @@ function CardMini({
         </p>
       </div>
 
+      {/* Faturas: atual (esquerda) e próxima (direita) */}
       <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            Fatura do mês
-          </p>
-          <p className="text-base font-bold" style={{ color: barColor }}>
-            {fmt(billTotal)}
-          </p>
+        {/* Fatura atual (período fechado) */}
+        <div
+          className="rounded-lg p-3 flex flex-col gap-1"
+          style={{
+            background: isPaid ? "rgba(34,197,94,0.08)" : "var(--bg-overlay)",
+            border: isPaid ? "1px solid rgba(34,197,94,0.2)" : "1px solid var(--border-subtle)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-1">
+            <p className="text-[10px] font-medium truncate" style={{ color: "var(--text-muted)" }}>
+              Fatura atual
+            </p>
+            {isPaid && (
+              <span
+                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
+              >
+                <FiCheck className="h-2.5 w-2.5" />
+                Paga
+              </span>
+            )}
+          </div>
           <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-            Vence{" "}
-            {dueDate.toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            })}
+            vence {fmtDate(closed.dueDate)}
           </p>
+          <p
+            className="text-base font-bold"
+            style={{ color: isPaid ? "var(--green)" : closedBillTotal > 0 ? "var(--red)" : "var(--text-secondary)" }}
+          >
+            {fmt(closedBillTotal)}
+          </p>
+          {isPaid && paidAt && (
+            <p className="text-[10px]" style={{ color: "var(--green)" }}>
+              Paga em {fmtDate(new Date(paidAt))}
+            </p>
+          )}
+          {!isPaid && closedBillTotal > 0 && (
+            <button
+              onClick={() => onPay(closedBillTotal)}
+              className="mt-auto text-[11px] py-1.5 rounded-lg font-medium transition-all w-full"
+              style={{
+                background: "var(--accent-dim)",
+                color: "var(--accent-light)",
+                border: "1px solid var(--border-accent)",
+              }}
+            >
+              Pagar
+            </button>
+          )}
+          {closedBillTotal === 0 && (
+            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+              Sem compras
+            </p>
+          )}
         </div>
-        <div className="text-right">
-          <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            Disponível
-          </p>
-          <p className="text-base font-bold" style={{ color: "var(--green)" }}>
-            {fmt(available)}
+
+        {/* Próxima fatura (período aberto) */}
+        <div
+          className="rounded-lg p-3 flex flex-col gap-1"
+          style={{
+            background: "var(--bg-overlay)",
+            border: "1px solid var(--border-subtle)",
+          }}
+        >
+          <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>
+            Próxima fatura
           </p>
           <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-            de {fmt(card.creditLimit)}
+            vence {fmtDate(new Date(open.end.getFullYear(), open.end.getMonth(), card.dueDay))}
           </p>
+          <p className="text-base font-bold" style={{ color: "var(--text-secondary)" }}>
+            {fmt(openBillTotal)}
+          </p>
+          {openBillTotal > 0 ? (
+            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+              acumulando
+            </p>
+          ) : (
+            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+              Sem compras
+            </p>
+          )}
+          <div className="mt-auto">
+            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Disponível</p>
+            <p className="text-sm font-bold" style={{ color: "var(--green)" }}>{fmt(available)}</p>
+          </div>
         </div>
       </div>
 
+      {/* Barra de uso */}
       <div
         className="h-1 rounded-full overflow-hidden"
         style={{ background: "var(--bg-overlay)" }}
@@ -264,30 +344,18 @@ function CardMini({
         />
       </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => onPay(billTotal)}
-          className="flex-1 text-xs py-1.5 rounded-lg font-medium transition-all"
-          style={{
-            background: "var(--accent-dim)",
-            color: "var(--accent-light)",
-            border: "1px solid var(--border-accent)",
-          }}
-        >
-          Pagar fatura
-        </button>
-        <Link
-          href="/credit-cards"
-          className="flex-1 text-xs py-1.5 rounded-lg font-medium text-center transition-all"
-          style={{
-            background: "var(--bg-overlay)",
-            color: "var(--text-secondary)",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
-          Ver detalhes
-        </Link>
-      </div>
+      {/* Link para detalhes */}
+      <Link
+        href="/credit-cards"
+        className="text-xs py-1.5 rounded-lg font-medium text-center transition-all"
+        style={{
+          background: "var(--bg-overlay)",
+          color: "var(--text-secondary)",
+          border: "1px solid var(--border-subtle)",
+        }}
+      >
+        Ver detalhes
+      </Link>
     </div>
   );
 }
