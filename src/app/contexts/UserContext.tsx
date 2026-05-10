@@ -219,7 +219,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           const cached = localStorage.getItem("user-finan-flow");
           if (cached) {
             const parsed = JSON.parse(cached) as IUser;
-            if (parsed.id === firebaseUser.uid) {
+            // Link between Firebase Auth and Firestore is email, not UID
+            if (parsed.email === firebaseUser.email) {
               resolved = parsed;
             } else {
               localStorage.removeItem("user-finan-flow");
@@ -227,9 +228,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
-        if (!resolved) {
+        if (!resolved && firebaseUser.email) {
           const repo = new UserRepositoryFirestore();
-          const fetched = await repo.findById(firebaseUser.uid);
+          const fetched = await repo.findByEmail(firebaseUser.email);
           if (fetched) {
             resolved = fetched.toJSON();
             if (typeof window !== "undefined") {
