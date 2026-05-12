@@ -59,6 +59,16 @@ export enum EditScope {
   AMOUNT_FORWARD = "amount_forward",
 
   /**
+   * Altera o valor de apenas uma ocorrência (mês/parcela específica).
+   * - FIXED:        atualiza só o paymentHistory[n].amount do mês alvo.
+   *                 tx.amount base não muda (usado para gerar meses futuros).
+   * - INSTALLMENT:  atualiza só o paymentHistory[n].amount da parcela alvo.
+   *                 tx.amount é recalculado como soma de todas as parcelas.
+   * Parcelas já pagas são rejeitadas — histórico é imutável.
+   */
+  CURRENT_MONTH = "current_month",
+
+  /**
    * Edição completa: description + amount + category + account.
    * Recalcula TODOS os payments não pagos com o novo amount.
    * Use para SIMPLE ou quando o usuário escolhe "alterar tudo".
@@ -109,6 +119,17 @@ export class EditTransactionUseCase {
           );
         }
         return this.editAmountForward(tx, payload, year, month);
+
+      case EditScope.CURRENT_MONTH:
+        if (payload.amount === undefined) {
+          throw new Error("amount é obrigatório para EditScope.CURRENT_MONTH");
+        }
+        if (!year || !month) {
+          throw new Error(
+            "year e month são obrigatórios para EditScope.CURRENT_MONTH"
+          );
+        }
+        return this.editCurrentMonth(tx, payload, year, month);
 
       case EditScope.ALL:
         return this.editAll(tx, payload);
@@ -218,6 +239,47 @@ export class EditTransactionUseCase {
       description: payload.description ?? tx.description,
       categoryId: payload.categoryId ?? tx.categoryId,
       accountId: payload.accountId ?? tx.accountId,
+      paymentHistory: updatedPaymentHistory,
+    });
+
+    return this.transactionRepository.update(tx.id, updated);
+  }
+
+  // ── CURRENT_MONTH: só a ocorrência do mês alvo ────────────────────────────
+  private async editCurrentMonth(
+    tx: Transaction,
+    payload: EditPayload,
+    year: number,
+    month: number
+  ): Promise<Transaction> {
+    const entry = tx.paymentHistory.find((p) => {
+      const d = new Date(p.dueDate);
+      return d.getFullYear() === year && d.getMonth() + 1 === month;
+    });
+    if (!entry) throw new Error("Ocorrência não encontrada para este mês");
+    if (entry.isPaid) throw new Error("Não é possível editar uma parcela já paga");
+
+    const newAmount = payload.amount!;
+    const updatedPaymentHistory: IPaymentHistory[] = tx.paymentHistory.map((p) => {
+      const d = new Date(p.dueDate);
+      if (d.getFullYear() === year && d.getMonth() + 1 === month) {
+        return { ...p, amount: newAmount };
+      }
+      return p;
+    });
+
+    // INSTALLMENT: total = soma real de todas as parcelas individuais
+    // FIXED: tx.amount é o valor base dos meses futuros — não muda
+    const newTotal =
+      tx.kind === TransactionKind.INSTALLMENT
+        ? updatedPaymentHistory.reduce((s, p) => s + p.amount, 0)
+        : tx.amount;
+
+    const updated = tx.update({
+      amount: newTotal,
+      description: tx.description,
+      categoryId: tx.categoryId,
+      accountId: tx.accountId,
       paymentHistory: updatedPaymentHistory,
     });
 

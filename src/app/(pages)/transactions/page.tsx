@@ -12,9 +12,17 @@ import { getBillingPeriods } from "@/utils/getBillingPeriod";
 import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
 import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { BsCreditCard2Front } from "react-icons/bs";
+import Link from "next/link";
 
 import { CiSearch } from "react-icons/ci";
-import { FiX, FiFilter, FiChevronDown, FiCalendar } from "react-icons/fi";
+import {
+  FiX,
+  FiFilter,
+  FiChevronDown,
+  FiCalendar,
+  FiCheck,
+  FiArrowRight,
+} from "react-icons/fi";
 import {
   RiArrowUpCircleLine,
   RiArrowDownCircleLine,
@@ -86,8 +94,12 @@ export default function Transactions() {
     if (!creditCards || !allTransactions) return [];
     return creditCards
       .map((card) => {
-        const { closed: { start, end, dueDate } } = getBillingPeriods(card.closingDay, card.dueDay);
+        const {
+          closed: { start, end, dueDate },
+          open,
+        } = getBillingPeriods(card.closingDay, card.dueDay);
         let bill = 0;
+        let nextBill = 0;
         for (const t of allTransactions) {
           if (t.creditCardId !== card.id) continue;
           if (t.type !== TransactionTypes.WITHDRAW) continue;
@@ -96,9 +108,26 @@ export default function Transactions() {
             if (excluded.has(idx + 1)) return;
             const d = new Date(p.dueDate);
             if (d >= start && d < end) bill += p.amount;
+            if (d >= open.start && d < open.end) nextBill += p.amount;
           });
         }
-        return { card, bill, dueDate };
+        // Detecta pagamento de fatura
+        const paidEntry = allTransactions.find(
+          (t) =>
+            t.description === `Fatura ${card.name}` &&
+            !t.creditCardId &&
+            t.accountId &&
+            t.paymentHistory?.[0]?.isPaid === true &&
+            new Date(t.dueDate) >= start
+        );
+        return {
+          card,
+          bill,
+          dueDate,
+          nextBill,
+          isPaid: !!paidEntry,
+          paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
+        };
       })
       .filter(({ bill }) => bill > 0);
   }, [creditCards, allTransactions]);
@@ -167,10 +196,20 @@ export default function Transactions() {
     )}-${String(d.getDate()).padStart(2, "0")}`;
   }, []);
 
+  // Exclui compras de cartão (creditCardId) e pagamentos de fatura (WITHDRAW sem categoria)
+  const baseTransactions = useMemo(
+    () =>
+      (transactions ?? []).filter(
+        (tx) =>
+          !tx.creditCardId &&
+          !(tx.type === TransactionTypes.WITHDRAW && !tx.categoryId)
+      ),
+    [transactions]
+  );
+
   // ── Filtragem ────────────────────────────────────────────────
   const filtered = useMemo<ITransaction[]>(() => {
-    if (!transactions) return [];
-    return transactions.filter((tx) => {
+    return baseTransactions.filter((tx) => {
       if (search.trim()) {
         const q = search.trim().toLowerCase();
         if (!tx.description?.toLowerCase().includes(q)) return false;
@@ -206,7 +245,7 @@ export default function Transactions() {
       return true;
     });
   }, [
-    transactions,
+    baseTransactions,
     search,
     statusFilter,
     typeFilter,
@@ -261,8 +300,8 @@ export default function Transactions() {
   };
 
   const availableCategories = useMemo(() => {
-    if (!categories || !transactions) return [];
-    const usedIds = new Set(transactions.map((tx) => tx.categoryId));
+    if (!categories) return [];
+    const usedIds = new Set(baseTransactions.map((tx) => tx.categoryId));
     return categories.filter((c) => usedIds.has(c.id));
   }, [categories, transactions]);
 
@@ -360,6 +399,250 @@ export default function Transactions() {
           </div>
         ))}
       </div>
+      {/* Faturas de cartão do mês */}
+      {visibleInvoices.length > 0 && (
+        <div
+          className="rounded-sm overflow-hidden"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border-default)",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
+          >
+            <div className="flex items-center gap-2">
+              <BsCreditCard2Front
+                className="h-4 w-4"
+                style={{ color: "var(--accent-light)" }}
+              />
+              <p
+                className="text-sm font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Faturas de cartão
+              </p>
+            </div>
+            <Link
+              href="/credit-cards"
+              className="flex items-center gap-1 text-xs transition-all"
+              style={{ color: "var(--accent-light)" }}
+            >
+              Ver cartões
+              <FiArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div
+            className="flex flex-col divide-y"
+            style={{ borderColor: "var(--border-subtle)" }}
+          >
+            {visibleInvoices.map(
+              ({ card, bill, dueDate, nextBill, isPaid, paidAt }) => {
+                const today = new Date();
+                const isOverdue = !isPaid && dueDate < today;
+                return (
+                  <div
+                    key={card.id}
+                    className="flex items-center justify-between px-4 py-3 gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{
+                          background: card.color + "22",
+                          border: `1px solid ${card.color}44`,
+                        }}
+                      >
+                        <BsCreditCard2Front
+                          className="h-4 w-4"
+                          style={{ color: card.color }}
+                        />
+                      </div>
+                      <div>
+                        <p
+                          className="text-sm font-medium"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          Fatura {card.name}
+                        </p>
+                        {isPaid ? (
+                          <p
+                            className="text-xs"
+                            style={{ color: "var(--green)" }}
+                          >
+                            Paga em{" "}
+                            {paidAt
+                              ? new Date(paidAt).toLocaleDateString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                })
+                              : dueDate.toLocaleDateString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                })}
+                          </p>
+                        ) : (
+                          <p
+                            className="text-xs"
+                            style={{
+                              color: isOverdue ? "var(--red)" : "var(--yellow)",
+                            }}
+                          >
+                            {isOverdue ? "Venceu" : "Vence"}{" "}
+                            {dueDate.toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {isPaid ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span
+                            className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: "rgba(34,197,94,0.15)",
+                              color: "var(--green)",
+                            }}
+                          >
+                            <FiCheck className="h-3 w-3" />
+                            {fmt(bill)}
+                          </span>
+                          {nextBill > 0 && (
+                            <p
+                              className="text-[11px]"
+                              style={{ color: "var(--text-disabled)" }}
+                            >
+                              Próxima: {fmt(nextBill)}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <p
+                            className="text-sm font-bold"
+                            style={{ color: "var(--red)" }}
+                          >
+                            {fmt(bill)}
+                          </p>
+                          <button
+                            onClick={() => {
+                              setPayingCard({ card, amount: bill });
+                              setPayAccountId(accounts?.[0]?.id ?? "");
+                              setPayError(null);
+                            }}
+                            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                            style={{
+                              background: "var(--accent-dim)",
+                              color: "var(--accent-light)",
+                              border: "1px solid var(--border-accent)",
+                            }}
+                          >
+                            Pagar
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de pagamento */}
+      {payingCard && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+          onClick={() => setPayingCard(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
+            style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-subtle)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p
+              className="font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Pagar fatura · {payingCard.card.name}
+            </p>
+            <div
+              className="rounded-xl p-4 text-center"
+              style={{ background: "var(--bg-overlay)" }}
+            >
+              <p
+                className="text-xs mb-1"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Valor da fatura
+              </p>
+              <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>
+                {payingCard.amount.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+              </p>
+            </div>
+            <div>
+              <label
+                className="text-xs mb-1 block"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Debitar da conta
+              </label>
+              <select
+                className="input w-full"
+                value={payAccountId}
+                onChange={(e) => setPayAccountId(e.target.value)}
+              >
+                {(accounts ?? []).map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} —{" "}
+                    {a.balance.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {payError && (
+              <p className="text-xs" style={{ color: "var(--red)" }}>
+                {payError}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPayingCard(null)}
+                className="flex-1 button"
+                style={{
+                  background: "var(--bg-overlay)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handlePayInvoice}
+                disabled={payLoading}
+                className="flex-1 button button-primary"
+              >
+                {payLoading ? "Registrando..." : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Barra de busca + filtros */}
       <div className="flex gap-2">
@@ -677,16 +960,10 @@ export default function Transactions() {
             onClick={() => setStatusFilter(v)}
           >
             {v === "all"
-              ? `Todas (${transactions?.length ?? 0})`
+              ? `Todas (${baseTransactions.length})`
               : v === "unpaid"
-              ? `Pendentes (${
-                  transactions?.filter((tx) => !isTxPaid(tx, year, month))
-                    .length ?? 0
-                })`
-              : `Resolvidas (${
-                  transactions?.filter((tx) => isTxPaid(tx, year, month))
-                    .length ?? 0
-                })`}
+              ? `Pendentes (${baseTransactions.filter((tx) => !isTxPaid(tx, year, month)).length})`
+              : `Resolvidas (${baseTransactions.filter((tx) => isTxPaid(tx, year, month)).length})`}
           </Chip>
         ))}
         <Chip
@@ -770,195 +1047,6 @@ export default function Transactions() {
           );
         })()}
       </div>
-
-      {/* Faturas de cartão do mês */}
-      {visibleInvoices.length > 0 && (
-        <div
-          className="rounded-sm overflow-hidden"
-          style={{
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          <div
-            className="flex items-center gap-2 px-4 py-3"
-            style={{ borderBottom: "1px solid var(--border-subtle)" }}
-          >
-            <BsCreditCard2Front
-              className="h-4 w-4"
-              style={{ color: "var(--accent-light)" }}
-            />
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Faturas de cartão
-            </p>
-          </div>
-          <div
-            className="flex flex-col divide-y"
-            style={{ borderColor: "var(--border-subtle)" }}
-          >
-            {visibleInvoices.map(({ card, bill, dueDate }) => {
-              const today = new Date();
-              const isOverdue = dueDate < today;
-              const statusColor = isOverdue ? "var(--red)" : "var(--yellow)";
-              return (
-                <div
-                  key={card.id}
-                  className="flex items-center justify-between px-4 py-3 gap-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{
-                        background: card.color + "22",
-                        border: `1px solid ${card.color}44`,
-                      }}
-                    >
-                      <BsCreditCard2Front
-                        className="h-4 w-4"
-                        style={{ color: card.color }}
-                      />
-                    </div>
-                    <div>
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        Fatura {card.name}
-                      </p>
-                      <p className="text-xs" style={{ color: statusColor }}>
-                        {isOverdue ? "Venceu" : "Vence"}{" "}
-                        {dueDate.toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p
-                      className="text-sm font-bold"
-                      style={{ color: "var(--red)" }}
-                    >
-                      {bill.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </p>
-                    <button
-                      onClick={() => {
-                        setPayingCard({ card, amount: bill });
-                        setPayAccountId(accounts?.[0]?.id ?? "");
-                        setPayError(null);
-                      }}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
-                      style={{
-                        background: "var(--accent-dim)",
-                        color: "var(--accent-light)",
-                        border: "1px solid var(--border-accent)",
-                      }}
-                    >
-                      Pagar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Modal de pagamento */}
-      {payingCard && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-          onClick={() => setPayingCard(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
-            style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-subtle)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p
-              className="font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Pagar fatura · {payingCard.card.name}
-            </p>
-            <div
-              className="rounded-xl p-4 text-center"
-              style={{ background: "var(--bg-overlay)" }}
-            >
-              <p
-                className="text-xs mb-1"
-                style={{ color: "var(--text-muted)" }}
-              >
-                Valor da fatura
-              </p>
-              <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>
-                {payingCard.amount.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </p>
-            </div>
-            <div>
-              <label
-                className="text-xs mb-1 block"
-                style={{ color: "var(--text-muted)" }}
-              >
-                Debitar da conta
-              </label>
-              <select
-                className="input w-full"
-                value={payAccountId}
-                onChange={(e) => setPayAccountId(e.target.value)}
-              >
-                {(accounts ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name} —{" "}
-                    {a.balance.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {payError && (
-              <p className="text-xs" style={{ color: "var(--red)" }}>
-                {payError}
-              </p>
-            )}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPayingCard(null)}
-                className="flex-1 button"
-                style={{
-                  background: "var(--bg-overlay)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handlePayInvoice}
-                disabled={payLoading}
-                className="flex-1 button button-primary"
-              >
-                {payLoading ? "Registrando..." : "Confirmar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Lista */}
       <div

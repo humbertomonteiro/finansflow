@@ -154,7 +154,18 @@ function CardMini({
 }) {
   const { closed, open } = getBillingPeriods(card.closingDay, card.dueDay);
 
-  const { closedBillTotal, openBillTotal, totalCommitted } = useMemo(() => {
+  const { closedBillTotal, openBillTotal, totalCommitted, isPaid, paidAt } = useMemo(() => {
+    // Detecta pagamento de fatura primeiro para ajustar o committed
+    const paidEntry = transactions.find(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= closed.start
+    );
+    const invoicePaid = !!paidEntry;
+
     let closedBill = 0;
     let openBill = 0;
     let committed = 0;
@@ -170,6 +181,7 @@ function CardMini({
           const d = new Date(p.dueDate);
           if (d >= closed.start && d < closed.end) closedBill += p.amount;
           if (d >= open.start && d < open.end) openBill += p.amount;
+          // Parcelas futuras não pagas ainda comprometem o limite
           if (d >= closed.start && !p.isPaid) committed += p.amount;
         });
       } else {
@@ -177,29 +189,25 @@ function CardMini({
           const d = new Date(p.dueDate);
           if (d >= closed.start && d < closed.end) {
             closedBill += p.amount;
+            // Fatura fechada só compromete o limite se ainda não foi paga
+            if (!invoicePaid) committed += p.amount;
+          }
+          if (d >= open.start && d < open.end) {
+            openBill += p.amount;
             committed += p.amount;
           }
-          if (d >= open.start && d < open.end) openBill += p.amount;
         });
       }
     }
-    return { closedBillTotal: closedBill, openBillTotal: openBill, totalCommitted: committed };
-  }, [transactions, card.id, closed, open]);
 
-  // Detecta se a fatura fechada já foi paga (procura transação de pagamento no allTransactions)
-  const paidEntry = useMemo(() => {
-    return transactions.find(
-      (t) =>
-        t.description === `Fatura ${card.name}` &&
-        !t.creditCardId &&
-        t.accountId &&
-        t.paymentHistory?.[0]?.isPaid === true &&
-        new Date(t.dueDate) >= closed.start
-    );
-  }, [transactions, card.name, card.id, closed.start]);
-
-  const isPaid = !!paidEntry;
-  const paidAt = paidEntry?.paymentHistory?.[0]?.paidAt ?? null;
+    return {
+      closedBillTotal: closedBill,
+      openBillTotal: openBill,
+      totalCommitted: committed,
+      isPaid: invoicePaid,
+      paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
+    };
+  }, [transactions, card.id, card.name, closed, open]);
 
   const available = Math.max(0, card.creditLimit - totalCommitted);
   const usedPct =

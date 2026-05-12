@@ -194,6 +194,18 @@ function ScopeChoiceScreen({
 
       {isRecurring && (
         <ScopeOption
+          title={`Só ${format(new Date(year, month - 1), "MMM/yyyy", {
+            locale: ptBR,
+          })}`}
+          description="Altera apenas o valor desta ocorrência. Os outros meses não mudam."
+          scope={EditScope.CURRENT_MONTH}
+          selected={editScope}
+          onSelect={setEditScope}
+        />
+      )}
+
+      {isRecurring && (
+        <ScopeOption
           title={`Valor a partir de ${format(
             new Date(year, month - 1),
             "MMM/yyyy",
@@ -287,6 +299,10 @@ function EditFormScreen({
       >
         <FiInfo className="h-3.5 w-3.5 shrink-0" />
         {editScope === EditScope.SINGLE && "Alterando: descrição e categoria"}
+        {editScope === EditScope.CURRENT_MONTH &&
+          `Alterando: apenas ${format(new Date(year, month - 1), "MMM/yyyy", {
+            locale: ptBR,
+          })}`}
         {editScope === EditScope.AMOUNT_FORWARD &&
           `Alterando: valor a partir de ${format(
             new Date(year, month - 1),
@@ -360,7 +376,9 @@ function EditFormScreen({
             className="text-[0.65rem] font-semibold uppercase tracking-wider"
             style={{ color: "var(--text-muted)" }}
           >
-            {editScope === EditScope.AMOUNT_FORWARD && isInstallment
+            {editScope === EditScope.CURRENT_MONTH
+              ? `Valor de ${format(new Date(year, month - 1), "MMM/yyyy", { locale: ptBR })}`
+              : editScope === EditScope.AMOUNT_FORWARD && isInstallment
               ? "Novo valor por parcela"
               : editScope === EditScope.AMOUNT_FORWARD
               ? "Novo valor mensal"
@@ -430,10 +448,23 @@ export const TransactionDetails = ({
     if (transaction) {
       setStep("view");
       setEditedDesc(transaction.description ?? "");
-      setEditedAmount(transaction.amount);
+      const initAmount = (() => {
+        if (transaction.kind === TransactionKind.FIXED) {
+          const entry = transaction.paymentHistory.find((p) => {
+            const d = new Date(p.dueDate);
+            return d.getFullYear() === year && d.getMonth() + 1 === month;
+          });
+          return entry?.amount ?? transaction.amount;
+        }
+        if (transaction.kind === TransactionKind.INSTALLMENT) {
+          return transaction.paymentHistory[0]?.amount ?? transaction.amount;
+        }
+        return transaction.amount;
+      })();
+      setEditedAmount(initAmount);
       setEditedCategory(transaction.categoryId);
       setEditScope(EditScope.SINGLE);
-      amountInput.reset(transaction.amount);
+      amountInput.reset(initAmount);
       const d = new Date(transaction.dueDate);
       setEditedDate(
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
@@ -470,6 +501,18 @@ export const TransactionDetails = ({
   const isInstallment = transaction.kind === TransactionKind.INSTALLMENT;
   const isRecurring = isFixed || isInstallment;
 
+  // Para FIXED: mostra o amount do mês atual (pode ter sido editado com CURRENT_MONTH).
+  // Para INSTALLMENT: mantém paymentHistory[0].amount (valor por parcela).
+  // Para SIMPLE: usa transaction.amount diretamente.
+  const displayAmount = isFixed
+    ? (transaction.paymentHistory.find((p) => {
+        const d = new Date(p.dueDate);
+        return d.getFullYear() === year && d.getMonth() + 1 === month;
+      })?.amount ?? transaction.amount)
+    : isInstallment
+    ? (transaction.paymentHistory[0]?.amount ?? transaction.amount)
+    : transaction.amount;
+
   const getCategoryName = (id: string) =>
     categories?.find((c) => c.id === id)?.name ?? "Sem categoria";
 
@@ -488,12 +531,15 @@ export const TransactionDetails = ({
         const [y, m, d] = editedDate.split("-").map(Number);
         payload.dueDate = new Date(y, m - 1, d);
       }
+      const needsYearMonth =
+        editScope === EditScope.AMOUNT_FORWARD ||
+        editScope === EditScope.CURRENT_MONTH;
       const updated = await editTransactionController(
         transaction.id,
         payload,
         editScope,
-        editScope === EditScope.AMOUNT_FORWARD ? year : undefined,
-        editScope === EditScope.AMOUNT_FORWARD ? month : undefined
+        needsYearMonth ? year : undefined,
+        needsYearMonth ? month : undefined
       );
       updateTransaction(updated);
       setStep("view");
@@ -609,11 +655,7 @@ export const TransactionDetails = ({
                   style={{ color: isDeposit ? "var(--green)" : "var(--red)" }}
                 >
                   {isDeposit ? "+" : "-"}
-                  {fmt(
-                    isInstallment && transaction.paymentHistory[0]
-                      ? transaction.paymentHistory[0].amount
-                      : transaction.amount
-                  )}
+                  {fmt(displayAmount)}
                 </p>
                 {isInstallment && transaction.paymentHistory[0] && (
                   <p

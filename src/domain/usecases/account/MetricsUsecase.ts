@@ -83,7 +83,7 @@ export class MetricsUsecase {
           .filter((payment) => payment.isPaid)
           .reduce((acc, payment) => acc + payment.amount, 0);
         metrics.revenuesPaid += valuesPaid;
-      } else if (transaction.type === TransactionTypes.WITHDRAW) {
+      } else if (transaction.type === TransactionTypes.WITHDRAW && transaction.categoryId) {
         metrics.expenses += amount;
         const valuesPaid = paymentHistory
           .filter((payment) => payment.isPaid)

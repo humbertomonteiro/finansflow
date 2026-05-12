@@ -12,10 +12,16 @@ import { BsCreditCard2Front } from "react-icons/bs";
 import {
   FiChevronDown,
   FiChevronUp,
+  FiChevronLeft,
+  FiChevronRight,
   FiCalendar,
   FiPlus,
   FiTrash2,
+  FiCheck,
+  FiX,
 } from "react-icons/fi";
+import { createTransactionController } from "@/controllers/transaction/CreateTransactionController";
+import { payerTransactionController } from "@/controllers/transaction/PayerTransactionController";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CategoryExpensesChart } from "@/app/components/shared/CategoryExpensesChart";
@@ -44,18 +50,114 @@ interface BillEntry {
   installment?: { current: number; total: number };
 }
 
+// ── Modal pagar fatura ────────────────────────────────────────────────────────
+function PayInvoiceModal({
+  card,
+  invoiceAmount,
+  onClose,
+}: {
+  card: ICreditCard;
+  invoiceAmount: number;
+  onClose: () => void;
+}) {
+  const { accounts, addTransaction, refreshAccounts } = useUser();
+  const [accountId, setAccountId] = useState(accounts?.[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handlePay = async () => {
+    if (!accountId) { setError("Selecione uma conta."); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const today = new Date();
+      const tx = await createTransactionController({
+        accountId,
+        type: TransactionTypes.WITHDRAW,
+        kind: TransactionKind.SIMPLE,
+        description: `Fatura ${card.name}`,
+        amount: invoiceAmount,
+        dueDate: today,
+        categoryId: "",
+        recurrence: {},
+      });
+      const paidTx = await payerTransactionController(
+        tx.id,
+        today.getFullYear(),
+        today.getMonth() + 1,
+        accountId
+      );
+      addTransaction(paidTx ?? tx);
+      await refreshAccounts();
+      onClose();
+    } catch (e: any) {
+      setError(e?.message ?? "Erro ao registrar pagamento.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fmt2 = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
+        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+            Pagar fatura · {card.name}
+          </p>
+          <button onClick={onClose}>
+            <FiX className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+          </button>
+        </div>
+        <div className="rounded-xl p-4 text-center" style={{ background: "var(--bg-overlay)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Valor da fatura</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>{fmt2(invoiceAmount)}</p>
+        </div>
+        <div>
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>
+            Debitar da conta
+          </label>
+          <select className="input w-full" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+            {(accounts ?? []).map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} — {fmt2(a.balance)}
+              </option>
+            ))}
+          </select>
+        </div>
+        {error && <p className="text-xs" style={{ color: "var(--red)" }}>{error}</p>}
+        <button onClick={handlePay} disabled={loading} className="button button-primary w-full">
+          {loading ? "Registrando..." : `Pagar ${fmt2(invoiceAmount)}`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Fatura do cartão ──────────────────────────────────────────────────────────
 function CardBillView({
   card,
   transactions,
   onDelete,
+  onPay,
 }: {
   card: ICreditCard;
   transactions: ITransaction[];
   onDelete: () => void;
+  onPay: (amount: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const { closed: { start, end, dueDate: invoiceDueDate } } = getBillingPeriods(card.closingDay, card.dueDay);
+  const { closed: { start, end, dueDate: invoiceDueDate }, open } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const billEntries = useMemo<BillEntry[]>(() => {
     const entries: BillEntry[] = [];
@@ -96,8 +198,50 @@ function CardBillView({
     [billEntries]
   );
 
-  // Total comprometido do limite: parcelas futuras + lançamentos à vista da fatura atual
-  const totalCommitted = useMemo(() => {
+  const openBillEntries = useMemo<BillEntry[]>(() => {
+    const entries: BillEntry[] = [];
+    for (const t of transactions) {
+      if (t.creditCardId !== card.id) continue;
+      if (t.type !== TransactionTypes.WITHDRAW) continue;
+      const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+      t.paymentHistory.forEach((payment, idx) => {
+        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1)) return;
+        const d = new Date(payment.dueDate);
+        if (d >= open.start && d < open.end) {
+          const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+          entries.push({
+            txId: t.id,
+            description: t.description || "Sem descrição",
+            amount: payment.amount,
+            date: d,
+            installment:
+              t.kind === TransactionKind.INSTALLMENT
+                ? { current: idx + 1, total }
+                : undefined,
+          });
+        }
+      });
+    }
+    return entries.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [transactions, card.id, open.start, open.end]);
+
+  const openBillTotal = useMemo(
+    () => openBillEntries.reduce((sum, e) => sum + e.amount, 0),
+    [openBillEntries]
+  );
+
+  // Detecta pagamento de fatura e calcula total comprometido do limite
+  const { isPaid, paidAt, totalCommitted } = useMemo(() => {
+    const paidEntry = transactions.find(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= start
+    );
+    const invoicePaid = !!paidEntry;
+
     let sum = 0;
     for (const t of transactions) {
       if (t.creditCardId !== card.id) continue;
@@ -112,12 +256,17 @@ function CardBillView({
       } else {
         t.paymentHistory.forEach((p) => {
           const d = new Date(p.dueDate);
-          if (d >= start && d < end) sum += p.amount;
+          if (d >= start && d < end && !invoicePaid) sum += p.amount;
         });
       }
     }
-    return sum;
-  }, [transactions, card.id, start, end]);
+
+    return {
+      isPaid: invoicePaid,
+      paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
+      totalCommitted: sum,
+    };
+  }, [transactions, card.id, card.name, start, end]);
 
   const usagePercent =
     card.creditLimit > 0
@@ -131,6 +280,7 @@ function CardBillView({
       : "var(--green)";
 
   const dueDate = invoiceDueDate;
+  const nextDueDate = new Date(invoiceDueDate.getFullYear(), invoiceDueDate.getMonth() + 1, card.dueDay);
 
   return (
     <div
@@ -203,41 +353,97 @@ function CardBillView({
           </div>
         </div>
 
-        <div>
-          <div className="flex justify-between items-baseline mb-1.5">
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Fatura atual
-            </span>
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Vence{" "}
-              {dueDate.toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "short",
-              })}
-            </span>
-          </div>
-          <p className="text-2xl font-bold mb-2" style={{ color: statusColor }}>
-            {fmt(billTotal)}
-          </p>
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ background: "var(--bg-overlay)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${usagePercent}%`, background: statusColor }}
-            />
-          </div>
-          <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
-            {usagePercent.toFixed(0)}% do limite utilizado
-            {totalCommitted > billTotal && (
-              <span style={{ color: "var(--text-muted)" }}>
-                {" "}
-                · {fmt(totalCommitted)} comprometidos
+        {!isPaid ? (
+          <div>
+            <div className="flex justify-between items-baseline mb-1.5">
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Fatura atual
               </span>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Vence{" "}
+                {dueDate.toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                })}
+              </span>
+            </div>
+            <p className="text-2xl font-bold mb-2" style={{ color: statusColor }}>
+              {fmt(billTotal)}
+            </p>
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ background: "var(--bg-overlay)" }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${usagePercent}%`, background: statusColor }}
+              />
+            </div>
+            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
+              {usagePercent.toFixed(0)}% do limite utilizado
+              {totalCommitted > billTotal && (
+                <span style={{ color: "var(--text-muted)" }}>
+                  {" "}· {fmt(totalCommitted)} comprometidos
+                </span>
+              )}
+            </p>
+            {billTotal > 0 && (
+              <button
+                onClick={() => onPay(billTotal)}
+                className="mt-3 w-full text-sm py-2 rounded-xl font-medium transition-all"
+                style={{
+                  background: "var(--accent-dim)",
+                  color: "var(--accent-light)",
+                  border: "1px solid var(--border-accent)",
+                }}
+              >
+                Pagar fatura · {fmt(billTotal)}
+              </button>
             )}
-          </p>
-        </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
+              >
+                <FiCheck className="h-3 w-3" />
+                Paga{paidAt
+                  ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`
+                  : ""}
+              </span>
+              <span className="text-sm font-semibold" style={{ color: "var(--green)" }}>
+                · {fmt(billTotal)}
+              </span>
+            </div>
+            <div style={{ borderTop: `1px solid ${card.color}33`, paddingTop: "12px" }}>
+              <div className="flex justify-between items-baseline mb-1.5">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Próxima fatura
+                </span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Vence{" "}
+                  {nextDueDate.toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "short",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p
+                  className="text-2xl font-bold"
+                  style={{ color: openBillTotal > 0 ? "var(--text-primary)" : "var(--text-disabled)" }}
+                >
+                  {fmt(openBillTotal)}
+                </p>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  acumulando
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <button
@@ -246,8 +452,9 @@ function CardBillView({
         style={{ color: "var(--text-secondary)" }}
       >
         <span>
-          {billEntries.length} lançamento
-          {billEntries.length !== 1 ? "s" : ""} nesta fatura
+          {isPaid
+            ? `${openBillEntries.length} lançamento${openBillEntries.length !== 1 ? "s" : ""} acumulando`
+            : `${billEntries.length} lançamento${billEntries.length !== 1 ? "s" : ""} nesta fatura`}
         </span>
         {expanded ? (
           <FiChevronUp className="h-4 w-4" />
@@ -261,15 +468,15 @@ function CardBillView({
           className="border-t px-5 pb-4 flex flex-col gap-0"
           style={{ borderColor: "var(--border-subtle)" }}
         >
-          {billEntries.length === 0 ? (
+          {(isPaid ? openBillEntries : billEntries).length === 0 ? (
             <p
               className="text-center text-sm py-4"
               style={{ color: "var(--text-disabled)" }}
             >
-              Nenhum lançamento neste período
+              {isPaid ? "Nenhum lançamento ainda" : "Nenhum lançamento neste período"}
             </p>
           ) : (
-            billEntries.map((entry, i) => (
+            (isPaid ? openBillEntries : billEntries).map((entry, i) => (
               <div
                 key={`${entry.txId}-${i}`}
                 className="flex items-center justify-between py-2.5 border-b last:border-b-0"
@@ -332,7 +539,7 @@ function InstallmentsTracker({
   card: ICreditCard;
   transactions: ITransaction[];
 }) {
-  const { closed: { start: periodStart, end: periodEnd } } = getBillingPeriods(card.closingDay, card.dueDay);
+  const { closed: { start: periodStart, end: periodEnd }, open } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const installmentTxs = useMemo(
     () =>
@@ -347,6 +554,16 @@ function InstallmentsTracker({
 
   // Summary items: one per installment transaction
   const summaryItems = useMemo(() => {
+    // Detecta se a fatura do período atual foi paga
+    const invoicePaid = transactions.some(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= periodStart
+    );
+
     return installmentTxs.map((t) => {
       const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
       const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
@@ -364,7 +581,16 @@ function InstallmentsTracker({
       const validPayments = t.paymentHistory.filter(
         (_, idx) => !excluded.has(idx + 1)
       );
-      const paidCount = validPayments.filter((p) => p.isPaid).length;
+
+      // Conta como paga: explicitamente paga OU no período fechado com fatura paga
+      const paidCount = validPayments.filter((p) => {
+        if (p.isPaid) return true;
+        if (invoicePaid) {
+          const d = new Date(p.dueDate);
+          return d >= periodStart && d < periodEnd;
+        }
+        return false;
+      }).length;
 
       const lastPayment = validPayments[validPayments.length - 1];
       const endDate = lastPayment ? new Date(lastPayment.dueDate) : null;
@@ -377,15 +603,28 @@ function InstallmentsTracker({
         description: t.description || "Sem descrição",
         amountPerInstallment,
         currentInstallment: Math.min(Math.max(currentIdx, 1), total),
+        paidCount,
         total,
         endDate,
         remaining: Math.max(0, remaining),
       };
     });
-  }, [installmentTxs, periodStart, periodEnd]);
+  }, [installmentTxs, periodStart, periodEnd, transactions, card.name]);
 
   // Monthly breakdown: future payments grouped by month
   const monthlyRows = useMemo<MonthlyRow[]>(() => {
+    const invoicePaid = transactions.some(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= periodStart
+    );
+    // Not paid: show from open.start (next billing cycle)
+    // Paid: show from open.end (the cycle after next, since next is already accumulating)
+    const listStart = invoicePaid ? open.end : open.start;
+
     const map = new Map<string, MonthlyRow>();
 
     for (const t of installmentTxs) {
@@ -395,7 +634,7 @@ function InstallmentsTracker({
       t.paymentHistory.forEach((payment, idx) => {
         if (excluded.has(idx + 1)) return;
         const d = new Date(payment.dueDate);
-        if (d < periodStart) return;
+        if (d < listStart) return;
 
         const key = `${d.getFullYear()}-${d.getMonth()}`;
         if (!map.has(key)) {
@@ -418,7 +657,7 @@ function InstallmentsTracker({
     return Array.from(map.values()).sort(
       (a, b) => a.month.getTime() - b.month.getTime()
     );
-  }, [installmentTxs, periodStart]);
+  }, [installmentTxs, periodStart, open.start, open.end, transactions, card.name]);
 
   if (installmentTxs.length === 0) return null;
 
@@ -452,10 +691,7 @@ function InstallmentsTracker({
         style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
         {summaryItems.map((item) => {
-          const pct = Math.min(
-            ((item.currentInstallment - 1) / item.total) * 100,
-            100
-          );
+          const pct = Math.min((item.paidCount / item.total) * 100, 100);
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
               <div className="flex items-start justify-between gap-2">
@@ -494,7 +730,7 @@ function InstallmentsTracker({
                   className="text-xs whitespace-nowrap tabular-nums"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {item.currentInstallment - 1}/{item.total}x pagas
+                  {item.paidCount}/{item.total}x pagas
                 </span>
               </div>
               {item.endDate && (
@@ -648,6 +884,226 @@ function CardCategoryChart({
       ) : (
         <CategoryExpensesChart dataCategoryExpenses={cardExpenses} />
       )}
+    </div>
+  );
+}
+
+// ── Helper para navegar entre períodos ───────────────────────────────────────
+function shiftPeriod(
+  closed: { start: Date; end: Date; dueDate: Date },
+  offset: number
+) {
+  const add = (d: Date, n: number) =>
+    new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
+  return {
+    start: add(closed.start, offset),
+    end: add(closed.end, offset),
+    dueDate: add(closed.dueDate, offset),
+  };
+}
+
+// ── Histórico de faturas ──────────────────────────────────────────────────────
+function InvoiceHistory({
+  card,
+  transactions,
+}: {
+  card: ICreditCard;
+  transactions: ITransaction[];
+}) {
+  const [offset, setOffset] = useState(0);
+  const { closed } = getBillingPeriods(card.closingDay, card.dueDay);
+  const closedStartMs = closed.start.getTime();
+
+  const period = useMemo(
+    () => shiftPeriod(closed, offset),
+    // closed is recreated each render; closedStartMs is a stable primitive
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [closedStartMs, offset]
+  );
+
+  const entries = useMemo<BillEntry[]>(() => {
+    const list: BillEntry[] = [];
+    for (const t of transactions) {
+      if (t.creditCardId !== card.id) continue;
+      if (t.type !== TransactionTypes.WITHDRAW) continue;
+      const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+      t.paymentHistory.forEach((payment, idx) => {
+        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1)) return;
+        const d = new Date(payment.dueDate);
+        if (d >= period.start && d < period.end) {
+          const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+          list.push({
+            txId: t.id,
+            description: t.description || "Sem descrição",
+            amount: payment.amount,
+            date: d,
+            installment:
+              t.kind === TransactionKind.INSTALLMENT
+                ? { current: idx + 1, total }
+                : undefined,
+          });
+        }
+      });
+    }
+    return list.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [transactions, card.id, period]);
+
+  const total = useMemo(
+    () => entries.reduce((s, e) => s + e.amount, 0),
+    [entries]
+  );
+
+  const { isPaid, paidAt } = useMemo(() => {
+    const tolerance = new Date(period.end.getTime() + 45 * 24 * 60 * 60 * 1000);
+    const paidEntry = transactions.find(
+      (t) =>
+        t.description === `Fatura ${card.name}` &&
+        !t.creditCardId &&
+        t.accountId &&
+        t.paymentHistory?.[0]?.isPaid === true &&
+        new Date(t.dueDate) >= period.start &&
+        new Date(t.dueDate) < tolerance
+    );
+    return {
+      isPaid: !!paidEntry,
+      paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
+    };
+  }, [transactions, card.name, period]);
+
+  const periodLabel =
+    offset === 0
+      ? `${fmtMonth(period.start)} (atual)`
+      : fmtMonth(period.start);
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      {/* Header with navigation */}
+      <div
+        className="px-5 py-4 flex items-center justify-between"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      >
+        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+          Histórico de faturas
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setOffset((o) => o - 1)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+            style={{ background: "var(--bg-overlay)", color: "var(--text-secondary)" }}
+            title="Mês anterior"
+          >
+            <FiChevronLeft className="h-4 w-4" />
+          </button>
+          <span
+            className="text-sm font-medium min-w-[96px] text-center capitalize"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {periodLabel}
+          </span>
+          <button
+            onClick={() => setOffset((o) => o + 1)}
+            disabled={offset >= 0}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+            style={{
+              background: offset >= 0 ? "transparent" : "var(--bg-overlay)",
+              color: offset >= 0 ? "var(--text-disabled)" : "var(--text-secondary)",
+              cursor: offset >= 0 ? "not-allowed" : "pointer",
+            }}
+            title="Próximo mês"
+          >
+            <FiChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Summary row */}
+      <div
+        className="px-5 py-4 flex items-center justify-between"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      >
+        <div>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Total da fatura
+          </p>
+          <p className="text-xl font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>
+            {fmt(total)}
+          </p>
+        </div>
+        {isPaid ? (
+          <span
+            className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
+          >
+            <FiCheck className="h-3 w-3" />
+            Paga{paidAt
+              ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`
+              : ""}
+          </span>
+        ) : offset === 0 ? (
+          <span
+            className="text-xs px-2.5 py-1 rounded-full"
+            style={{ background: "var(--red-dim)", color: "var(--red)" }}
+          >
+            Pendente
+          </span>
+        ) : (
+          <span
+            className="text-xs px-2.5 py-1 rounded-full"
+            style={{ background: "var(--bg-overlay)", color: "var(--text-disabled)" }}
+          >
+            Não paga
+          </span>
+        )}
+      </div>
+
+      {/* Entries */}
+      <div className="px-5 pb-2 flex flex-col gap-0 max-h-56 overflow-y-auto">
+        {entries.length === 0 ? (
+          <p className="text-center text-sm py-6" style={{ color: "var(--text-disabled)" }}>
+            Nenhum lançamento neste período
+          </p>
+        ) : (
+          entries.map((entry, i) => (
+            <div
+              key={`${entry.txId}-${i}`}
+              className="flex items-center justify-between py-2.5 border-b last:border-b-0"
+              style={{ borderColor: "var(--border-subtle)" }}
+            >
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <p
+                    className="text-sm font-medium"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {entry.description}
+                  </p>
+                  {entry.installment && (
+                    <span
+                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: "var(--bg-overlay)", color: "var(--text-muted)" }}
+                    >
+                      {entry.installment.current}/{entry.installment.total}x
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {entry.date.toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+              <p className="text-sm font-semibold" style={{ color: "var(--red)" }}>
+                -{fmt(entry.amount)}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -831,6 +1287,7 @@ export default function CreditCardsPage() {
     useUser();
   const transactions = allTransactions ?? [];
   const [showForm, setShowForm] = useState(false);
+  const [paying, setPaying] = useState<{ card: ICreditCard; amount: number } | null>(null);
 
   const handleDelete = async (cardId: string, cardName: string) => {
     if (
@@ -920,32 +1377,31 @@ export default function CreditCardsPage() {
                 key={card.id}
                 className="grid grid-cols-1 lg:grid-cols-2 gap-3"
               >
-                {/* Col 1, Row 1: Fatura */}
-                <CardBillView
-                  card={card}
-                  transactions={transactions}
-                  onDelete={() => handleDelete(card.id, card.name)}
-                />
-
-                {/* Col 2, Rows 1-2: Parcelamentos (spans both rows) */}
-                {hasInstallments ? (
-                  <div className="lg:row-span-2">
-                    <InstallmentsTracker
-                      card={card}
-                      transactions={transactions}
-                    />
-                  </div>
-                ) : (
-                  /* Sem parcelamentos: categoria ocupa col 2 ao lado da fatura */
-                  <CardCategoryChart
+                {/* Col 1: Fatura + Histórico + Categoria (empilhados) */}
+                <div className="flex flex-col gap-3">
+                  <CardBillView
                     card={card}
                     transactions={transactions}
-                    categories={categories ?? []}
+                    onDelete={() => handleDelete(card.id, card.name)}
+                    onPay={(amount) => setPaying({ card, amount })}
                   />
-                )}
+                  <InvoiceHistory card={card} transactions={transactions} />
+                  {hasInstallments && (
+                    <CardCategoryChart
+                      card={card}
+                      transactions={transactions}
+                      categories={categories ?? []}
+                    />
+                  )}
+                </div>
 
-                {/* Col 1, Row 2: Categoria (só quando há parcelamentos) */}
-                {hasInstallments && (
+                {/* Col 2: Parcelamentos ou Categoria */}
+                {hasInstallments ? (
+                  <InstallmentsTracker
+                    card={card}
+                    transactions={transactions}
+                  />
+                ) : (
                   <CardCategoryChart
                     card={card}
                     transactions={transactions}
@@ -956,6 +1412,14 @@ export default function CreditCardsPage() {
             );
           })}
         </div>
+      )}
+
+      {paying && (
+        <PayInvoiceModal
+          card={paying.card}
+          invoiceAmount={paying.amount}
+          onClose={() => setPaying(null)}
+        />
       )}
     </div>
   );

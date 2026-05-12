@@ -21,7 +21,7 @@ export class CalculateCategoryExpensesUsecase {
   ): CategoryExpensesSummary {
     // Agrupa gastos por categoryId
     const expensesByCategory = transactions
-      .filter((transaction) => transaction.type === TransactionTypes.WITHDRAW)
+      .filter((transaction) => transaction.type === TransactionTypes.WITHDRAW && !!transaction.categoryId)
       .reduce((acc, transaction) => {
         const categoryId = transaction.categoryId || "uncategorized";
         const amount = transaction.paymentHistory[0]?.amount ?? transaction.amount;

@@ -52,7 +52,7 @@ export class AnnualMetricsUsecase {
           // Adiciona o valor à categoria correta (receita ou despesa)
           if (transaction.type === TransactionTypes.DEPOSIT) {
             monthlyRevenues[monthIndex] += amount;
-          } else if (transaction.type === TransactionTypes.WITHDRAW) {
+          } else if (transaction.type === TransactionTypes.WITHDRAW && transaction.categoryId) {
             monthlyExpenses[monthIndex] += amount;
           }
         }
