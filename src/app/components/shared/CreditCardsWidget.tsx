@@ -154,60 +154,60 @@ function CardMini({
 }) {
   const { closed, open } = getBillingPeriods(card.closingDay, card.dueDay);
 
-  const { closedBillTotal, openBillTotal, totalCommitted, isPaid, paidAt } = useMemo(() => {
-    // Detecta pagamento de fatura primeiro para ajustar o committed
-    const paidEntry = transactions.find(
-      (t) =>
-        t.description === `Fatura ${card.name}` &&
-        !t.creditCardId &&
-        t.accountId &&
-        t.paymentHistory?.[0]?.isPaid === true &&
-        new Date(t.dueDate) >= closed.start
-    );
-    const invoicePaid = !!paidEntry;
+  const { closedBillTotal, openBillTotal, totalCommitted, isPaid, paidAt } =
+    useMemo(() => {
+      const paidEntry = transactions.find(
+        (t) =>
+          t.description === `Fatura ${card.name}` &&
+          !t.creditCardId &&
+          t.accountId &&
+          t.paymentHistory?.[0]?.isPaid === true &&
+          new Date(t.dueDate) >= closed.start
+      );
+      const invoicePaid = !!paidEntry;
 
-    let closedBill = 0;
-    let openBill = 0;
-    let committed = 0;
+      let closedBill = 0;
+      let openBill = 0;
+      let committed = 0;
 
-    for (const t of transactions) {
-      if (t.creditCardId !== card.id) continue;
-      if (t.type !== TransactionTypes.WITHDRAW) continue;
-      const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
+      for (const t of transactions) {
+        if (t.creditCardId !== card.id) continue;
+        if (t.type !== TransactionTypes.WITHDRAW) continue;
+        const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
 
-      if (t.kind === TransactionKind.INSTALLMENT) {
-        t.paymentHistory.forEach((p, idx) => {
-          if (excluded.has(idx + 1)) return;
-          const d = new Date(p.dueDate);
-          if (d >= closed.start && d < closed.end) closedBill += p.amount;
-          if (d >= open.start && d < open.end) openBill += p.amount;
-          // Parcelas futuras não pagas ainda comprometem o limite
-          if (d >= closed.start && !p.isPaid) committed += p.amount;
-        });
-      } else {
-        t.paymentHistory.forEach((p) => {
-          const d = new Date(p.dueDate);
-          if (d >= closed.start && d < closed.end) {
-            closedBill += p.amount;
-            // Fatura fechada só compromete o limite se ainda não foi paga
-            if (!invoicePaid) committed += p.amount;
-          }
-          if (d >= open.start && d < open.end) {
-            openBill += p.amount;
-            committed += p.amount;
-          }
-        });
+        if (t.kind === TransactionKind.INSTALLMENT) {
+          t.paymentHistory.forEach((p, idx) => {
+            if (excluded.has(idx + 1)) return;
+            const d = new Date(p.dueDate);
+            if (d >= closed.start && d < closed.end) closedBill += p.amount;
+            if (d >= open.start && d < open.end) openBill += p.amount;
+            // Após pagar a fatura, parcelas do período fechado estão quitadas
+            const countFrom = invoicePaid ? open.start : closed.start;
+            if (d >= countFrom && !p.isPaid) committed += p.amount;
+          });
+        } else {
+          t.paymentHistory.forEach((p) => {
+            const d = new Date(p.dueDate);
+            if (d >= closed.start && d < closed.end) {
+              closedBill += p.amount;
+              if (!invoicePaid) committed += p.amount;
+            }
+            if (d >= open.start && d < open.end) {
+              openBill += p.amount;
+              committed += p.amount;
+            }
+          });
+        }
       }
-    }
 
-    return {
-      closedBillTotal: closedBill,
-      openBillTotal: openBill,
-      totalCommitted: committed,
-      isPaid: invoicePaid,
-      paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
-    };
-  }, [transactions, card.id, card.name, closed, open]);
+      return {
+        closedBillTotal: closedBill,
+        openBillTotal: openBill,
+        totalCommitted: committed,
+        isPaid: invoicePaid,
+        paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
+      };
+    }, [transactions, card.id, card.name, closed, open]);
 
   const available = Math.max(0, card.creditLimit - totalCommitted);
   const usedPct =
@@ -221,149 +221,144 @@ function CardMini({
       ? "var(--yellow)"
       : "var(--green)";
 
+  const nextDueDate = new Date(
+    open.end.getFullYear(),
+    open.end.getMonth(),
+    card.dueDay
+  );
+
   return (
     <div
-      className="rounded-sm p-4 flex flex-col gap-3"
+      className="rounded-xl overflow-hidden"
       style={{
         background: "var(--bg-surface)",
-        border: "1px solid var(--border-subtle)",
+        border: `1px solid ${card.color}22`,
         borderLeft: `3px solid ${card.color}`,
         boxShadow: "var(--shadow-card)",
       }}
     >
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BsCreditCard2Front
-            className="h-4 w-4"
-            style={{ color: card.color }}
-          />
-          <p
-            className="text-sm font-semibold"
-            style={{ color: "var(--text-primary)" }}
-          >
-            {card.name}
-          </p>
-        </div>
-        <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-          Fecha {card.closingDay} · Vence {card.dueDay}
-        </p>
-      </div>
-
-      {/* Faturas: atual (esquerda) e próxima (direita) */}
-      <div className="grid grid-cols-2 gap-2">
-        {/* Fatura atual (período fechado) */}
-        <div
-          className="rounded-lg p-3 flex flex-col gap-1"
-          style={{
-            background: isPaid ? "rgba(34,197,94,0.08)" : "var(--bg-overlay)",
-            border: isPaid ? "1px solid rgba(34,197,94,0.2)" : "1px solid var(--border-subtle)",
-          }}
-        >
-          <div className="flex items-center justify-between gap-1">
-            <p className="text-[10px] font-medium truncate" style={{ color: "var(--text-muted)" }}>
-              Fatura atual
-            </p>
-            {isPaid && (
-              <span
-                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
-              >
-                <FiCheck className="h-2.5 w-2.5" />
-                Paga
-              </span>
-            )}
-          </div>
-          <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-            vence {fmtDate(closed.dueDate)}
-          </p>
-          <p
-            className="text-base font-bold"
-            style={{ color: isPaid ? "var(--green)" : closedBillTotal > 0 ? "var(--red)" : "var(--text-secondary)" }}
-          >
-            {fmt(closedBillTotal)}
-          </p>
-          {isPaid && paidAt && (
-            <p className="text-[10px]" style={{ color: "var(--green)" }}>
-              Paga em {fmtDate(new Date(paidAt))}
-            </p>
-          )}
-          {!isPaid && closedBillTotal > 0 && (
-            <button
-              onClick={() => onPay(closedBillTotal)}
-              className="mt-auto text-[11px] py-1.5 rounded-lg font-medium transition-all w-full"
-              style={{
-                background: "var(--accent-dim)",
-                color: "var(--accent-light)",
-                border: "1px solid var(--border-accent)",
-              }}
-            >
-              Pagar
-            </button>
-          )}
-          {closedBillTotal === 0 && (
-            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-              Sem compras
-            </p>
-          )}
-        </div>
-
-        {/* Próxima fatura (período aberto) */}
-        <div
-          className="rounded-lg p-3 flex flex-col gap-1"
-          style={{
-            background: "var(--bg-overlay)",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
-          <p className="text-[10px] font-medium" style={{ color: "var(--text-muted)" }}>
-            Próxima fatura
-          </p>
-          <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-            vence {fmtDate(new Date(open.end.getFullYear(), open.end.getMonth(), card.dueDay))}
-          </p>
-          <p className="text-base font-bold" style={{ color: "var(--text-secondary)" }}>
-            {fmt(openBillTotal)}
-          </p>
-          {openBillTotal > 0 ? (
-            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-              acumulando
-            </p>
-          ) : (
-            <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
-              Sem compras
-            </p>
-          )}
-          <div className="mt-auto">
-            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>Disponível</p>
-            <p className="text-sm font-bold" style={{ color: "var(--green)" }}>{fmt(available)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Barra de uso */}
+      {/* ── Cabeçalho ── */}
       <div
-        className="h-1 rounded-full overflow-hidden"
-        style={{ background: "var(--bg-overlay)" }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${usedPct}%`, background: barColor }}
-        />
-      </div>
-
-      {/* Link para detalhes */}
-      <Link
-        href="/credit-cards"
-        className="text-xs py-1.5 rounded-lg font-medium text-center transition-all"
+        className="flex items-center justify-between px-3 py-2.5"
         style={{
-          background: "var(--bg-overlay)",
-          color: "var(--text-secondary)",
-          border: "1px solid var(--border-subtle)",
+          background: `linear-gradient(90deg, ${card.color}18 0%, transparent 100%)`,
+          borderBottom: `1px solid ${card.color}22`,
         }}
       >
-        Ver detalhes
-      </Link>
+        <div className="flex items-center gap-2 min-w-0">
+          <BsCreditCard2Front className="h-3.5 w-3.5 shrink-0" style={{ color: card.color }} />
+          <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+            {card.name}
+          </p>
+          <span className="text-[10px] shrink-0" style={{ color: "var(--text-disabled)" }}>
+            fecha {card.closingDay} · vence {card.dueDay}
+          </span>
+        </div>
+        <Link
+          href="/credit-cards"
+          className="flex items-center gap-0.5 text-[10px] shrink-0 ml-2 transition-opacity hover:opacity-70"
+          style={{ color: "var(--accent-light)" }}
+        >
+          Ver <FiArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+
+      <div className="px-3 py-2.5 flex flex-col gap-2.5">
+        {/* ── Limite disponível + barra ── */}
+        <div>
+          <div className="flex items-baseline justify-between mb-1">
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="text-base font-bold"
+                style={{ color: barColor }}
+              >
+                {fmt(available)}
+              </span>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                disponível
+              </span>
+            </div>
+            <span className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+              de {fmt(card.creditLimit)}
+            </span>
+          </div>
+          <div
+            className="h-1.5 rounded-full overflow-hidden"
+            style={{ background: "var(--bg-overlay)" }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${usedPct}%`, background: barColor }}
+            />
+          </div>
+          {totalCommitted > 0 && (
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--text-disabled)" }}>
+              {usedPct.toFixed(0)}% comprometido · {fmt(totalCommitted)} em aberto
+            </p>
+          )}
+        </div>
+
+        {/* ── Faturas ── */}
+        <div
+          className="flex flex-col gap-1.5 pt-2"
+          style={{ borderTop: `1px solid ${card.color}1a` }}
+        >
+          {/* Fatura fechada */}
+          {(closedBillTotal > 0 || isPaid) && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {isPaid ? (
+                  <FiCheck className="h-3 w-3 shrink-0" style={{ color: "var(--green)" }} />
+                ) : (
+                  <div
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: "var(--red)" }}
+                  />
+                )}
+                <div className="min-w-0">
+                  <span className="text-xs font-medium" style={{ color: isPaid ? "var(--green)" : "var(--text-secondary)" }}>
+                    {fmt(closedBillTotal)}
+                  </span>
+                  <span className="text-[10px] ml-1.5" style={{ color: "var(--text-disabled)" }}>
+                    {isPaid
+                      ? `paga ${paidAt ? `em ${fmtDate(new Date(paidAt))}` : ""}`
+                      : `vence ${fmtDate(closed.dueDate)}`}
+                  </span>
+                </div>
+              </div>
+              {!isPaid && closedBillTotal > 0 && (
+                <button
+                  onClick={() => onPay(closedBillTotal)}
+                  className="shrink-0 text-[10px] px-2 py-1 rounded-lg font-semibold transition-all cursor-pointer"
+                  style={{
+                    background: "var(--accent-dim)",
+                    color: "var(--accent-light)",
+                    border: "1px solid var(--border-accent)",
+                  }}
+                >
+                  Pagar
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Próxima fatura */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ background: "var(--text-disabled)" }}
+              />
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {fmt(openBillTotal)}
+              </span>
+              <span className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+                próxima · vence {fmtDate(nextDueDate)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -400,7 +395,7 @@ export function CreditCardsWidget() {
           </Link>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {creditCards.map((card) => (
             <CardMini
               key={card.id}

@@ -445,88 +445,57 @@ export default function Transactions() {
                 return (
                   <div
                     key={card.id}
-                    className="flex items-center justify-between px-4 py-3 gap-4"
+                    className="flex items-center justify-between px-4 py-2.5 gap-3"
+                    style={{ borderLeft: `3px solid ${card.color}` }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{
-                          background: card.color + "22",
-                          border: `1px solid ${card.color}44`,
-                        }}
-                      >
-                        <BsCreditCard2Front
-                          className="h-4 w-4"
-                          style={{ color: card.color }}
-                        />
-                      </div>
-                      <div>
-                        <p
-                          className="text-sm font-medium"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          Fatura {card.name}
+                    {/* Identidade do cartão */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <BsCreditCard2Front
+                        className="h-3.5 w-3.5 shrink-0"
+                        style={{ color: card.color }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          {card.name}
                         </p>
                         {isPaid ? (
-                          <p
-                            className="text-xs"
-                            style={{ color: "var(--green)" }}
-                          >
-                            Paga em{" "}
-                            {paidAt
-                              ? new Date(paidAt).toLocaleDateString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "short",
-                                })
-                              : dueDate.toLocaleDateString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "short",
-                                })}
+                          /* Pago: linha secundária mostra o que foi pago (discreta) */
+                          <p className="text-[10px]" style={{ color: "var(--text-disabled)" }}>
+                            <FiCheck className="inline h-2.5 w-2.5 mr-0.5" style={{ color: "var(--green)" }} />
+                            {fmt(bill)}{paidAt ? ` · ${new Date(paidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}` : ""}
                           </p>
                         ) : (
-                          <p
-                            className="text-xs"
-                            style={{
-                              color: isOverdue ? "var(--red)" : "var(--yellow)",
-                            }}
-                          >
+                          <p className="text-[10px]" style={{ color: isOverdue ? "var(--red)" : "var(--yellow)" }}>
                             {isOverdue ? "Venceu" : "Vence"}{" "}
-                            {dueDate.toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "short",
-                            })}
+                            {dueDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    {/* Valor em destaque + ação */}
+                    <div className="flex items-center gap-2 shrink-0">
                       {isPaid ? (
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span
-                            className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                            style={{
-                              background: "rgba(34,197,94,0.15)",
-                              color: "var(--green)",
-                            }}
-                          >
-                            <FiCheck className="h-3 w-3" />
-                            {fmt(bill)}
-                          </span>
-                          {nextBill > 0 && (
-                            <p
-                              className="text-[11px]"
-                              style={{ color: "var(--text-disabled)" }}
-                            >
-                              Próxima: {fmt(nextBill)}
+                        /* Pago: destaque na próxima fatura */
+                        nextBill > 0 ? (
+                          <div className="text-right">
+                            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                              {fmt(nextBill)}
                             </p>
-                          )}
-                        </div>
+                            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                              próxima
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                            style={{ background: "rgba(34,197,94,0.12)", color: "var(--green)" }}>
+                            Em dia
+                          </span>
+                        )
                       ) : (
+                        /* Não pago: valor em destaque + botão pagar */
                         <>
-                          <p
-                            className="text-sm font-bold"
-                            style={{ color: "var(--red)" }}
-                          >
+                          <p className="text-sm font-bold" style={{ color: isOverdue ? "var(--red)" : "var(--yellow)" }}>
                             {fmt(bill)}
                           </p>
                           <button
@@ -535,7 +504,7 @@ export default function Transactions() {
                               setPayAccountId(accounts?.[0]?.id ?? "");
                               setPayError(null);
                             }}
-                            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                            className="text-[11px] px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer"
                             style={{
                               background: "var(--accent-dim)",
                               color: "var(--accent-light)",

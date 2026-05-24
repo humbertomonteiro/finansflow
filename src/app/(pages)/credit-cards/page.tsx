@@ -66,7 +66,10 @@ function PayInvoiceModal({
   const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
-    if (!accountId) { setError("Selecione uma conta."); return; }
+    if (!accountId) {
+      setError("Selecione uma conta.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -108,7 +111,10 @@ function PayInvoiceModal({
     >
       <div
         className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
-        style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
+        style={{
+          background: "var(--bg-surface)",
+          border: "1px solid var(--border-subtle)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -119,15 +125,29 @@ function PayInvoiceModal({
             <FiX className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
           </button>
         </div>
-        <div className="rounded-xl p-4 text-center" style={{ background: "var(--bg-overlay)" }}>
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Valor da fatura</p>
-          <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>{fmt2(invoiceAmount)}</p>
+        <div
+          className="rounded-xl p-4 text-center"
+          style={{ background: "var(--bg-overlay)" }}
+        >
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+            Valor da fatura
+          </p>
+          <p className="text-2xl font-bold" style={{ color: "var(--red)" }}>
+            {fmt2(invoiceAmount)}
+          </p>
         </div>
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>
+          <label
+            className="text-xs mb-1 block"
+            style={{ color: "var(--text-muted)" }}
+          >
             Debitar da conta
           </label>
-          <select className="input w-full" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+          <select
+            className="input w-full"
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+          >
             {(accounts ?? []).map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name} — {fmt2(a.balance)}
@@ -135,8 +155,16 @@ function PayInvoiceModal({
             ))}
           </select>
         </div>
-        {error && <p className="text-xs" style={{ color: "var(--red)" }}>{error}</p>}
-        <button onClick={handlePay} disabled={loading} className="button button-primary w-full">
+        {error && (
+          <p className="text-xs" style={{ color: "var(--red)" }}>
+            {error}
+          </p>
+        )}
+        <button
+          onClick={handlePay}
+          disabled={loading}
+          className="button button-primary w-full"
+        >
           {loading ? "Registrando..." : `Pagar ${fmt2(invoiceAmount)}`}
         </button>
       </div>
@@ -157,7 +185,10 @@ function CardBillView({
   onPay: (amount: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const { closed: { start, end, dueDate: invoiceDueDate }, open } = getBillingPeriods(card.closingDay, card.dueDay);
+  const {
+    closed: { start, end, dueDate: invoiceDueDate },
+    open,
+  } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const billEntries = useMemo<BillEntry[]>(() => {
     const entries: BillEntry[] = [];
@@ -205,10 +236,12 @@ function CardBillView({
       if (t.type !== TransactionTypes.WITHDRAW) continue;
       const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
       t.paymentHistory.forEach((payment, idx) => {
-        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1)) return;
+        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1))
+          return;
         const d = new Date(payment.dueDate);
         if (d >= open.start && d < open.end) {
-          const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+          const total =
+            t.recurrence?.installmentsCount ?? t.paymentHistory.length;
           entries.push({
             txId: t.id,
             description: t.description || "Sem descrição",
@@ -251,12 +284,16 @@ function CardBillView({
         t.paymentHistory.forEach((p, idx) => {
           if (excluded.has(idx + 1)) return;
           const d = new Date(p.dueDate);
-          if (d >= start && !p.isPaid) sum += p.amount;
+          // Após pagar a fatura, parcelas do período fechado estão quitadas —
+          // só as futuras (open.start em diante) continuam comprometendo o limite.
+          const countFrom = invoicePaid ? open.start : start;
+          if (d >= countFrom && !p.isPaid) sum += p.amount;
         });
       } else {
         t.paymentHistory.forEach((p) => {
           const d = new Date(p.dueDate);
           if (d >= start && d < end && !invoicePaid) sum += p.amount;
+          if (d >= open.start && d < open.end) sum += p.amount;
         });
       }
     }
@@ -266,12 +303,13 @@ function CardBillView({
       paidAt: paidEntry?.paymentHistory?.[0]?.paidAt ?? null,
       totalCommitted: sum,
     };
-  }, [transactions, card.id, card.name, start, end]);
+  }, [transactions, card.id, card.name, start, end, open.start, open.end]);
 
   const usagePercent =
     card.creditLimit > 0
       ? Math.min((totalCommitted / card.creditLimit) * 100, 100)
       : 0;
+  const available = Math.max(0, card.creditLimit - totalCommitted);
   const statusColor =
     usagePercent >= 90
       ? "var(--red)"
@@ -280,7 +318,11 @@ function CardBillView({
       : "var(--green)";
 
   const dueDate = invoiceDueDate;
-  const nextDueDate = new Date(invoiceDueDate.getFullYear(), invoiceDueDate.getMonth() + 1, card.dueDay);
+  const nextDueDate = new Date(
+    invoiceDueDate.getFullYear(),
+    invoiceDueDate.getMonth() + 1,
+    card.dueDay
+  );
 
   return (
     <div
@@ -327,13 +369,19 @@ function CardBillView({
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Limite
+                Disponível
               </p>
               <p
                 className="text-sm font-semibold"
-                style={{ color: "var(--text-primary)" }}
+                style={{ color: statusColor }}
               >
-                {fmt(card.creditLimit)}
+                {fmt(available)}
+              </p>
+              <p
+                className="text-[10px]"
+                style={{ color: "var(--text-disabled)" }}
+              >
+                de {fmt(card.creditLimit)}
               </p>
             </div>
             <button
@@ -353,76 +401,22 @@ function CardBillView({
           </div>
         </div>
 
-        {!isPaid ? (
-          <div>
-            <div className="flex justify-between items-baseline mb-1.5">
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Fatura atual
-              </span>
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Vence{" "}
-                {dueDate.toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "short",
-                })}
-              </span>
-            </div>
-            <p className="text-2xl font-bold mb-2" style={{ color: statusColor }}>
-              {fmt(billTotal)}
-            </p>
-            <div
-              className="h-1.5 rounded-full overflow-hidden"
-              style={{ background: "var(--bg-overlay)" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${usagePercent}%`, background: statusColor }}
-              />
-            </div>
-            <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
-              {usagePercent.toFixed(0)}% do limite utilizado
-              {totalCommitted > billTotal && (
-                <span style={{ color: "var(--text-muted)" }}>
-                  {" "}· {fmt(totalCommitted)} comprometidos
-                </span>
-              )}
-            </p>
-            {billTotal > 0 && (
-              <button
-                onClick={() => onPay(billTotal)}
-                className="mt-3 w-full text-sm py-2 rounded-xl font-medium transition-all"
-                style={{
-                  background: "var(--accent-dim)",
-                  color: "var(--accent-light)",
-                  border: "1px solid var(--border-accent)",
-                }}
-              >
-                Pagar fatura · {fmt(billTotal)}
-              </button>
-            )}
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span
-                className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
-              >
-                <FiCheck className="h-3 w-3" />
-                Paga{paidAt
-                  ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`
-                  : ""}
-              </span>
-              <span className="text-sm font-semibold" style={{ color: "var(--green)" }}>
-                · {fmt(billTotal)}
-              </span>
-            </div>
-            <div style={{ borderTop: `1px solid ${card.color}33`, paddingTop: "12px" }}>
-              <div className="flex justify-between items-baseline mb-1.5">
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {billTotal > 0 || isPaid ? (
+          /* ── Duas seções: próxima (destaque) + fatura atual/paga (discreta) ── */
+          <div className="flex flex-col gap-0">
+            {/* PRIMARY — Próxima fatura (acumulando) */}
+            <div className="mb-2">
+              <div className="flex justify-between items-baseline mb-1">
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   Próxima fatura
                 </span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
                   Vence{" "}
                   {nextDueDate.toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -433,14 +427,166 @@ function CardBillView({
               <div className="flex items-baseline gap-2">
                 <p
                   className="text-2xl font-bold"
-                  style={{ color: openBillTotal > 0 ? "var(--text-primary)" : "var(--text-disabled)" }}
+                  style={{
+                    color:
+                      openBillTotal > 0
+                        ? "var(--text-primary)"
+                        : "var(--text-disabled)",
+                  }}
                 >
                   {fmt(openBillTotal)}
                 </p>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  acumulando
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {openBillTotal > 0 ? "acumulando" : "sem gastos ainda"}
                 </span>
               </div>
+            </div>
+
+            {/* Divisor */}
+            <div
+              style={{
+                borderTop: `1px solid ${card.color}33`,
+                paddingTop: "10px",
+              }}
+            >
+              {!isPaid ? (
+                /* Fatura fechada não paga — discreta + botão pagar */
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Fatura atual · Vence{" "}
+                      {dueDate.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "short",
+                      })}
+                    </p>
+                    <p
+                      className="text-base font-semibold mt-0.5"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {fmt(billTotal)}
+                    </p>
+                  </div>
+                  {billTotal > 0 && (
+                    <button
+                      onClick={() => onPay(billTotal)}
+                      className="shrink-0 text-xs px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer"
+                      style={{
+                        background: "var(--accent-dim)",
+                        color: "var(--accent-light)",
+                        border: "1px solid var(--border-accent)",
+                      }}
+                    >
+                      Pagar
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Fatura paga — confirmação mínima */
+                <div className="flex items-center gap-1.5">
+                  <FiCheck
+                    className="h-3 w-3 shrink-0"
+                    style={{ color: "var(--green)" }}
+                  />
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Última fatura paga
+                    {paidAt
+                      ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        })}`
+                      : ""}{" "}
+                    ·{" "}
+                    <span style={{ color: "var(--green)" }}>
+                      {fmt(billTotal)}
+                    </span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Barra de uso do limite */}
+            <div className="mt-3">
+              <div
+                className="h-1.5 rounded-full overflow-hidden"
+                style={{ background: "var(--bg-overlay)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${usagePercent}%`, background: statusColor }}
+                />
+              </div>
+              <p
+                className="text-xs mt-1"
+                style={{ color: "var(--text-disabled)" }}
+              >
+                {usagePercent.toFixed(0)}% comprometido
+                {totalCommitted > 0 && (
+                  <span style={{ color: "var(--text-muted)" }}>
+                    {" "}
+                    · {fmt(available)} disponível
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* ── Sem fatura fechada: só mostra o período acumulando ── */
+          <div>
+            <div className="flex justify-between items-baseline mb-1.5">
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Fatura em aberto
+              </span>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Fecha{" "}
+                {open.end.toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                })}
+              </span>
+            </div>
+            <p
+              className="text-2xl font-bold mb-1"
+              style={{
+                color: openBillTotal > 0 ? statusColor : "var(--text-disabled)",
+              }}
+            >
+              {fmt(openBillTotal)}
+            </p>
+            <p className="text-xs" style={{ color: "var(--text-disabled)" }}>
+              {openBillTotal > 0 ? "acumulando" : "Sem gastos neste período"}
+            </p>
+            <div className="mt-2">
+              <div
+                className="h-1.5 rounded-full overflow-hidden"
+                style={{ background: "var(--bg-overlay)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${usagePercent}%`, background: statusColor }}
+                />
+              </div>
+              <p
+                className="text-xs mt-1"
+                style={{ color: "var(--text-disabled)" }}
+              >
+                {usagePercent.toFixed(0)}% comprometido
+                {available > 0 && (
+                  <span style={{ color: "var(--text-muted)" }}>
+                    {" "}
+                    · {fmt(available)} disponível
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         )}
@@ -453,8 +599,12 @@ function CardBillView({
       >
         <span>
           {isPaid
-            ? `${openBillEntries.length} lançamento${openBillEntries.length !== 1 ? "s" : ""} acumulando`
-            : `${billEntries.length} lançamento${billEntries.length !== 1 ? "s" : ""} nesta fatura`}
+            ? `${openBillEntries.length} lançamento${
+                openBillEntries.length !== 1 ? "s" : ""
+              } acumulando`
+            : `${billEntries.length} lançamento${
+                billEntries.length !== 1 ? "s" : ""
+              } nesta fatura`}
         </span>
         {expanded ? (
           <FiChevronUp className="h-4 w-4" />
@@ -473,7 +623,9 @@ function CardBillView({
               className="text-center text-sm py-4"
               style={{ color: "var(--text-disabled)" }}
             >
-              {isPaid ? "Nenhum lançamento ainda" : "Nenhum lançamento neste período"}
+              {isPaid
+                ? "Nenhum lançamento ainda"
+                : "Nenhum lançamento neste período"}
             </p>
           ) : (
             (isPaid ? openBillEntries : billEntries).map((entry, i) => (
@@ -539,7 +691,10 @@ function InstallmentsTracker({
   card: ICreditCard;
   transactions: ITransaction[];
 }) {
-  const { closed: { start: periodStart, end: periodEnd }, open } = getBillingPeriods(card.closingDay, card.dueDay);
+  const {
+    closed: { start: periodStart, end: periodEnd },
+    open,
+  } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const installmentTxs = useMemo(
     () =>
@@ -657,7 +812,14 @@ function InstallmentsTracker({
     return Array.from(map.values()).sort(
       (a, b) => a.month.getTime() - b.month.getTime()
     );
-  }, [installmentTxs, periodStart, open.start, open.end, transactions, card.name]);
+  }, [
+    installmentTxs,
+    periodStart,
+    open.start,
+    open.end,
+    transactions,
+    card.name,
+  ]);
 
   if (installmentTxs.length === 0) return null;
 
@@ -816,7 +978,9 @@ function CardCategoryChart({
   transactions: ITransaction[];
   categories: ICategory[];
 }) {
-  const { closed: { start, end } } = getBillingPeriods(card.closingDay, card.dueDay);
+  const {
+    closed: { start, end },
+  } = getBillingPeriods(card.closingDay, card.dueDay);
 
   const cardExpenses = useMemo<CategoryExpensesSummary>(() => {
     const byCategory: Record<string, { name: string; amount: number }> = {};
@@ -928,10 +1092,12 @@ function InvoiceHistory({
       if (t.type !== TransactionTypes.WITHDRAW) continue;
       const excluded = new Set(t.recurrence?.excludedInstallments ?? []);
       t.paymentHistory.forEach((payment, idx) => {
-        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1)) return;
+        if (t.kind === TransactionKind.INSTALLMENT && excluded.has(idx + 1))
+          return;
         const d = new Date(payment.dueDate);
         if (d >= period.start && d < period.end) {
-          const total = t.recurrence?.installmentsCount ?? t.paymentHistory.length;
+          const total =
+            t.recurrence?.installmentsCount ?? t.paymentHistory.length;
           list.push({
             txId: t.id,
             description: t.description || "Sem descrição",
@@ -971,9 +1137,7 @@ function InvoiceHistory({
   }, [transactions, card.name, period]);
 
   const periodLabel =
-    offset === 0
-      ? `${fmtMonth(period.start)} (atual)`
-      : fmtMonth(period.start);
+    offset === 0 ? `${fmtMonth(period.start)} (atual)` : fmtMonth(period.start);
 
   return (
     <div
@@ -989,14 +1153,20 @@ function InvoiceHistory({
         className="px-5 py-4 flex items-center justify-between"
         style={{ borderBottom: "1px solid var(--border-subtle)" }}
       >
-        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "var(--text-primary)" }}
+        >
           Histórico de faturas
         </p>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setOffset((o) => o - 1)}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-            style={{ background: "var(--bg-overlay)", color: "var(--text-secondary)" }}
+            style={{
+              background: "var(--bg-overlay)",
+              color: "var(--text-secondary)",
+            }}
             title="Mês anterior"
           >
             <FiChevronLeft className="h-4 w-4" />
@@ -1013,7 +1183,8 @@ function InvoiceHistory({
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
             style={{
               background: offset >= 0 ? "transparent" : "var(--bg-overlay)",
-              color: offset >= 0 ? "var(--text-disabled)" : "var(--text-secondary)",
+              color:
+                offset >= 0 ? "var(--text-disabled)" : "var(--text-secondary)",
               cursor: offset >= 0 ? "not-allowed" : "pointer",
             }}
             title="Próximo mês"
@@ -1032,18 +1203,28 @@ function InvoiceHistory({
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             Total da fatura
           </p>
-          <p className="text-xl font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>
+          <p
+            className="text-xl font-bold mt-0.5"
+            style={{ color: "var(--text-primary)" }}
+          >
             {fmt(total)}
           </p>
         </div>
         {isPaid ? (
           <span
             className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(34,197,94,0.15)", color: "var(--green)" }}
+            style={{
+              background: "rgba(34,197,94,0.15)",
+              color: "var(--green)",
+            }}
           >
             <FiCheck className="h-3 w-3" />
-            Paga{paidAt
-              ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`
+            Paga
+            {paidAt
+              ? ` em ${new Date(paidAt).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                })}`
               : ""}
           </span>
         ) : offset === 0 ? (
@@ -1056,7 +1237,10 @@ function InvoiceHistory({
         ) : (
           <span
             className="text-xs px-2.5 py-1 rounded-full"
-            style={{ background: "var(--bg-overlay)", color: "var(--text-disabled)" }}
+            style={{
+              background: "var(--bg-overlay)",
+              color: "var(--text-disabled)",
+            }}
           >
             Não paga
           </span>
@@ -1066,7 +1250,10 @@ function InvoiceHistory({
       {/* Entries */}
       <div className="px-5 pb-2 flex flex-col gap-0 max-h-56 overflow-y-auto">
         {entries.length === 0 ? (
-          <p className="text-center text-sm py-6" style={{ color: "var(--text-disabled)" }}>
+          <p
+            className="text-center text-sm py-6"
+            style={{ color: "var(--text-disabled)" }}
+          >
             Nenhum lançamento neste período
           </p>
         ) : (
@@ -1087,7 +1274,10 @@ function InvoiceHistory({
                   {entry.installment && (
                     <span
                       className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                      style={{ background: "var(--bg-overlay)", color: "var(--text-muted)" }}
+                      style={{
+                        background: "var(--bg-overlay)",
+                        color: "var(--text-muted)",
+                      }}
                     >
                       {entry.installment.current}/{entry.installment.total}x
                     </span>
@@ -1097,7 +1287,10 @@ function InvoiceHistory({
                   {entry.date.toLocaleDateString("pt-BR")}
                 </p>
               </div>
-              <p className="text-sm font-semibold" style={{ color: "var(--red)" }}>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: "var(--red)" }}
+              >
                 -{fmt(entry.amount)}
               </p>
             </div>
@@ -1287,7 +1480,10 @@ export default function CreditCardsPage() {
     useUser();
   const transactions = allTransactions ?? [];
   const [showForm, setShowForm] = useState(false);
-  const [paying, setPaying] = useState<{ card: ICreditCard; amount: number } | null>(null);
+  const [paying, setPaying] = useState<{
+    card: ICreditCard;
+    amount: number;
+  } | null>(null);
 
   const handleDelete = async (cardId: string, cardName: string) => {
     if (

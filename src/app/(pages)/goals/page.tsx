@@ -13,7 +13,9 @@ import {
   MdClose,
   MdOutlineFlagCircle,
 } from "react-icons/md";
-import { FiAlertTriangle, FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiX, FiChevronRight } from "react-icons/fi";
+import { TransactionTypes } from "@/domain/enums/transaction/TransactionTypes";
+import { ITransaction } from "@/domain/interfaces/transaction/ITransaction";
 
 // ── Modal de adicionar meta ─────────────────────────────────────
 function AddGoalModal({
@@ -200,6 +202,193 @@ function AddGoalModal({
   );
 }
 
+// ── Modal de detalhe de uma meta ───────────────────────────────
+function GoalDetailModal({
+  categoryId,
+  categoryName,
+  limit,
+  spent,
+  transactions,
+  onClose,
+}: {
+  categoryId: string;
+  categoryName: string;
+  limit: number;
+  spent: number;
+  transactions: ITransaction[];
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const fmt = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
+  const isOver = spent > limit;
+  const isWarning = !isOver && percent >= 80;
+  const barColor = isOver ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)";
+
+  const categoryTxs = useMemo(
+    () =>
+      transactions
+        .filter(
+          (t) =>
+            t.categoryId === categoryId &&
+            t.type === TransactionTypes.WITHDRAW
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()
+        ),
+    [transactions, categoryId]
+  );
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: "rgba(7,11,20,0.85)", backdropFilter: "blur(6px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-md flex flex-col rounded-sm animate-fade-in-scale overflow-hidden"
+        style={{
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border-strong)",
+          boxShadow: "0 0 60px rgba(0,0,0,0.6)",
+          maxHeight: "80vh",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "var(--accent-dim)", border: "1px solid var(--border-accent)" }}
+            >
+              <MdOutlineFlagCircle className="h-4 w-4" style={{ color: "var(--accent-light)" }} />
+            </div>
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              {categoryName}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Resumo da meta */}
+        <div className="px-5 py-4 shrink-0" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+          <div className="flex justify-between items-baseline mb-2">
+            <div>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Gasto no mês</p>
+              <p className="text-xl font-bold money" style={{ color: isOver ? "var(--red)" : "var(--text-primary)" }}>
+                {fmt(spent)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Limite</p>
+              <p className="text-xl font-bold money" style={{ color: "var(--text-secondary)" }}>
+                {fmt(limit)}
+              </p>
+            </div>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-overlay)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${percent}%`, background: barColor }}
+            />
+          </div>
+          <p className="text-xs mt-1" style={{ color: isOver ? "var(--red)" : "var(--text-disabled)" }}>
+            {isOver
+              ? `Excedeu em ${fmt(spent - limit)} (${percent.toFixed(1)}%)`
+              : `${percent.toFixed(1)}% utilizado · ${fmt(limit - spent)} restante`}
+          </p>
+        </div>
+
+        {/* Lista de transações */}
+        <div className="overflow-y-auto flex-1">
+          {categoryTxs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-10">
+              <p className="text-sm" style={{ color: "var(--text-disabled)" }}>
+                Nenhum gasto registrado nesta categoria
+              </p>
+            </div>
+          ) : (
+            <>
+              <div
+                className="px-5 py-2.5 sticky top-0"
+                style={{
+                  background: "var(--bg-elevated)",
+                  borderBottom: "1px solid var(--border-subtle)",
+                }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                  {categoryTxs.length} transaç{categoryTxs.length === 1 ? "ão" : "ões"}
+                </p>
+              </div>
+              <div className="flex flex-col">
+                {categoryTxs.map((tx, i) => {
+                  const amount = tx.paymentHistory[0]?.amount ?? tx.amount;
+                  const dueDate = new Date(tx.dueDate);
+                  const isPaid = tx.paymentHistory[0]?.isPaid ?? false;
+                  return (
+                    <div
+                      key={`${tx.id}-${i}`}
+                      className="flex items-center justify-between px-5 py-3"
+                      style={{ borderBottom: "1px solid var(--border-subtle)" }}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          {tx.description || "Sem descrição"}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          {dueDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                          {isPaid && (
+                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
+                              style={{ background: "rgba(34,197,94,0.12)", color: "var(--green)" }}>
+                              Pago
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold money shrink-0 ml-4" style={{ color: "var(--red)" }}>
+                        -{fmt(amount)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ── Página ──────────────────────────────────────────────────────
 export default function Goals() {
   const {
@@ -211,6 +400,7 @@ export default function Goals() {
     addGoal,
     updateGoal,
     deleteGoal,
+    transactions,
   } = useUser();
   const router = useRouter();
 
@@ -218,6 +408,7 @@ export default function Goals() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -363,7 +554,7 @@ export default function Goals() {
           {overBudgetCount > 0 && (
             <div
               className="flex items-center gap-2 text-xs"
-              style={{ color: "var(--red)", boxShadow: "var(--shadow-card)" }}
+              style={{ color: "var(--red)" }}
             >
               <FiAlertTriangle className="h-3 w-3 shrink-0" />
               {overBudgetCount}{" "}
@@ -615,6 +806,19 @@ export default function Goals() {
                       <span>100%</span>
                     </div>
                   </div>
+
+                  {/* Ver gastos */}
+                  <button
+                    onClick={() => setSelectedCategoryId(categoryId)}
+                    className="flex items-center gap-1 mt-3 pt-3 w-full text-xs cursor-pointer transition-opacity hover:opacity-70"
+                    style={{
+                      borderTop: "1px solid var(--border-subtle)",
+                      color: "var(--accent-light)",
+                    }}
+                  >
+                    <FiChevronRight className="h-3.5 w-3.5" />
+                    Ver gastos desta categoria
+                  </button>
                 </div>
               );
             }
@@ -638,12 +842,24 @@ export default function Goals() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal nova meta */}
       {showModal && (
         <AddGoalModal
           categoriesAvailable={categoriesAvailable}
           onClose={() => setShowModal(false)}
           onSave={addGoal}
+        />
+      )}
+
+      {/* Modal detalhe de meta */}
+      {selectedCategoryId && goalsMap[selectedCategoryId] && (
+        <GoalDetailModal
+          categoryId={selectedCategoryId}
+          categoryName={getCategoryName(selectedCategoryId)}
+          limit={goalsMap[selectedCategoryId].limit}
+          spent={getSpent(selectedCategoryId)}
+          transactions={transactions ?? []}
+          onClose={() => setSelectedCategoryId(null)}
         />
       )}
     </div>

@@ -381,6 +381,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (bill <= 0) continue;
+
+      // Verifica se a fatura já foi paga (mesma lógica do CardBillView)
+      const invoicePaid = allTransactions.some(
+        (t) =>
+          t.description === `Fatura ${card.name}` &&
+          !t.creditCardId &&
+          t.accountId &&
+          t.paymentHistory?.[0]?.isPaid === true &&
+          new Date(t.dueDate) >= start
+      );
+      if (invoicePaid) continue;
+
       dueDate.setHours(0, 0, 0, 0);
       const days = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
 

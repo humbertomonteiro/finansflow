@@ -243,9 +243,13 @@ export class FilteredTransactionsListUsecase {
       } else if (transaction.kind === TransactionKind.INSTALLMENT) {
         const excludedInstallments =
           transaction.recurrence?.excludedInstallments || [];
+        const endDate = transaction.recurrence?.endDate
+          ? new Date(transaction.recurrence.endDate)
+          : null;
         transaction.paymentHistory.forEach((payment, index) => {
           if (excludedInstallments.includes(index + 1)) return;
           const paymentDate = new Date(payment.dueDate);
+          if (endDate && paymentDate > endDate) return;
           if (paymentDate <= today) {
             result.push({
               ...transaction,

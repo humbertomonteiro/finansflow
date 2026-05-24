@@ -19,6 +19,7 @@ import {
   FiAlertTriangle,
   FiInfo,
   FiChevronRight,
+  FiZap,
 } from "react-icons/fi";
 import { MdRepeat } from "react-icons/md";
 import {
@@ -26,6 +27,8 @@ import {
   EditScope,
   EditPayload,
 } from "@/controllers/transaction/EditTransactionController";
+import { settleInstallmentsController } from "@/controllers/transaction/SettleInstallmentsController";
+import { IAccount } from "@/domain/interfaces/account/IAccount";
 
 // ── Tipos ───────────────────────────────────────────────────────
 interface TransactionDetailsProps {
@@ -34,7 +37,7 @@ interface TransactionDetailsProps {
   onClose: () => void;
 }
 
-type ModalStep = "view" | "edit_choose_scope" | "edit_form" | "delete_scope";
+type ModalStep = "view" | "edit_choose_scope" | "edit_form" | "delete_scope" | "settle";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -421,14 +424,181 @@ function EditFormScreen({
   );
 }
 
+// ── Modal de quitação antecipada ────────────────────────────────
+interface SettleModalProps {
+  remainingCount: number;
+  remainingTotal: number;
+  accounts: IAccount[];
+  onConfirm: (amount: number, accountId: string) => Promise<void>;
+}
+
+function SettleModal({
+  remainingCount,
+  remainingTotal,
+  accounts,
+  onConfirm,
+}: SettleModalProps) {
+  const amountInput = useAmountInput();
+  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    amountInput.reset(remainingTotal);
+  }, [remainingTotal]);
+
+  const settlementAmount = amountInput.parseAmount();
+  const discount = remainingTotal - settlementAmount;
+
+  const handleConfirm = async () => {
+    if (settlementAmount <= 0) {
+      setError("Informe um valor válido.");
+      return;
+    }
+    if (!accountId) {
+      setError("Selecione uma conta.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await onConfirm(settlementAmount, accountId);
+    } catch (e: any) {
+      setError(e?.message ?? "Erro ao quitar parcelamento.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-5 py-4 flex flex-col gap-4">
+      <div
+        className="flex items-center justify-between p-4 rounded-sm"
+        style={{
+          background: "var(--bg-overlay)",
+          border: "1px solid var(--border-subtle)",
+        }}
+      >
+        <div>
+          <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
+            Parcelas restantes
+          </p>
+          <p
+            className="text-sm font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {remainingCount}x
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
+            Total pendente
+          </p>
+          <p
+            className="text-sm font-semibold"
+            style={{ color: "var(--red)" }}
+          >
+            {fmt(remainingTotal)}
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label
+          className="text-xs mb-1 block"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Valor de quitação
+        </label>
+        <div className="relative">
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
+            style={{ color: "var(--text-muted)" }}
+          >
+            R$
+          </span>
+          <input
+            className="input money"
+            style={{ paddingLeft: "2.25rem" }}
+            type="text"
+            inputMode="decimal"
+            placeholder="Ex: 360,00"
+            value={amountInput.raw}
+            onChange={amountInput.handleChange}
+          />
+        </div>
+        {discount > 0.005 && (
+          <p className="text-xs mt-1" style={{ color: "var(--green)" }}>
+            {fmt(discount)} de desconto
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label
+          className="text-xs mb-1 block"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Debitar da conta
+        </label>
+        <select
+          className="input w-full"
+          value={accountId}
+          onChange={(e) => setAccountId(e.target.value)}
+        >
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} — {fmt(a.balance)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && (
+        <p className="text-xs" style={{ color: "var(--red)" }}>
+          {error}
+        </p>
+      )}
+
+      <div
+        className="text-xs p-3 rounded-sm"
+        style={{
+          background: "var(--accent-dim)",
+          color: "var(--accent-light)",
+        }}
+      >
+        As parcelas restantes serão encerradas e um pagamento único de{" "}
+        <strong>{fmt(settlementAmount)}</strong> será registrado como pago.
+      </div>
+
+      <button
+        onClick={handleConfirm}
+        disabled={loading}
+        className="button button-primary w-full"
+      >
+        {loading ? "Quitando..." : `Confirmar quitação · ${fmt(settlementAmount)}`}
+      </button>
+    </div>
+  );
+}
+
 // ── Componente principal ────────────────────────────────────────
 export const TransactionDetails = ({
   transaction,
   isOpen,
   onClose,
 }: TransactionDetailsProps) => {
-  const { categories, removeTransaction, updateTransaction, year, month } =
-    useUser();
+  const {
+    categories,
+    removeTransaction,
+    updateTransaction,
+    addTransaction,
+    year,
+    month,
+    allTransactions,
+    accounts,
+    refreshAccounts,
+  } = useUser();
 
   const [step, setStep] = useState<ModalStep>("view");
   const [isSaving, setIsSaving] = useState(false);
@@ -501,6 +671,19 @@ export const TransactionDetails = ({
   const isInstallment = transaction.kind === TransactionKind.INSTALLMENT;
   const isRecurring = isFixed || isInstallment;
 
+  // Para a quitação: busca o full transaction para contar parcelas pagas/excluídas
+  const fullTx = isInstallment
+    ? allTransactions?.find((t) => t.id === transaction.id) ?? null
+    : null;
+  const settleExcluded = new Set<number>(fullTx?.recurrence?.excludedInstallments ?? []);
+  const settlePaidCount =
+    fullTx?.paymentHistory.filter((p, i) => p.isPaid && !settleExcluded.has(i + 1)).length ?? 0;
+  const settleRemainingEntries =
+    fullTx?.paymentHistory.filter((p, i) => !p.isPaid && !settleExcluded.has(i + 1)) ?? [];
+  const remainingCount = settleRemainingEntries.length;
+  const remainingTotal = settleRemainingEntries.reduce((s, p) => s + p.amount, 0);
+  const canSettle = isInstallment && remainingCount > 0;
+
   // Para FIXED: mostra o amount do mês atual (pode ter sido editado com CURRENT_MONTH).
   // Para INSTALLMENT: mantém paymentHistory[0].amount (valor por parcela).
   // Para SIMPLE: usa transaction.amount diretamente.
@@ -551,6 +734,18 @@ export const TransactionDetails = ({
   const handleDelete = async (scope: TransactionRemovalScope) => {
     if (!transaction) return;
     await removeTransaction(transaction.id, scope, year, month);
+    onClose();
+  };
+
+  const handleSettle = async (amount: number, accountId: string) => {
+    const { updatedTx, settlementTx } = await settleInstallmentsController(
+      transaction.id,
+      amount,
+      accountId
+    );
+    updateTransaction(updatedTx);
+    addTransaction(settlementTx);
+    await refreshAccounts();
     onClose();
   };
 
@@ -605,6 +800,7 @@ export const TransactionDetails = ({
               {step === "edit_choose_scope" && "Editar transação"}
               {step === "edit_form" && "Editar transação"}
               {step === "delete_scope" && "Excluir transação"}
+              {step === "settle" && "Quitar parcelamento"}
             </h2>
           </div>
           <button
@@ -840,6 +1036,15 @@ export const TransactionDetails = ({
           </div>
         )}
 
+        {step === "settle" && canSettle && (
+          <SettleModal
+            remainingCount={remainingCount}
+            remainingTotal={remainingTotal}
+            accounts={accounts ?? []}
+            onConfirm={handleSettle}
+          />
+        )}
+
         {/* Footer */}
         <div
           className="flex items-center justify-between px-5 py-4 gap-3"
@@ -877,6 +1082,21 @@ export const TransactionDetails = ({
                 >
                   <FiTrash2 className="h-4 w-4" />
                 </button>
+                {canSettle && (
+                  <button
+                    onClick={() => setStep("settle")}
+                    className="flex items-center gap-1.5 text-xs px-3 h-9 rounded-xl transition-all cursor-pointer"
+                    style={{
+                      background: "var(--accent-dim)",
+                      color: "var(--accent-light)",
+                      border: "1px solid var(--border-accent)",
+                    }}
+                    title="Quitar parcelamento antecipado"
+                  >
+                    <FiZap className="h-3.5 w-3.5" />
+                    Quitar
+                  </button>
+                )}
               </div>
               <button
                 onClick={onClose}
@@ -911,7 +1131,7 @@ export const TransactionDetails = ({
             </>
           )}
 
-          {(step === "edit_choose_scope" || step === "delete_scope") && (
+          {(step === "edit_choose_scope" || step === "delete_scope" || step === "settle") && (
             <button
               onClick={() => setStep("view")}
               className="button button-ghost h-9 px-4 text-sm"
